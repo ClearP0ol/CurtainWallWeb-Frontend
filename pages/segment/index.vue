@@ -53,7 +53,7 @@ import {
   SegSingleImg,
   GetSegResult,
   GetImgByDate,
-} from "@/api/segment/segmentation.js";
+} from "@/server/api/segment/segmentation.js";
 import {getInstanceById} from "echarts";
 import {ElMessage} from "element-plus";
 
