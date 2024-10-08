@@ -5,10 +5,11 @@
     <!-- 图片选择框 -->
     <el-row class="upload-container">
       <el-upload ref="uploadRef" :class="uploadClass" action="''" list-type="picture-card" :auto-upload="false"
-        :on-remove="handleRemove" :on-preview="handlePreview" :on-change="handleChange" :show-file-list="isSelectedShow"
-        :multiple="true">
+                 :on-remove="handleRemove" :on-preview="handlePreview" :on-change="handleChange"
+                 :show-file-list="isSelectedShow"
+                 :multiple="true">
         <el-icon>
-          <Plus />
+          <Plus/>
         </el-icon>
         <template #tip v-if="uploadClass === 'showUpload'">
           <div class="el-upload__tip">
@@ -21,9 +22,9 @@
       <el-dialog v-model="dialogVisible" height="705px">
         <div class="picture-container">
           <!-- <img w-full :src="dialogImageUrl" alt="Preview Image" class="picture"/> -->
-          <img w-full v-if="dialogImageUrl" :src="dialogImageUrl" alt="Preview Image" class="picture" />
+          <img w-full v-if="dialogImageUrl" :src="dialogImageUrl" alt="Preview Image" class="picture"/>
           <el-icon v-else class="avatar-uploader-icon">
-            <Plus />
+            <Plus/>
           </el-icon>
         </div>
       </el-dialog>
@@ -39,9 +40,9 @@
 </template>
 
 <script setup>
-import { computed, reactive } from 'vue'
-import { ElMessage, ElUpload, ElIcon, ElButton, ElDialog, ElRow } from 'element-plus'
-import { Plus } from '@element-plus/icons-vue'
+import {computed, reactive} from 'vue'
+import {ElMessage, ElUpload, ElIcon, ElButton, ElDialog, ElRow} from 'element-plus'
+import {Plus} from '@element-plus/icons-vue'
 
 const emit = defineEmits(['uploadPicture', 'onCancel']);//定义传值给父组件的方法
 
@@ -72,12 +73,12 @@ const handleChange = (File) => {
     isSelectedShow.value = false;  //不显示上传的文件列表
     return false;
   }
-  // 文件过大
-  // else if(!isLt){
-  //   ElMessage.error('上传图片大小不能超过5MB!');
-  //   uploadRef.value.clearFiles();  //调用el-upload的clearFiles()函数清空已经选择的文件列表
-  //   isSelectedShow.value = false;  //不显示上传的文件列表
-  //   return false;
+      // 文件过大
+      // else if(!isLt){
+      //   ElMessage.error('上传图片大小不能超过5MB!');
+      //   uploadRef.value.clearFiles();  //调用el-upload的clearFiles()函数清空已经选择的文件列表
+      //   isSelectedShow.value = false;  //不显示上传的文件列表
+      //   return false;
   // }
   else {
     fileList.push(File);     //将新选择的文件File加入fileList中
@@ -120,10 +121,9 @@ const onCancel = () => {
   emit('onCancel');
 };
 
-defineExpose({ onCancel });
+defineExpose({onCancel});
 
 </script>
-
 
 
 <style>

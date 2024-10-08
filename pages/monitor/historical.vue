@@ -5,7 +5,7 @@
   <UDashboardToolbar>
     <template #left>
       <!-- 设备选择 -->
-      <DeviceSelectMenu @selectDevice="handleSelectDevice" />
+      <DeviceSelectMenu @selectDevice="handleSelectDevice"/>
       <!-- 时间选择 -->
       <DateRangePicker @selectRange="handleSelectRange"></DateRangePicker>
     </template>
@@ -13,16 +13,14 @@
 
   <MonitorTimeCurveChart :chartData="response" v-if="response != null"></MonitorTimeCurveChart>
   <div class="flex items-center justify-center h-screen" v-if="response == null">
-    <USkeleton class="w-4/5 h-4/5" />
+    <USkeleton class="w-4/5 h-4/5"/>
   </div>
 
 </template>
 
-
-
 <script setup lang="ts">
-import { sub } from 'date-fns';
-import { useRouter } from "vue-router";
+import {sub} from 'date-fns';
+import {useRouter} from "vue-router";
 
 const router = useRouter();
 const backToMain = () => {
@@ -60,7 +58,7 @@ const getHistoricalData = async (requestParams: RequestParam) => {
 
 onMounted(() => {
   // 获取当前日期
-  const initialTime = ref({ start: sub(new Date(), { days: 7 }), end: new Date() })
+  const initialTime = ref({start: sub(new Date(), {days: 7}), end: new Date()})
   console.log(initialTime.value.end)
   // 获取时间戳
   requestParams.startTime = initialTime.value.start.getTime();
@@ -88,8 +86,6 @@ const handleSelectDevice = (val: any) => {
   getHistoricalData(requestParams);
 
 }
-
-
 </script>
 
 

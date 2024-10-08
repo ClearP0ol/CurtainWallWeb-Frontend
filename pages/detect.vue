@@ -1,7 +1,9 @@
 <template>
   <div class="upload-container">
     <el-upload class="upload-demo" drag action="http://localhost:8080/upload" multiple @success="handleUploadSuccess">
-      <el-icon class="el-icon--upload"><upload-filled /></el-icon>
+      <el-icon class="el-icon--upload">
+        <upload-filled/>
+      </el-icon>
       <div class="el-upload__text">拖动文件至区域内或<em>点击上传</em></div>
       <template #tip>
         <div class="el-upload__tip">
@@ -16,21 +18,21 @@
         <el-button type="primary" @click="fetchData">
           开始检测
           <el-icon class="el-icon--right">
-            <Upload />
+            <Upload/>
           </el-icon>
         </el-button>
       </div>
-      <div class="grid-content ep-bg-purple" />
+      <div class="grid-content ep-bg-purple"/>
     </el-col>
     <el-col :span="21">
-      <el-progress :percentage="progressPercentage" status="success" />
-      <div class="grid-content ep-bg-purple" />
+      <el-progress :percentage="progressPercentage" status="success"/>
+      <div class="grid-content ep-bg-purple"/>
     </el-col>
   </el-row>
   <div class="demo-image">
     <div v-if="showTable">
       <el-table :data="tableData" :span-method="objectSpanMethod" border style="width: 100%; margin-top: 20px">
-        <el-table-column prop="id" label="图片编号" width="180" />
+        <el-table-column prop="id" label="图片编号" width="180"/>
         <el-table-column label="原图">
           <template #default="scope">
             <el-image style="width: 100%; height: 100%" :src="scope.row.name" :fit="cover"></el-image>
@@ -41,7 +43,7 @@
             <el-image style="width: 100%; height: 100%" :src="scope.row.mark_photo" :fit="cover"></el-image>
           </template>
         </el-table-column>
-        <el-table-column prop="num_photo" label="幕墙块编号" />
+        <el-table-column prop="num_photo" label="幕墙块编号"/>
         <el-table-column label="幕墙块原图">
           <template #default="scope">
             <el-image style="width: 100%; height: 100%" :src="scope.row.pre_photo" :fit="cover"></el-image>
@@ -52,63 +54,17 @@
             <el-image style="width: 100%; height: 100%" :src="scope.row.result_photo" :fit="cover"></el-image>
           </template>
         </el-table-column>
-        <el-table-column prop="area" label="污渍总面积" />
+        <el-table-column prop="area" label="污渍总面积"/>
       </el-table>
     </div>
   </div>
 </template>
 
-<style>
-.center-button {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  margin: 0 auto;
-}
-
-.upload-container {
-  display: flex;
-  justify-content: center;
-  /* 水平居中 */
-  align-items: center;
-  /* 垂直居中 */
-  height: 100vh;
-  /* 使容器高度占满视口高度 */
-}
-
-.upload-demo {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  border: 2px dashed #d9d9d9;
-  padding: 20px;
-  border-radius: 8px;
-}
-
-.el-row {
-  margin-bottom: 20px;
-}
-
-.el-row:last-child {
-  margin-bottom: 0;
-}
-
-.el-col {
-  border-radius: 4px;
-}
-
-.grid-content {
-  border-radius: 4px;
-  min-height: 36px;
-}
-</style>
-
 <script lang="ts" setup>
-import type { TableColumnCtx } from "element-plus";
-import { ref } from "vue";
-import { UploadFilled } from "@element-plus/icons-vue";
-import { Upload } from "@element-plus/icons-vue";
+import type {TableColumnCtx} from "element-plus";
+import {ref} from "vue";
+import {UploadFilled} from "@element-plus/icons-vue";
+import {Upload} from "@element-plus/icons-vue";
 import axios from "axios";
 
 const tableData = ref([]);
@@ -164,7 +120,7 @@ interface SpanMethodProps {
   columnIndex: number;
 }
 
-const objectSpanMethod = ({ rowIndex, columnIndex }: SpanMethodProps) => {
+const objectSpanMethod = ({rowIndex, columnIndex}: SpanMethodProps) => {
   if (columnIndex === 0 || columnIndex === 1 || columnIndex === 2) {
     if (rowIndex === 0) {
       return {
@@ -180,7 +136,53 @@ const objectSpanMethod = ({ rowIndex, columnIndex }: SpanMethodProps) => {
   }
 };
 
-
-
 //增加注释
 </script>
+
+<style>
+.center-button {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 0 auto;
+}
+
+.upload-container {
+  display: flex;
+  justify-content: center;
+  /* 水平居中 */
+  align-items: center;
+  /* 垂直居中 */
+  height: 100vh;
+  /* 使容器高度占满视口高度 */
+}
+
+.upload-demo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border: 2px dashed #d9d9d9;
+  padding: 20px;
+  border-radius: 8px;
+}
+
+.el-row {
+  margin-bottom: 20px;
+}
+
+.el-row:last-child {
+  margin-bottom: 0;
+}
+
+.el-col {
+  border-radius: 4px;
+}
+
+.grid-content {
+  border-radius: 4px;
+  min-height: 36px;
+}
+</style>
+
+

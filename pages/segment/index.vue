@@ -2,14 +2,15 @@
 <template>
   <div class="main-page">
     <div style="position: fixed; right: 10px; top: 10px; z-index: 1000;">
-        <el-button type="primary" class="back-to-main-btn" @click="backToMain"
-            style="position: absolute; right: 0; top: 0;">返回主页</el-button>
+      <el-button type="primary" class="back-to-main-btn" @click="backToMain"
+                 style="position: absolute; right: 0; top: 0;">返回主页
+      </el-button>
     </div>
     <div class="container">
       <ImgUploader
-        ref="ImgUploadRef"
-        @uploadPicture="upload"
-        @onCancel="cancel"
+          ref="ImgUploadRef"
+          @uploadPicture="upload"
+          @onCancel="cancel"
       />
       <div class="progress-wrap" v-if="showProgress">
         <UProgress animation="carousel"></UProgress>
@@ -20,14 +21,14 @@
     </div> -->
     <div class="carousel-container" v-if="ImgResult.length > 0">
       <el-carousel
-        class="carousel"
-        :interval="0"
-        arrow="always"
-        indicator-position="outside"
-        style="flex: 1"
+          class="carousel"
+          :interval="0"
+          arrow="always"
+          indicator-position="outside"
+          style="flex: 1"
       >
         <el-carousel-item v-for="(item, index) in ImgResult" :key="index">
-          <ImgList :data="item" :isGlass="isGlassWall" />
+          <ImgList :data="item" :isGlass="isGlassWall"/>
         </el-carousel-item>
       </el-carousel>
     </div>
@@ -36,7 +37,7 @@
   <div class="switch-container" v-if="false">
     <div class="p-4 h-6 rounded-lg flex items-center justify-between">
       <span class="left-text text-lg">其他幕墙</span>
-      <UToggle v-model="isGlassWall" @change="handleSwitchChange" />
+      <UToggle v-model="isGlassWall" @change="handleSwitchChange"/>
       <span class="right-text text-lg">玻璃幕墙</span>
     </div>
   </div>
@@ -46,15 +47,15 @@
 // import { ref }from 'vue'
 import ImgList from "@/components/segment/ResultContainer.vue";
 import ImgUploader from "@/components/segment/ImgUploader_batch.vue";
-import { useRouter } from "vue-router";
+import {useRouter} from "vue-router";
 import {
   UploadBatchImg,
   SegSingleImg,
   GetSegResult,
   GetImgByDate,
 } from "@/api/segment/segmentation.js";
-import { getInstanceById } from "echarts";
-import { ElMessage } from "element-plus";
+import {getInstanceById} from "echarts";
+import {ElMessage} from "element-plus";
 
 const MIN_WIDTH = 400; // 图像分割的建议最小宽度
 
@@ -106,13 +107,13 @@ const upload = (val) => {
   }
 
   UploadBatchImg(formData)
-    .then(function (result) {
-      console.log("upload Done", result);
-      after_upload(result);
-    })
-    .catch(function (error) {
-      console.log(error);
-    });
+      .then(function (result) {
+        console.log("upload Done", result);
+        after_upload(result);
+      })
+      .catch(function (error) {
+        console.log(error);
+      });
 };
 
 // 改变图片尺寸，用于生成缩略图
@@ -156,24 +157,24 @@ const after_upload = async (result) => {
       var segmentationResult = await GetSegResult(formData);
       // console.log("fileList[index].url ", fileList[index].url);
       resizeImage(fileList[index].url, 200, 200)
-        .then((resizedUrl) => {
-          thumbnailUrl.value = resizedUrl;
-          ImgResult.value.push({
-            // 被分割图片的路径
-            thumbnail: thumbnailUrl.value,
-            // 分割得到的标签列表
-            labelList: [...new Set(labels)],
-            // 分割得到的各个图片局部及其标签
-            pictures: labels.map((label, index) => ({
-              label: isGlassWall.value ? label : "",
-              image: segmentationResult.data["segmented_image_paths"][index],
-            })),
+          .then((resizedUrl) => {
+            thumbnailUrl.value = resizedUrl;
+            ImgResult.value.push({
+              // 被分割图片的路径
+              thumbnail: thumbnailUrl.value,
+              // 分割得到的标签列表
+              labelList: [...new Set(labels)],
+              // 分割得到的各个图片局部及其标签
+              pictures: labels.map((label, index) => ({
+                label: isGlassWall.value ? label : "",
+                image: segmentationResult.data["segmented_image_paths"][index],
+              })),
+            });
+            // console.log(ImgResult.value, 'ImgResult')
+          })
+          .catch((error) => {
+            console.error("Error resizing image:", error);
           });
-          // console.log(ImgResult.value, 'ImgResult')
-        })
-        .catch((error) => {
-          console.error("Error resizing image:", error);
-        });
     } catch (error) {
       console.error("Error in SegSingleImg:", error);
     }

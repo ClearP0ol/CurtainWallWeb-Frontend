@@ -1,13 +1,13 @@
 <template>
   <div>
-    <NuxtLoadingIndicator />
+    <NuxtLoadingIndicator/>
 
     <NuxtLayout>
-      <NuxtPage />
+      <NuxtPage/>
     </NuxtLayout>
 
-    <UNotifications />
-    <UModals />
+    <UNotifications/>
+    <UModals/>
   </div>
 </template>
 
@@ -18,14 +18,14 @@ const color = computed(() => colorMode.value === 'light' ? 'light' : '#111827')
 useHead({
   title: 'Curtain Wall Monitor Platform',
   meta: [
-    { charset: 'utf-8' },
-    { name: 'viewport', content: 'width=device-width, initial-scale=1' },
-    { key: 'theme-color', name: 'theme-color', content: color},
-    { hid: 'author', name: 'author', content: 'Curtain Wall'},
-    { hid: 'description', name: 'description', content: 'Curtain Wall' }
+    {charset: 'utf-8'},
+    {name: 'viewport', content: 'width=device-width, initial-scale=1'},
+    {key: 'theme-color', name: 'theme-color', content: color},
+    {hid: 'author', name: 'author', content: 'Curtain Wall'},
+    {hid: 'description', name: 'description', content: 'Curtain Wall'}
   ],
   link: [
-    { rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' }
+    {rel: 'icon', type: 'image/x-icon', href: '/favicon.ico'}
   ],
   htmlAttrs: {
     lang: 'zh-CN',

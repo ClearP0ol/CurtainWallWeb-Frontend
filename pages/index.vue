@@ -1,8 +1,46 @@
+<template>
+  <UDashboardPage>
+    <UDashboardPanel grow>
+      <UDashboardNavbar title="首页"></UDashboardNavbar>
+      <div class="main-page">
+        <UPageGrid class="custom-margin">
+          <UPageCard v-for="(module, index) in modulesLine1" :key="index" v-bind="module"
+                     @click="checkPermissionAndRedirect(module)" class="hover-effect">
+            <template #description>
+              <span class="line-clamp-2">{{ module.description }}</span>
+            </template>
+          </UPageCard>
+          <div></div>
+          <div></div>
+          <UPageCard v-for="(module, index) in modulesLine2" :key="index" v-bind="module"
+                     @click="checkPermissionAndRedirect(module)" class="hover-effect">
+            <template #description>
+              <span class="line-clamp-2">{{ module.description }}</span>
+            </template>
+          </UPageCard>
+          <UPageCard v-for="(module, index) in modulesLine3" :key="index" v-bind="module"
+                     @click="checkPermissionAndRedirect(module)" class="hover-effect">
+            <template #description>
+              <span class="line-clamp-2">{{ module.description }}</span>
+            </template>
+          </UPageCard>
+          <UPageCard v-for="(module, index) in modulesLine4" :key="index" v-bind="module"
+                     @click="checkPermissionAndRedirect(module)" class="hover-effect">
+            <template #description>
+              <span class="line-clamp-2">{{ module.description }}</span>
+            </template>
+          </UPageCard>
+        </UPageGrid>
+      </div>
+    </UDashboardPanel>
+  </UDashboardPage>
+</template>
+
 <script setup>
 import axios from "axios";
-import { ref, reactive } from "vue";
-import { ElMessage } from "element-plus";
-import { useRouter } from "vue-router";
+import {ref, reactive} from "vue";
+import {ElMessage} from "element-plus";
+import {useRouter} from "vue-router";
 
 const router = useRouter();
 const userAuth = ref({});
@@ -165,51 +203,13 @@ const checkPermissionAndRedirect = (module) => {
     if (module.title === "3D建筑模型" || module.title === "玻璃平整度检测" || module.title === "石材裂缝检测" || module.title === "幕墙韧性评估") {
       window.location.href = module.target_address; // 使用window.location.href进行跳转
     } else {
-      router.push({ path: module.target_address }); // 使用router.push进行跳转
+      router.push({path: module.target_address}); // 使用router.push进行跳转
     }
   } else {
     ElMessage.error("您没有权限访问此模块");
   }
 };
 </script>
-
-<template>
-  <UDashboardPage>
-    <UDashboardPanel grow>
-      <UDashboardNavbar title="首页"> </UDashboardNavbar>
-      <div class="main-page">
-        <UPageGrid class="custom-margin">
-          <UPageCard v-for="(module, index) in modulesLine1" :key="index" v-bind="module"
-            @click="checkPermissionAndRedirect(module)" class="hover-effect">
-            <template #description>
-              <span class="line-clamp-2">{{ module.description }}</span>
-            </template>
-          </UPageCard>
-          <div></div>
-          <div></div>
-          <UPageCard v-for="(module, index) in modulesLine2" :key="index" v-bind="module"
-            @click="checkPermissionAndRedirect(module)" class="hover-effect">
-            <template #description>
-              <span class="line-clamp-2">{{ module.description }}</span>
-            </template>
-          </UPageCard>
-          <UPageCard v-for="(module, index) in modulesLine3" :key="index" v-bind="module"
-            @click="checkPermissionAndRedirect(module)" class="hover-effect">
-            <template #description>
-              <span class="line-clamp-2">{{ module.description }}</span>
-            </template>
-          </UPageCard>
-          <UPageCard v-for="(module, index) in modulesLine4" :key="index" v-bind="module"
-            @click="checkPermissionAndRedirect(module)" class="hover-effect">
-            <template #description>
-              <span class="line-clamp-2">{{ module.description }}</span>
-            </template>
-          </UPageCard>
-        </UPageGrid>
-      </div>
-    </UDashboardPanel>
-  </UDashboardPage>
-</template>
 
 <style scoped>
 .main-page {
