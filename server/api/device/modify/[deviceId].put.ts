@@ -3,7 +3,19 @@ import axios from 'axios';
 import { defineEventHandler } from 'h3';
 
 const BASE_URL = 'http://111.231.168.12:8180/api/device';
-
+/**
+ * 接口名称：修改设备信息接口
+ * 接口定义：此接口用于处理修改指定设备信息的请求。
+ * 输入：
+ *   - deviceId: 从URL中提取的设备ID，用于标识要修改的设备，数据类型为 string
+ *   - query: 从请求体中提取的设备信息，包含要更新的字段，数据类型为 object
+ * 输出：
+ *   - 在修改成功的情况下：
+ *     - success: true 表示修改成功，数据类型为 boolean
+ *     - data: 修改后的设备信息，数据类型为 object
+ *   - 在修改失败的情况下：
+ *     - error: 包含修改失败的原因，数据类型为 string
+ */
 export default defineEventHandler(async (event: any) => {
   try {
     // 从请求中提取设备信息

@@ -17,7 +17,17 @@ interface DeviceListResponse {
         devices: Device[];
     };
 }
-
+/**
+ * 接口名称：获取所有设备列表接口
+ * 接口定义：此接口用于处理获取所有设备列表的请求。
+ * 输入：
+ *   - 无
+ * 输出：
+ *   - 在获取成功的情况下：
+ *     - data: 包含设备列表的对象，数据类型为 object
+ *   - 在获取失败的情况下：
+ *     - error: 包含获取失败的原因，数据类型为 string
+ */
 export default defineEventHandler(async (event) => {
     try {
         const response = await axios.get<DeviceListResponse>(`${BASE_URL}/all`);

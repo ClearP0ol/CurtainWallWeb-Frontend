@@ -2,6 +2,17 @@ import axios from 'axios';
 import { defineEventHandler } from 'h3';
 
 const BASE_URL = 'http://111.231.168.12:8180/api/device';
+/**
+ * 接口名称：获取设备信息接口
+ * 接口定义：此接口用于获取指定设备的详细信息。
+ * 输入：
+ *   - deviceId: 从URL中提取的设备ID，用于标识要获取信息的设备，输入类型为 string
+ * 输出：
+ *   - 在获取成功的情况下：
+ *     - deviceInfo: 包含设备详细信息的对象，数据类型为 object
+ *   - 在获取失败的情况下：
+ *     - error: 包含获取失败的原因，数据类型为 string
+ */
 
 export default defineEventHandler(async (event) => {
     try {

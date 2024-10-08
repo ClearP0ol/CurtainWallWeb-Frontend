@@ -3,7 +3,20 @@ import axios from 'axios';
 import { defineEventHandler } from 'h3';
 
 const BASE_URL = 'http://111.231.168.12:8180/api/device';
-
+/**
+ * 接口名称：添加设备接口
+ * 接口定义：此接口用于处理添加新设备的请求。
+ * 输入：
+ *   - query: 从请求体中提取的设备信息，包含要添加的新设备的数据，数据类型为 object
+ * 输出：
+ *   - 在添加成功的情况下：
+ *     - success: true 表示添加成功，数据类型为 boolean
+ *     - data: 添加后的设备信息，数据类型为 object
+ *   - 在设备ID已存在的情况下：
+ *     - error: 包含设备ID已存在的错误信息，数据类型为 string
+ *   - 在添加失败的情况下：
+ *     - error: 包含添加失败的原因，数据类型为 string
+ */
 export default defineEventHandler(async (event: any) => {
   try {
     // 从请求中提取设备信息
