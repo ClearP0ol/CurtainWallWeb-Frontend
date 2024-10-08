@@ -5,11 +5,11 @@ import Message from "@/server/segment/Message.js"  // 在每个 api 文件里都
  * 接口名称：图像上传接口
  * 接口定义：此接口用于上传图像。
  * 输入：
- *   - headers：请求头，限定数据类型为form-data。
- *   - data：FormData，类型为form-data
+ *   - headers：请求头，限定数据类型为 form-data。
+ *   - data：FormData，类型为 form-data
  * 输出：
  *   - 在获取成功的情况下：
- *     - response，类型是object
+ *     - response，类型是 object
  *   - 在获取失败的情况下：
  *     - 无输出。
  */

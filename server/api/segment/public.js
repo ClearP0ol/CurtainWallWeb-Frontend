@@ -10,7 +10,7 @@ import store from "@/store/index.js"
  *   - data: FormData，使用表单作为输入。类型是form-data。
  * 输出：
  *   - 在获取成功的情况下：
- *     - 无输出。只执行Beginyolo(successCallback)函数。
+ *     - 无输出。只执行 Beginyolo(successCallback)函数。
  *   - 在获取失败的情况下：
  *     - 无输出。
  */
