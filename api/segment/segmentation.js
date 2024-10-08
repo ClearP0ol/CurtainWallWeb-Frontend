@@ -1,5 +1,5 @@
-import Request from "@/server/segment/Request.js";  // 在每个 api 文件里都要引入这两个文件
-import Message from "@/server/segment/Message.js"  // 在每个 api 文件里都要引入这两个文件
+import Request from "~/server/segment/Request.js";  // 在每个 api 文件里都要引入这两个文件
+import Message from "~/server/segment/Message.js"  // 在每个 api 文件里都要引入这两个文件
 
 /**
  * 接口名称：图像上传接口

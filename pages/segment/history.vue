@@ -41,7 +41,7 @@
 
 <script setup>
 // import { ref, watch }from 'vue'
-import {GetResultByDate} from '@/server/api/segment/segmentation.js'
+import {GetResultByDate} from '~/api/segment/segmentation.js'
 import {useRouter} from "vue-router";
 
 const pickedDate = ref('')

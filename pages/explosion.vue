@@ -51,7 +51,7 @@ import {ref, watch} from 'vue'
 import axios from 'axios'
 import Message from "@/server/segment/Message.js";
 import ImgUploader from '@/components/ImgUploader.vue'
-import {UploadImg} from '@/server/api/segment/public.js'
+import {UploadImg} from '~/api/segment/public.js'
 import {useStore} from 'vuex'
 import {useRouter} from "vue-router";
 
