@@ -1,5 +1,7 @@
 import { ElMessage } from 'element-plus'
-
+/**
+ * 定义message类型，以便在其它接口中直接使用。
+ */
 const showMessage = (msg, callback, type) => {
     ElMessage({
         type: type,
