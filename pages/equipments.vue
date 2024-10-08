@@ -1,3 +1,18 @@
+<template>
+  <UDashboardPage>
+    <UDashboardPanel grow>
+      <UDashboardNavbar title="设备中心">
+      </UDashboardNavbar>
+
+      <UDashboardToolbar class="overflow-x-auto">
+        <UHorizontalNavigation :links="links"/>
+      </UDashboardToolbar>
+
+      <NuxtPage/>
+    </UDashboardPanel>
+  </UDashboardPage>
+</template>
+
 <script setup lang="ts">
 const links = [[{
   id: 'deviceList',
@@ -12,18 +27,3 @@ const links = [[{
   to: '/equipments/add'
 }]]
 </script>
-
-<template>
-  <UDashboardPage>
-    <UDashboardPanel grow>
-      <UDashboardNavbar title="设备中心">
-      </UDashboardNavbar>
-
-      <UDashboardToolbar class="overflow-x-auto">
-        <UHorizontalNavigation :links="links" />
-      </UDashboardToolbar>
-      
-      <NuxtPage />
-    </UDashboardPanel>
-  </UDashboardPage>
-</template>

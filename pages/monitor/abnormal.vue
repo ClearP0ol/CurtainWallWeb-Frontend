@@ -1,14 +1,15 @@
 <template>
   <div style="position: fixed; right: 10px; top: 15px; z-index: 1000;">
     <el-button type="primary" @click="backToMain"
-      style="position: absolute; right: 0; top: 0;">返回主页</el-button>
+               style="position: absolute; right: 0; top: 0;">返回主页
+    </el-button>
   </div>
   <UDashboardToolbar>
     <template #left>
       <!-- 设备选择 -->
-      <DeviceSelectMenu @selectDevice="handleSelectDevice" style="width: 150px" />
+      <DeviceSelectMenu @selectDevice="handleSelectDevice" style="width: 150px"/>
       <!-- 方向选择 -->
-      <USelectMenu v-model="direction" :options="directions" placeholder="选择方向" style="width: 100px" />
+      <USelectMenu v-model="direction" :options="directions" placeholder="选择方向" style="width: 100px"/>
       <!-- 时间选择 -->
       <DateRangePicker @selectRange="handleSelectRange"></DateRangePicker>
       <!-- <el-button type="primary" class="back-to-main-btn" @click="backToMain">返回主页</el-button> -->
@@ -17,16 +18,15 @@
 
   <MonitorLargeDataChart :chartData="response" :direction="direction" v-if="response != null"></MonitorLargeDataChart>
   <div class="flex items-center justify-center h-screen" v-if="response == null">
-    <USkeleton class="w-4/5 h-4/5" />
+    <USkeleton class="w-4/5 h-4/5"/>
   </div>
 
 </template>
 
 
-
 <script setup lang="ts">
-import { sub } from 'date-fns';
-import { useRouter } from "vue-router";
+import {sub} from 'date-fns';
+import {useRouter} from "vue-router";
 
 const router = useRouter();
 const backToMain = () => {
@@ -71,7 +71,7 @@ const getAbnormalData = async (requestParams: RequestParam) => {
 
 onMounted(() => {
   // 获取当前日期
-  const initialTime = ref({ start: sub(new Date(), { days: 7 }), end: new Date() })
+  const initialTime = ref({start: sub(new Date(), {days: 7}), end: new Date()})
   // 获取时间戳
   requestParams.startTime = initialTime.value.start.getTime();
   requestParams.endTime = initialTime.value.end.getTime();
@@ -102,7 +102,6 @@ const handleSelectDevice = (val: any) => {
 
 
 </script>
-
 
 <style scoped>
 #main {

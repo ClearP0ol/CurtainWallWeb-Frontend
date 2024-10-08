@@ -8,22 +8,22 @@
           <span style="margin-bottom: 20px; font-size: 20px;">欢迎！请登录您的账户</span>
           <el-form-item>
             <el-input
-              v-model="loginForm.email"
-              placeholder="邮箱"
-              required
-              @keydown.enter="focusNextInput"
-              ref="inputEmail"
+                v-model="loginForm.email"
+                placeholder="邮箱"
+                required
+                @keydown.enter="focusNextInput"
+                ref="inputEmail"
             />
           </el-form-item>
 
           <el-form-item>
             <el-input
-              v-model="loginForm.password"
-              type="password"
-              placeholder="密码"
-              required
-              @keydown.enter="login"
-              ref="inputPassword"
+                v-model="loginForm.password"
+                type="password"
+                placeholder="密码"
+                required
+                @keydown.enter="login"
+                ref="inputPassword"
             />
           </el-form-item>
 
@@ -47,10 +47,10 @@
           <span style="margin-bottom: 20px; font-size: 20px;">欢迎！请输入注册信息</span>
           <el-form-item>
             <el-input
-              v-model="registerForm.email"
-              placeholder="邮箱"
-              required
-              ref="inputEmail"
+                v-model="registerForm.email"
+                placeholder="邮箱"
+                required
+                ref="inputEmail"
             />
           </el-form-item>
 
@@ -58,9 +58,9 @@
             <el-input v-model="registerForm.code" placeholder="验证码" required>
               <template #suffix>
                 <button
-                  @click.prevent="sendVerificationCode"
-                  :disabled="disableButton"
-                  style="color: white; background-color: RGB(0,102,204); padding: 0 10px; border-radius: 5px; cursor: pointer;"
+                    @click.prevent="sendVerificationCode"
+                    :disabled="disableButton"
+                    style="color: white; background-color: RGB(0,102,204); padding: 0 10px; border-radius: 5px; cursor: pointer;"
                 >
                   {{ buttonText }}
                 </button>
@@ -70,21 +70,21 @@
 
           <el-form-item>
             <el-input
-              v-model="registerForm.password"
-              type="password"
-              placeholder="输入密码"
-              required
-              ref="inputPassword"
+                v-model="registerForm.password"
+                type="password"
+                placeholder="输入密码"
+                required
+                ref="inputPassword"
             />
           </el-form-item>
 
           <el-form-item>
             <el-input
-              v-model="registerForm.confirmPassword"
-              type="password"
-              placeholder="确认密码"
-              required
-              ref="inputPassword"
+                v-model="registerForm.confirmPassword"
+                type="password"
+                placeholder="确认密码"
+                required
+                ref="inputPassword"
             />
           </el-form-item>
 
@@ -94,8 +94,8 @@
 
           <el-form-item style="position: absolute; top: 90%">
             <p
-              @click="toggleForm"
-              style="color: rgb(193, 193, 193); cursor: pointer;margin-top:20px; font-size:15px"
+                @click="toggleForm"
+                style="color: rgb(193, 193, 193); cursor: pointer;margin-top:20px; font-size:15px"
             >
               已有账户？点此登录
             </p>
@@ -109,9 +109,9 @@
 
 <script setup>
 import userService from "@/server/api/user.js";
-import { onMounted, ref } from "vue";
-import { useRouter } from "vue-router";
-import { ElMessage, ElLoading } from "element-plus";
+import {onMounted, ref} from "vue";
+import {useRouter} from "vue-router";
+import {ElMessage, ElLoading} from "element-plus";
 // import store from '@/store/index.js'
 
 // const GoToLayout = () => {
@@ -138,7 +138,7 @@ const registerForm = ref({
   email: "",
   code: "",
   password: "",
-  confirmPassword:"",
+  confirmPassword: "",
 });
 
 const focusNextInput = () => {
@@ -166,7 +166,7 @@ const login = async () => {
       localStorage.setItem("authToken", response.token);
       localStorage.setItem("email", loginForm.value.email);
       console.log("authToken stored:", localStorage.getItem("authToken"));
-      router.push({ path: "/" });
+      router.push({path: "/"});
     } else {
       console.log("登陆失败");
       ElMessage.error("登录失败，请检查您的用户名和密码。");
@@ -188,7 +188,7 @@ const sendVerificationCode = async () => {
   try {
     const response = await $fetch("/api/account/sendCode", {
       method: "POST",
-      body: { email: registerForm.value.email },
+      body: {email: registerForm.value.email},
     });
     if (response) {
       disableButton.value = true;
@@ -220,7 +220,7 @@ const resetCountdown = () => {
 };
 
 const register = async () => {
-  if (registerForm.value.password != registerForm.value.confirmPassword){
+  if (registerForm.value.password != registerForm.value.confirmPassword) {
     ElMessage.error("两次密码输入不一致，请重新输入密码");
     return
   }
@@ -235,7 +235,7 @@ const register = async () => {
     });
     if (response) {
       // console.log(response.code);
-      if(response.code !== 200) {
+      if (response.code !== 200) {
         ElMessage.error(response.message);
         return;
       }
