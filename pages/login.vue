@@ -108,7 +108,7 @@
 </template>
 
 <script setup>
-import userService from "@/server/api/user.js";
+import userService from "~/api/user.js";
 import {onMounted, ref} from "vue";
 import {useRouter} from "vue-router";
 import {ElMessage, ElLoading} from "element-plus";
