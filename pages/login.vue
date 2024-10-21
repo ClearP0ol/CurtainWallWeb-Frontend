@@ -147,34 +147,35 @@ const focusNextInput = () => {
 
 //todo: 暂时不发请求，需要统一api，先直接写死
 const login = async () => {
-  let loadingInstance = null;
-  try {
-    loadingInstance = ElLoading.service({
-      lock: true,
-      text: "正在登录...",
-      background: "rgba(0, 0, 0, 0.7)",
-    });
-    const response = await $fetch("/api/account/login", {
-      method: "POST",
-      body: {
-        username: loginForm.value.email,
-        password: loginForm.value.password,
-      },
-    });
-    if (loadingInstance) loadingInstance.close();
-    if (response.authentication) {
-      localStorage.setItem("authToken", response.token);
-      localStorage.setItem("email", loginForm.value.email);
-      console.log("authToken stored:", localStorage.getItem("authToken"));
-      router.push({path: "/"});
-    } else {
-      console.log("登陆失败");
-      ElMessage.error("登录失败，请检查您的用户名和密码。");
-    }
-  } catch (error) {
-    console.error(error);
-    ElMessage.error(error.message || "登录过程中发生错误");
-  }
+  router.push({path: "/"});
+  // let loadingInstance = null;
+  // try {
+  //   loadingInstance = ElLoading.service({
+  //     lock: true,
+  //     text: "正在登录...",
+  //     background: "rgba(0, 0, 0, 0.7)",
+  //   });
+  //   const response = await $fetch("/api/account/login", {
+  //     method: "POST",
+  //     body: {
+  //       username: loginForm.value.email,
+  //       password: loginForm.value.password,
+  //     },
+  //   });
+  //   if (loadingInstance) loadingInstance.close();
+  //   if (response.authentication) {
+  //     localStorage.setItem("authToken", response.token);
+  //     localStorage.setItem("email", loginForm.value.email);
+  //     console.log("authToken stored:", localStorage.getItem("authToken"));
+  //     router.push({path: "/"});
+  //   } else {
+  //     console.log("登陆失败");
+  //     ElMessage.error("登录失败，请检查您的用户名和密码。");
+  //   }
+  // } catch (error) {
+  //   console.error(error);
+  //   ElMessage.error(error.message || "登录过程中发生错误");
+  // }
 };
 
 const disableButton = ref(false);
