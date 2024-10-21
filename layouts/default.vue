@@ -312,7 +312,7 @@ const links = reactive([
   {
     id: "userManage",
     label: "用户管理",
-    // to: "/userManage",
+    to: "/userManage",
     icon: "i-heroicons-book-open",
     tooltip: {
       text: "用户管理",
