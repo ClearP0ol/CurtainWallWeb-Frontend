@@ -147,6 +147,8 @@ const focusNextInput = () => {
 
 //todo: 暂时不发请求，需要统一api，先直接写死
 const login = async () => {
+  localStorage.setItem("authToken", "fakeAuthToken");
+  localStorage.setItem("email", loginForm.value.email);
   router.push({path: "/"});
   // let loadingInstance = null;
   // try {
