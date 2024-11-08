@@ -14,6 +14,7 @@
           v-model="filterKeyword"
           placeholder="请输入邮箱"
           class="input-with-select"
+          @keyup.enter="enterDown"
       >
       </el-input>
       <el-select v-model="selectedPermission" placeholder="请选择权限" class="input-with-option">
@@ -39,7 +40,7 @@
     <div class="table_container">
       <el-table
           border
-          :data="itemList"
+          :data="filteredItemList"
           style="width: 100%"
           :table-layout="auto"
       >
@@ -130,7 +131,6 @@
  */
 import {ref, reactive, onMounted, nextTick} from "vue";
 import axios from "axios";
-
 /**
  * filterKeyword: 绑定用户搜索输入的邮箱。
  * selectedPermission: 当前选择的权限。
@@ -144,42 +144,15 @@ const selected_item = ref("1");
 const selectedPermission = ref("");
 
 const permissions = [
-  {
-    value: 'is_superuser',
-    label: '是否为管理员',
-  },
-  {
-    value: 'access_system_a',
-    label: '3D模型权限',
-  },
-  {
-    value: 'access_system_b',
-    label: '石材污渍权限',
-  },
-  {
-    value: 'access_system_c',
-    label: '石材裂缝权限',
-  },
-  {
-    value: 'access_system_d',
-    label: '玻璃自爆检测权限',
-  },
-  {
-    value: 'access_system_e',
-    label: '风振数据权限',
-  },
-  {
-    value: 'access_system_f',
-    label: '幕墙材质分割权限',
-  },
-  {
-    value: 'access_system_g',
-    label: '玻璃平整度权限',
-  },
-  {
-    value: 'access_system_h',
-    label: '幕墙韧性评估权限',
-  },
+  { value: 'is_superuser',    label: '是否为管理员', },
+  { value: 'access_system_a',    label: '3D模型权限', },
+  { value: 'access_system_b',    label: '石材污渍权限',  },
+  { value: 'access_system_c',    label: '石材裂缝权限',  },
+  { value: 'access_system_d',    label: '玻璃自爆检测权限',  },
+  { value: 'access_system_e',    label: '风振数据权限',  },
+  { value: 'access_system_f',    label: '幕墙材质分割权限',  },
+  { value: 'access_system_g',    label: '玻璃平整度权限',  },
+  { value: 'access_system_h',    label: '幕墙韧性评估权限',  },
 ]
 
 /**
@@ -200,7 +173,51 @@ const handleSelect = (key, keyPath) => {
   console.log(key, keyPath);
 };
 
-const itemList = ref([]);
+const itemList = ref([
+  {
+    email: "user1@example.com",
+    is_superuser: false,
+    access_system_a: true,
+    access_system_b: false,
+    access_system_c: true,
+    access_system_d: false,
+    access_system_e: true,
+    access_system_f: false,
+    access_system_g: true,
+    access_system_h: false,
+  },
+  {
+    email: "admin@example.com",
+    is_superuser: true,
+    access_system_a: true,
+    access_system_b: true,
+    access_system_c: true,
+    access_system_d: true,
+    access_system_e: true,
+    access_system_f: true,
+    access_system_g: true,
+    access_system_h: true,
+  },
+  {
+    email: "user2@example.com",
+    is_superuser: false,
+    access_system_a: false,
+    access_system_b: true,
+    access_system_c: false,
+    access_system_d: true,
+    access_system_e: false,
+    access_system_f: true,
+    access_system_g: false,
+    access_system_h: true,
+  },
+]);
+
+const filteredItemList = computed(() => {
+  if (!filterKeyword.value) {
+    return itemList.value;
+  }
+  return itemList.value.filter(item => item.email.includes(filterKeyword.value));
+});
 
 /**
  * handleSwitchChange
@@ -318,6 +335,9 @@ const getAllPermission = async () => {
     }
   }
 };
+
+
+
 getAllPermission();
 </script>
 
