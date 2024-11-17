@@ -265,7 +265,7 @@ const links = reactive([
   {
     id: "explosion",
     label: "玻璃自爆检测",
-    to: "/explosion",
+    to: "/spallingDetection",
     icon: "i-material-symbols-sound-detection-glass-break-sharp",
     tooltip: {
       text: "玻璃自爆检测",
@@ -274,11 +274,11 @@ const links = reactive([
   {
     id: "glassFlatness",
     label: "玻璃平整度检测",
-    // to: "/explosion",
+    to: "/smoothnessDetection",
     icon: "i-simple-icons-edgeimpulse",
     click: gotoGlassFlatness,
     tooltip: {
-      text: "玻璃自爆检测",
+      text: "玻璃平整度检测",
     },
   },
   {
