@@ -2,6 +2,7 @@
 export default defineNuxtConfig({
   extends: [process.env.NUXT_UI_PRO_PATH || '@nuxt/ui-pro'],
   modules: ['@nuxt/ui', '@nuxt/fonts', '@vueuse/nuxt', "@nuxt/image", '@element-plus/nuxt','@pinia/nuxt'],
+
   // plugins: [
   //   '~/plugins/cleanup.js'
   // ],
@@ -9,8 +10,12 @@ export default defineNuxtConfig({
     icons: ['heroicons', 'simple-icons','material-symbols'],
     safelistColors: ['primary', 'red', 'orange', 'green']
   },
+
   devtools: { enabled: true },
-  ssr: false,// 不开启服务端渲染
+
+  // 不开启服务端渲染
+  ssr: false,
+
   nitro: {
     devProxy: {
       '/api/account': {
@@ -24,4 +29,6 @@ export default defineNuxtConfig({
       },
     },
   },
+
+  compatibilityDate: '2024-12-01',
 })

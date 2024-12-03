@@ -76,7 +76,7 @@ Check out the [deployment documentation](https://nuxt.com/docs/getting-started/d
 
 ## 子系统
 
-| 子系统1231                                                                                                                                                                                                                                                        | 成员 |
+| 子系统                                                                                                                                                                                                                                                        | 成员 |
 |:---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------| :--- |
 | **金属幕墙锈蚀污损检测系统**<br>源代码：[CorrosionDetection](CorrosionDetection)<br>分支：[corrosion-detection](https://github.com/MinmusLin/Intelligent_Curtain_Wall_Backend_Applications/tree/corrosion-detection)<br>接口访问链接：https://hz-t3.matpool.com:29040                    | 2056174 [张泰宇](https://github.com/donggua227)<br>2153267 [聂怡然](https://github.com/NieYiran)<br>2251474 [许城玮](https://github.com/kwzr-xu)<br>2254199 [帕克扎提·热布哈提](https://github.com/pkzt03) |
 | **石材幕墙裂缝检测系统**<br>源代码：[CrackDetection](CrackDetection)<br>分支：[crack-detection](https://github.com/MinmusLin/Intelligent_Curtain_Wall_Backend_Applications/tree/crack-detection)<br>接口访问链接：https://hz-4.matpool.com:26627                                       | 2251352 [徐陈皓](https://github.com/IamNotXCH)<br>2250591 [朱雨凝](https://github.com/zynynyn)<br>2254321 [陆诚彬](https://github.com/IamLCB)<br>2251077 [张圣坤](https://github.com/12345zsk) |

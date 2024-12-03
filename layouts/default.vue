@@ -120,7 +120,7 @@ const links = reactive([
     id: "home",
     label: "首页",
     icon: "i-heroicons-home",
-    to: "/",
+    to: "/stonedirty/mainpage",
     tooltip: {
       text: "首页",
       shortcuts: ["G", "H"],
@@ -154,6 +154,26 @@ const links = reactive([
       {
         label: "历史图片",
         to: "/stonedirty/otherpage",
+      },
+    ],
+
+  },
+  {
+    id: "stoneDirty",
+    label: "金属锈蚀检测",
+    //icon: "i-amazon-s3",
+    icon: "i-simple-icons-amazons3",
+    defaultOpen: false,
+    children: [
+      {
+        label: "上传图片",
+        to: "/corrosiondetection/test",
+        exact: true,
+      },
+      {
+        label: "历史记录",
+        to: "/corrosiondetection/history",
+        exact: true,
       },
     ],
 
