@@ -52,7 +52,7 @@ const deleteAllRecords = () => {
 
 // 模拟获取数据的函数 (请根据实际情况替换)
 const fetchData = async () => {
-  const response = await axios.get("http://127.0.0.1:5000/tabledata");
+  const response = await axios.get("http://110.42.214.164:8000/post");
   tableData.value = response.data;
 };
 
