@@ -7,24 +7,13 @@
         <el-form class="form1">
           <span style="margin-bottom: 20px; font-size: 20px;">欢迎！请登录您的账户</span>
           <el-form-item>
-            <el-input
-                v-model="loginForm.email"
-                placeholder="邮箱"
-                required
-                @keydown.enter="focusNextInput"
-                ref="inputEmail"
-            />
+            <el-input v-model="loginForm.email" placeholder="邮箱" required @keydown.enter="focusNextInput"
+              ref="inputEmail" />
           </el-form-item>
 
           <el-form-item>
-            <el-input
-                v-model="loginForm.password"
-                type="password"
-                placeholder="密码"
-                required
-                @keydown.enter="login"
-                ref="inputPassword"
-            />
+            <el-input v-model="loginForm.password" type="password" placeholder="密码" required @keydown.enter="login"
+              ref="inputPassword" />
           </el-form-item>
 
           <el-form-item @click="login">
@@ -46,22 +35,14 @@
         <el-form class="form2">
           <span style="margin-bottom: 20px; font-size: 20px;">欢迎！请输入注册信息</span>
           <el-form-item>
-            <el-input
-                v-model="registerForm.email"
-                placeholder="邮箱"
-                required
-                ref="inputEmail"
-            />
+            <el-input v-model="registerForm.email" placeholder="邮箱" required ref="inputEmail" />
           </el-form-item>
 
           <el-form-item>
             <el-input v-model="registerForm.code" placeholder="验证码" required>
               <template #suffix>
-                <button
-                    @click.prevent="sendVerificationCode"
-                    :disabled="disableButton"
-                    style="color: white; background-color: RGB(0,102,204); padding: 0 10px; border-radius: 5px; cursor: pointer;"
-                >
+                <button @click.prevent="sendVerificationCode" :disabled="disableButton"
+                  style="color: white; background-color: RGB(0,102,204); padding: 0 10px; border-radius: 5px; cursor: pointer;">
                   {{ buttonText }}
                 </button>
               </template>
@@ -69,23 +50,12 @@
           </el-form-item>
 
           <el-form-item>
-            <el-input
-                v-model="registerForm.password"
-                type="password"
-                placeholder="输入密码"
-                required
-                ref="inputPassword"
-            />
+            <el-input v-model="registerForm.password" type="password" placeholder="输入密码" required ref="inputPassword" />
           </el-form-item>
 
           <el-form-item>
-            <el-input
-                v-model="registerForm.confirmPassword"
-                type="password"
-                placeholder="确认密码"
-                required
-                ref="inputPassword"
-            />
+            <el-input v-model="registerForm.confirmPassword" type="password" placeholder="确认密码" required
+              ref="inputPassword" />
           </el-form-item>
 
           <el-form-item>
@@ -93,10 +63,7 @@
           </el-form-item>
 
           <el-form-item style="position: absolute; top: 90%">
-            <p
-                @click="toggleForm"
-                style="color: rgb(193, 193, 193); cursor: pointer;margin-top:20px; font-size:15px"
-            >
+            <p @click="toggleForm" style="color: rgb(193, 193, 193); cursor: pointer;margin-top:20px; font-size:15px">
               已有账户？点此登录
             </p>
           </el-form-item>
@@ -109,9 +76,10 @@
 
 <script setup>
 import userService from "~/api/user.js";
-import {onMounted, ref} from "vue";
-import {useRouter} from "vue-router";
-import {ElMessage, ElLoading} from "element-plus";
+import { onMounted, ref } from "vue";
+import { useRouter } from "vue-router";
+import { ElMessage, ElLoading } from "element-plus";
+import { useFetch } from "#app";
 // import store from '@/store/index.js'
 
 // const GoToLayout = () => {
@@ -147,37 +115,42 @@ const focusNextInput = () => {
 
 //todo: 暂时不发请求，需要统一api，先直接写死
 const login = async () => {
-  localStorage.setItem("authToken", "fakeAuthToken");
-  localStorage.setItem("email", loginForm.value.email);
-  router.push({path: "/"});
-  // let loadingInstance = null;
-  // try {
-  //   loadingInstance = ElLoading.service({
-  //     lock: true,
-  //     text: "正在登录...",
-  //     background: "rgba(0, 0, 0, 0.7)",
-  //   });
-  //   const response = await $fetch("/api/account/login", {
-  //     method: "POST",
-  //     body: {
-  //       username: loginForm.value.email,
-  //       password: loginForm.value.password,
-  //     },
-  //   });
-  //   if (loadingInstance) loadingInstance.close();
-  //   if (response.authentication) {
-  //     localStorage.setItem("authToken", response.token);
-  //     localStorage.setItem("email", loginForm.value.email);
-  //     console.log("authToken stored:", localStorage.getItem("authToken"));
-  //     router.push({path: "/"});
-  //   } else {
-  //     console.log("登陆失败");
-  //     ElMessage.error("登录失败，请检查您的用户名和密码。");
-  //   }
-  // } catch (error) {
-  //   console.error(error);
-  //   ElMessage.error(error.message || "登录过程中发生错误");
-  // }
+  // localStorage.setItem("authToken", "fakeAuthToken");
+  // localStorage.setItem("email", loginForm.value.email);
+  // router.push({path: "/"});
+  let loadingInstance = null;
+  try {
+    loadingInstance = ElLoading.service({
+      lock: true,
+      text: "正在登录...",
+      background: "rgba(0, 0, 0, 0.7)",
+    });
+    const response = await useFetch("/api/account/login", {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        username: loginForm.value.email,
+        password: loginForm.value.password,
+      }),
+    });
+    const data=response.data.value;
+    console.log(data);
+    if (loadingInstance) loadingInstance.close();
+    if (data.authentication) {
+      localStorage.setItem("authToken", data.token);
+      localStorage.setItem("email", loginForm.value.email);
+      console.log("authToken stored:", localStorage.getItem("authToken"));
+      router.push({ path: "/" });
+    } else {
+      console.log("登陆失败");
+      ElMessage.error("登录失败，请检查您的用户名和密码。");
+    }
+  } catch (error) {
+    console.error(error);
+    ElMessage.error(error.message || "登录过程中发生错误");
+  }
 };
 
 const disableButton = ref(false);
@@ -191,7 +164,7 @@ const sendVerificationCode = async () => {
   try {
     const response = await $fetch("/api/account/sendCode", {
       method: "POST",
-      body: {email: registerForm.value.email},
+      body: { email: registerForm.value.email },
     });
     if (response) {
       disableButton.value = true;
@@ -301,7 +274,7 @@ definePageMeta({
   align-items: center;
 }
 
-.el-form-item + .el-form-item {
+.el-form-item+.el-form-item {
   margin-top: 20px;
   /* 设置间距大小 */
 }
