@@ -13,8 +13,8 @@ export default defineNuxtConfig({
   ssr: false,// 不开启服务端渲染
   nitro: {
     devProxy: {
-      '/api/account': {
-        target: 'http://111.231.168.12:8000/account',
+      '/api': {
+        target: 'http://110.42.214.164:8008',
          changeOrigin: true,
       },
       '/stonedirty': {
