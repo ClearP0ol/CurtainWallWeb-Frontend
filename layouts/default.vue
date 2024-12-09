@@ -167,12 +167,17 @@ const links = reactive([
     children: [
       {
         label: "上传图片",
-        to: "/corrosiondetection/test",
+        to: "/corrosiondetection/detect",
         exact: true,
       },
       {
         label: "历史记录",
-        to: "/corrosiondetection/history",
+        to: "/corrosiondetection/history_user",
+        exact: true,
+      },
+      {
+        label: "历史记录管理",
+        to: "/corrosiondetection/history_admin",
         exact: true,
       },
     ],

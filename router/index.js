@@ -5,18 +5,18 @@ const router = createRouter({
     routes: [
         // {
         //     path: '/',
-        //     // redirect: '/layout/test.vue'  // 重定向
+        //     // redirect: '/layout/detect.vue'  // 重定向
         //     redirect: '/login'
         // },
         // {
         //     path: '/login',
         //     name: 'login',  // 登录界面
-        //     component: () => import('@/views/login/test.vue'),
+        //     component: () => import('@/views/login/detect.vue'),
         // },
         // {
         //     path: '/layout/:choice',//choice为右侧功能区显示的内容（如dashboard、segmentation）
         //     name: 'layout',  // 布局界面（包括菜单栏与功能区）
-        //     component: () => import('@/views/layout/test.vue'),
+        //     component: () => import('@/views/layout/detect.vue'),
         // },
     ]
 })

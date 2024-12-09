@@ -82,11 +82,12 @@ export default defineComponent({
 
       const formData = new FormData();
       formData.append('file', imageFile.value);
+      formData.append('UserID', '13'); // 将 UserID 添加到 FormData 中
 
       try {
         const response = await axios.post('http://110.42.214.164:8000/post', formData, {
           headers: {
-            'Content-Type': 'multipart/form-data',
+            'Content-Type': 'multipart/form-data' // 保持 Content-Type 为 multipart/form-data
           },
           responseType: 'blob'
         });
