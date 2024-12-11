@@ -52,6 +52,10 @@ definePageMeta({
 const getUserAuth = async () => {
   try {
     const authToken = localStorage.getItem("authToken");
+    if (!authToken) {
+      console.warn('No authentication token found');
+      return navigateTo('/login'); // 或者其他处理方式
+    }
     const response = await axios.get("/api/account/custom/getPermissions", {
       headers: {
         Authorization: `Bearer ${authToken}`,

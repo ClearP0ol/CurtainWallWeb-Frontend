@@ -129,7 +129,7 @@ const links = reactive([
   {
     id: "3DBuildingModel",
     label: "3D建筑模型",
-    // to: "/userManage",
+    to: "/3DModel",
     icon: "i-simple-icons-googlehome",
     tooltip: {
       text: "3D建筑模型",
