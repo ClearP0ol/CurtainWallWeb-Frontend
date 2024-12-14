@@ -5,7 +5,7 @@
         <el-button type="primary" @click="backToMain">返回主页</el-button>
       </div>
       <el-divider content-position="center">
-          本地上传
+        本地上传
       </el-divider>
       <div class="upload-container">
         <!-- 显示上传后的图片 -->
@@ -21,7 +21,7 @@
 
         <el-upload v-else
           class="upload-demo"
-          :action="'http://localhost:5000/defect/upload'"
+          :action="'http://127.0.0.1:8080/urltest'"
           drag
           :on-success="handleUploadSuccess"
           :on-error="handleUploadError"
@@ -50,10 +50,10 @@
       <el-divider content-position="center">
         检测结果
       </el-divider>
-
+      
       <el-scrollbar class="scrollbar-container">
         <div v-if="ImgResult" class="result">
-          {{ ImgResult.value }} <!-- 显示检测结果 -->
+          {{ ImgResult.value }} 
         </div>
         <div v-if="processedImageUrl" class="image-preview">
           <img :src="processedImageUrl" alt="Processed Image" class="preview-img" />
@@ -65,9 +65,9 @@
   
   <script setup>
   import { ref } from 'vue';
-  import { UploadFilled } from '@element-plus/icons-vue';
+  import { Close, UploadFilled } from '@element-plus/icons-vue';
   import { Upload } from '@element-plus/icons-vue';
-  import axios from 'axios';
+  import axios, { CanceledError } from 'axios';
   import { useRouter } from 'vue-router';
   
   const router = useRouter();
@@ -124,24 +124,24 @@
     console.log("发送的图片路径：", imageUrl.value);
 
     axios
-        .post('http://localhost:5000/defect/classify', formData)
+        .post('http://127.0.0.1:8080/flat_test', formData)
         .then((response) => {
         console.log('检测结果：', response.data);
         ImgResult.value = response.data.result; // 只提取结果部分
 
-        if (ImgResult.value === 'defect') {
+        if (ImgResult.value === '玻璃不平整') {
             // 如果检测到 defect，调用 process_image 后端 API
-            axios
-            .post('http://localhost:5000/defect/showDefect', {
-                image_path: imageUrl.value.replace('http://localhost:5000/', ''),
-            })
-            .then((processResponse) => {
-                processedImageUrl.value = `http://localhost:5000/${processResponse.data.processed_image_path}`;
-                console.log("处理后的图片路径：", processedImageUrl.value); // 在这里记录路径，确保请求完成后
-            })
-            .catch((error) => {
-                console.error('处理图片失败：', error);
-            });
+            // axios
+            // .post('http://127.0.0.1:8080/defect/showDefect', {
+            //     image_path: imageUrl.value.replace('http://localhost:8080/', ''),
+            // })
+            // .then((processResponse) => {
+            //     processedImageUrl.value = `http://127.0.0.1:8080/${processResponse.data.processed_image_path}`;
+            //     console.log("处理后的图片路径：", processedImageUrl.value); // 在这里记录路径，确保请求完成后
+            // })
+            // .catch((error) => {
+            //     console.error('处理图片失败：', error);
+            // });
         } else {
             // 如果检测到 undefect，直接显示原图
             processedImageUrl.value = imagePreviewUrl.value;
@@ -198,8 +198,7 @@
 
   .scrollbar-container {
     display: flex;
-    flex-direction: column;
-    justify-content: center;
+    justify-content: space-between;
     align-items: center;
   }
   </style>
