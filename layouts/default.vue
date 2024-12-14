@@ -270,6 +270,17 @@ const links = reactive([
     tooltip: {
       text: "玻璃自爆检测",
     },
+    children: [
+      {
+        label: "玻璃自爆检测",
+        to: "/spallingDetection",
+        exact: true,
+      },
+      {
+        label: "查看历史记录",
+        to: "/spallingDetection/history",
+      },
+    ],
   },
   {
     id: "glassFlatness",
@@ -280,6 +291,17 @@ const links = reactive([
     tooltip: {
       text: "玻璃平整度检测",
     },
+    children: [
+      {
+        label: "玻璃平整度检测",
+        to: "/smoothnessDetection",
+        exact: true,
+      },
+      {
+        label: "查看历史记录",
+        to: "/smoothnessDetection/history",
+      },
+    ],
   },
   {
     id: "glassToughnessJudge",

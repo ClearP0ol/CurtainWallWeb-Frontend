@@ -4,9 +4,22 @@
         <el-button @click="GoToDash">进入仪表盘</el-button>
         <el-button type="primary" @click="backToMain">返回主页</el-button>
       </div>
-  
+      <el-divider content-position="center">
+          本地上传
+      </el-divider>
       <div class="upload-container">
-        <el-upload
+        <!-- 显示上传后的图片 -->
+        <div v-if="imagePreviewUrl" class="uploaded-image-preview">
+          <img :src="imagePreviewUrl" alt="Uploaded Image" class="preview-img" />
+          <el-button size="small" type="danger" @click="removeImage">
+            删除图片
+            <el-icon class="el-icon--right">
+              <Close />
+            </el-icon>
+          </el-button>
+        </div>
+
+        <el-upload v-else
           class="upload-demo"
           :action="'http://localhost:5000/defect/upload'"
           drag
@@ -32,17 +45,17 @@
             </el-icon>
           </el-button>
         </el-col>
-        <el-col :span="21">
-          <el-progress :percentage="progressPercentage" status="success" />
-        </el-col>
       </el-row>
 
+      <el-divider content-position="center">
+        检测结果
+      </el-divider>
+
       <el-scrollbar class="scrollbar-container">
-        <div v-if="ImgResult">
-          检测结果：{{ ImgResult }} <!-- 显示检测结果 -->
+        <div v-if="ImgResult" class="result">
+          {{ ImgResult.value }} <!-- 显示检测结果 -->
         </div>
         <div v-if="processedImageUrl" class="image-preview">
-          <h3>处理后的图片：</h3>
           <img :src="processedImageUrl" alt="Processed Image" class="preview-img" />
         </div>
       </el-scrollbar>
@@ -59,10 +72,8 @@
   
   const router = useRouter();
   const imageUrl = ref(''); // 存储上传后的图片路径
-  const progressPercentage = ref(0); // 进度条响应变量
   const uploadedFile = ref(null); // 存储上传的文件
   const ImgResult = ref(null); 
-  const fileList = ref([]); // 存储上传的文件列表
   const imagePreviewUrl = ref(null); // 存储图片预览的 URL
   const processedImageUrl = ref(null); // Store the processed image URL (newly added)
   
@@ -93,6 +104,13 @@
   const handlePreview = (file) => {
     // 处理图片预览
     imagePreviewUrl.value = URL.createObjectURL(file.raw);
+  };
+
+  // 删除图片
+  const removeImage = () => {
+    imagePreviewUrl.value = null; // 清空图片预览
+    uploadedFile.value = null; // 清空上传的文件
+    imageUrl.value = ''; // 清空图片的 URL
   };
 
   const startDetection = () => {
@@ -129,12 +147,6 @@
             processedImageUrl.value = imagePreviewUrl.value;
             console.log("处理后的图片路径：", processedImageUrl.value); // 在这里记录路径，确保请求完成后
         }
-        // 模拟进度增长
-        if (progressPercentage.value === 100) return;
-        const intervalId = setInterval(() => {
-            progressPercentage.value += 1;
-            if (progressPercentage.value === 100) clearInterval(intervalId);
-        }, 2);
         })
         .catch((error) => {
         console.error('检测失败：', error);
@@ -152,12 +164,43 @@
   }
   
   .upload-container {
-    padding: 20px;
+    padding: 10px;
     background: #f5f7fa;
     border: 1px dashed #d9d9d9;
     border-radius: 6px;
     text-align: center;
-    margin-bottom: 20px;
+    margin-bottom: 10px;
+  }
+
+  .uploaded-image-preview {
+    margin-top: 10px;
+    display: flex;
+    flex-direction: column;  
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    justify-content: center;
+  }
+
+  .preview-img {
+    max-width: 100%;
+    height: auto;
+  }
+
+  .result {
+    color: brown;
+    background: #e0bebe;
+    padding: 5px;
+    width: 65px;
+    border-radius: 5px;
+    margin: 5px;
+  }
+
+  .scrollbar-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
   }
   </style>
   
