@@ -80,7 +80,6 @@ const categories = computed(() => [{
   items: [
     {shortcuts: ['G', 'H'], name: '首页'},
     {shortcuts: ['G', 'M'], name: '监测中心'},
-    {shortcuts: ['G', 'E'], name: '设备中心'},
     {shortcuts: ['G', 'S'], name: '管理中心'}
   ]
 }])
