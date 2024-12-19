@@ -21,10 +21,9 @@
 
         <el-upload v-else
           class="upload-demo"
-          :action="'http://localhost:5000/defect/upload'"
-          drag
-          :on-success="handleUploadSuccess"
-          :on-error="handleUploadError"
+          :action="uploadUrl"
+            drag
+          :before-upload="beforeUpload"
         >
           <el-icon class="el-icon--upload">
             <upload-filled />
@@ -65,18 +64,20 @@
   
   <script setup>
   import { ref } from 'vue';
-  import { UploadFilled } from '@element-plus/icons-vue';
+  import {  Close, UploadFilled } from '@element-plus/icons-vue';
   import { Upload } from '@element-plus/icons-vue';
   import axios from 'axios';
   import { useRouter } from 'vue-router';
   
   const router = useRouter();
-  const imageUrl = ref(''); // 存储上传后的图片路径
+  const downloadImageUrl = ref(''); // 存储上传后的可下载图片路径
   const uploadedFile = ref(null); // 存储上传的文件
-  const ImgResult = ref(null); 
+  const ImgResult = ref(null); // 爆裂结果
   const imagePreviewUrl = ref(null); // 存储图片预览的 URL
-  const processedImageUrl = ref(null); // Store the processed image URL (newly added)
-  
+  const processedImageUrl = ref(null); // 存储处理图片预览的 URL
+  const uploadUrl = ref('http://110.42.214.164:9000/oss/upload/user/upload/'); // 文件上传的 URL
+  const filename = ref('');
+
   const backToMain = () => {
     router.push('/');
   };
@@ -90,27 +91,38 @@
     });
   };
   
-  const handleUploadSuccess = (response, file, fileList) => {
-    console.log('上传成功：', response);
-    imageUrl.value = response.url; // 假设后端返回的图片 URL 在 response.url 中
-    uploadedFile.value = file.raw; // 存储上传的文件
-    imagePreviewUrl.value = URL.createObjectURL(file.raw); // 创建图片预览的 URL
-  };
-  
-  const handleUploadError = (error) => {
-    console.error('上传失败：', error);
-  };
-  
-  const handlePreview = (file) => {
-    // 处理图片预览
-    imagePreviewUrl.value = URL.createObjectURL(file.raw);
+  const beforeUpload = async (file) => {
+    filename.value = Date.now().toString()+'.jpg';
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('userName', "spalling-detection");
+    formData.append('password', "tongji-icw-1805");
+
+    try {
+      // 文件名只包含数字，字母和-
+        const response = await axios.post(uploadUrl.value + filename.value, formData, {
+        headers: {
+            'Content-Type': 'multipart/form-data'
+        }
+        });
+        console.log(`上传成功: ${response.data || '文件已上传'}`);
+        downloadImageUrl.value = response.data; 
+        uploadedFile.value = file; // 存储上传的文件
+        imagePreviewUrl.value = URL.createObjectURL(file); // 创建图片预览的 URL
+    } catch (error) {
+        console.error('上传失败：', error.response?.data?.message || error.message);
+    }
+
+    // 返回 false 会阻止默认的上传行为，交给自定义处理
+    return false; 
   };
 
   // 删除图片
   const removeImage = () => {
     imagePreviewUrl.value = null; // 清空图片预览
     uploadedFile.value = null; // 清空上传的文件
-    imageUrl.value = ''; // 清空图片的 URL
+    downloadImageUrl.value = ''; // 清空图片的 URL
+    filename.value = '';
   };
 
   const startDetection = () => {
@@ -119,25 +131,37 @@
         return;
     }
 
+    // 返回给后端图片下载地址
     let formData = new FormData();
-    formData.append('image', uploadedFile.value);
-    console.log("发送的图片路径：", imageUrl.value);
+    formData.append('url', downloadImageUrl.value);
+    console.log("下载原图的url：", downloadImageUrl.value);
 
     axios
-        .post('http://localhost:5000/defect/classify', formData)
+        .post('http://localhost:8080/defect/classify', formData)
         .then((response) => {
         console.log('检测结果：', response.data);
         ImgResult.value = response.data.result; // 只提取结果部分
-
+        console.log(ImgResult.value)
         if (ImgResult.value === 'defect') {
+          let formData = new FormData();
+          formData.append('url', downloadImageUrl.value);
             // 如果检测到 defect，调用 process_image 后端 API
             axios
-            .post('http://localhost:5000/defect/showDefect', {
-                image_path: imageUrl.value.replace('http://localhost:5000/', ''),
-            })
+            .post('http://localhost:8080/defect/showDefect', formData)
             .then((processResponse) => {
-                processedImageUrl.value = `http://localhost:5000/${processResponse.data.processed_image_path}`;
-                console.log("处理后的图片路径：", processedImageUrl.value); // 在这里记录路径，确保请求完成后
+                console.log("处理后的图片url：", processResponse.data.downloadUrl); // 后端返回处理后图片的可下载url
+                try {
+                  // 从oss下载处理后的图片并显示到界面
+                  axios.get(processResponse.data.downloadUrl,{
+                    responseType: 'blob', // 返回 blob 数据
+                  })
+                  .then((downloadResponse) => {
+                  console.log(downloadResponse.data);
+                  processedImageUrl.value = URL.createObjectURL(downloadResponse.data);
+                  })
+                } catch (error) {
+                    console.error('下载失败：', error.response?.data?.message || error.message);
+                }
             })
             .catch((error) => {
                 console.error('处理图片失败：', error);
@@ -145,7 +169,6 @@
         } else {
             // 如果检测到 undefect，直接显示原图
             processedImageUrl.value = imagePreviewUrl.value;
-            console.log("处理后的图片路径：", processedImageUrl.value); // 在这里记录路径，确保请求完成后
         }
         })
         .catch((error) => {
@@ -183,8 +206,8 @@
   }
 
   .preview-img {
-    max-width: 100%;
-    height: auto;
+    max-height: 200px;
+    width: auto;
   }
 
   .result {
