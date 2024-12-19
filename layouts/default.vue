@@ -265,43 +265,21 @@ const links = reactive([
   {
     id: "explosion",
     label: "玻璃自爆检测",
-    to: "/spallingDetection",
+    to: "/explosion",
     icon: "i-material-symbols-sound-detection-glass-break-sharp",
     tooltip: {
       text: "玻璃自爆检测",
     },
-    children: [
-      {
-        label: "玻璃自爆检测",
-        to: "/spallingDetection",
-        exact: true,
-      },
-      {
-        label: "查看历史记录",
-        to: "/spallingDetection/history",
-      },
-    ],
   },
   {
     id: "glassFlatness",
     label: "玻璃平整度检测",
-    to: "/smoothnessDetection",
+    // to: "/explosion",
     icon: "i-simple-icons-edgeimpulse",
     click: gotoGlassFlatness,
     tooltip: {
-      text: "玻璃平整度检测",
+      text: "玻璃自爆检测",
     },
-    children: [
-      {
-        label: "玻璃平整度检测",
-        to: "/smoothnessDetection",
-        exact: true,
-      },
-      {
-        label: "查看历史记录",
-        to: "/smoothnessDetection/history",
-      },
-    ],
   },
   {
     id: "glassToughnessJudge",
