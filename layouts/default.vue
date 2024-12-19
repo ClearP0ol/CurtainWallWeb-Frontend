@@ -162,8 +162,20 @@ const links = reactive([
     id: "stoneCrack",
     label: "石材裂缝检测",
     icon: "i-simple-icons-affinitypublisher",
-    to: "http://1.92.72.113:5050",
-    defaultOpen: false,
+    to: "/crackdetect",
+    //to: "http://1.92.72.113:5050",
+    defaultOpen: true,
+    children: [
+      {
+        label: "检测中心",
+        to : "/crackdetect",
+        exact: true,
+      },
+      {
+        label:"历史记录",
+        to : "/crackdetect/history",
+      },
+    ]
   },
   {
     id: "wind",
