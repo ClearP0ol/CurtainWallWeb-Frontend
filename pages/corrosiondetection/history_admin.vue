@@ -178,12 +178,14 @@ const fetchData = async () => {
 }
 
 .el-button {
-  background-color: blue;
+  background-color: #409eff; /* 设置初始背景颜色 */
+  border-color: #409eff;
   color: white;
 }
 
 .el-button:hover {
-  background-color: darkblue;
+  background-color: #a0cfff; /* 悬停时的背景颜色 */
+  border-color: #a0cfff;
 }
 
 .el-table {
@@ -199,4 +201,5 @@ const fetchData = async () => {
   justify-content: center;
   align-items: center;
 }
+
 </style>

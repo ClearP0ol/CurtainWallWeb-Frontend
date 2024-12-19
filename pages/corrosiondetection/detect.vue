@@ -1,7 +1,7 @@
 <template>
   <div class="main-container">
     <div style="display: flex; justify-content: flex-end; margin-bottom: 5px; margin-right: 5px">
-      <el-button type="primary" @click="backToMain">返回主页</el-button>
+      <el-button class="custom-button" type="primary" @click="backToMain">返回主页</el-button>
     </div>
     <div class="upload-container">
       <el-upload
@@ -26,7 +26,7 @@
     </div>
     <el-row :gutter="10">
       <el-col :span="3">
-        <el-button type="success" @click="startDetection" :disabled="!imageFile">
+        <el-button class="custom-button" type="success" @click="startDetection" :disabled="!imageFile">
           开始检测
         </el-button>
       </el-col>
@@ -38,7 +38,7 @@
       <div class="image-box">
         <img :src="resultImageUrl" alt="检测结果图" class="result-image" />
       </div>
-      <el-button type="danger" @click="closeModal">关闭</el-button>
+      <el-button class="custom-button" type="danger" @click="closeModal">关闭</el-button>
     </div>
   </div>
 </template>
@@ -121,6 +121,9 @@ export default defineComponent({
 </script>
 
 <style scoped>
+.primary {
+  background: #409eff;
+}
 .upload-demo {
   margin-bottom: 20px;
 }
@@ -178,5 +181,20 @@ export default defineComponent({
   max-height: 100%; /* 限制图片的最大高度 */
   height: auto; /* 自适应高度 */
   object-fit: contain; /* 保持比例 */
+}
+
+.custom-button {
+  background-color: #409eff; /* 设置初始背景颜色 */
+  border-color: #409eff;
+  color: #fff; /* 设置文本颜色 */
+}
+.custom-button:hover {
+  background-color: #a0cfff; /* 悬停时的背景颜色 */
+  border-color: #a0cfff;
+}
+.custom-button:disabled {
+  background-color: #a0cfff; /* 禁用时的背景颜色 */
+  border-color: #a0cfff;
+  color: #fff; /* 禁用时的文本颜色 */
 }
 </style>

@@ -215,12 +215,14 @@ const deleteAllRecords = async () => {
 }
 
 .el-button {
-  background-color: blue; /* 设置按钮背景颜色为蓝色 */
-  color: white; /* 设置按钮字体颜色为白色 */
+  background-color: #409eff; /* 设置初始背景颜色 */
+  border-color: #409eff;
+  color: white;
 }
 
 .el-button:hover {
-  background-color: darkblue; /* 鼠标悬停时按钮颜色 */
+  background-color: #a0cfff; /* 悬停时的背景颜色 */
+  border-color: #a0cfff;
 }
 
 .el-table {
