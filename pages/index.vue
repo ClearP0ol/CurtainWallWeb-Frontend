@@ -49,7 +49,7 @@ definePageMeta({
   middleware: "auth",
 });
 
-const getUserAuth = async () => {
+/*const getUserAuth = async () => {
   try {
     const authToken = localStorage.getItem("authToken");
     const response = await axios.get("/api/account/custom/getPermissions", {
@@ -64,7 +64,7 @@ const getUserAuth = async () => {
     ElMessage.error("获取用户权限失败");
   }
 };
-getUserAuth();
+getUserAuth();*/
 
 const modulesLine1 = reactive([
   {
