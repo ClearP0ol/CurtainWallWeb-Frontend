@@ -57,7 +57,7 @@ import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import axios from 'axios'
-import { jwtDecode } from 'jwt-decode'
+import jwtDecode from "jwt-decode";
 
 const router = useRouter()
 const projects = ref([])

@@ -49,7 +49,7 @@ import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import axios from 'axios'
-import { jwtDecode } from 'jwt-decode'
+import jwtDecode from "jwt-decode";
 import { Monitor } from '@element-plus/icons-vue'
 
 const router = useRouter()
