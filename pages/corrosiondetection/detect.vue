@@ -60,6 +60,10 @@ export default defineComponent({
 
     const imageFile = ref<File | null>(null);
     const resultImageUrl = ref<string>('');
+    const originalImageUrl = ref<string>('');
+    const hasRust = ref<boolean | null>(null);
+    const historyId = ref<number | null>(null);
+    const message = ref<string>('');
 
     const beforeUpload = (file: File) => {
       const isImage = file.type.startsWith('image/');
@@ -88,14 +92,25 @@ export default defineComponent({
         const response = await axios.post('http://110.42.214.164:8000/detect', formData, {
           headers: {
             'Content-Type': 'multipart/form-data' // 保持 Content-Type 为 multipart/form-data
-          },
-          responseType: 'blob'
+          }
         });
 
         if (response.status === 200) {
-          const blob = new Blob([response.data], { type: 'image/jpeg' });
-          const imageUrl = URL.createObjectURL(blob);
-          resultImageUrl.value = imageUrl; // 直接使用生成的 URL
+          const responseData = response.data;
+
+          // 处理返回的数据
+          resultImageUrl.value = responseData.detection_image_url; // 检测图 URL
+          originalImageUrl.value = responseData.original_image_url; // 原图 URL
+          hasRust.value = responseData.has_rust; // 是否有锈蚀
+          historyId.value = responseData.history.history_id; // 上传记录 ID
+          message.value = responseData.message; // 消息
+
+          // 这里可以根据需要处理这些数据，比如更新UI
+          console.log('检测图 URL:', resultImageUrl.value);
+          console.log('原图 URL:', originalImageUrl.value);
+          console.log('是否有锈蚀:', hasRust.value);
+          console.log('上传记录 ID:', historyId.value);
+          console.log('消息:', message.value);
         }
       } catch (error) {
         console.error('上传失败:', error);
@@ -105,11 +120,19 @@ export default defineComponent({
 
     const closeModal = () => {
       resultImageUrl.value = ''; // 清空图片
+      originalImageUrl.value = ''; // 清空原图
+      hasRust.value = null; // 清空锈蚀状态
+      historyId.value = null; // 清空上传记录 ID
+      message.value = ''; // 清空消息
     };
 
     return {
       imageFile,
       resultImageUrl,
+      originalImageUrl,
+      hasRust,
+      historyId,
+      message,
       beforeUpload,
       handleChange,
       startDetection,
