@@ -170,16 +170,6 @@ const links = reactive([
         to: "/corrosiondetection/detect",
         exact: true,
       },
-      {
-        label: "历史记录",
-        to: "/corrosiondetection/history_user",
-        exact: true,
-      },
-      {
-        label: "历史记录管理",
-        to: "/corrosiondetection/history_admin",
-        exact: true,
-      },
     ],
 
   },
