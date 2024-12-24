@@ -52,7 +52,7 @@
 
       <el-scrollbar class="scrollbar-container">
         <div v-if="ImgResult" class="result">
-          {{ ImgResult.value }} <!-- 显示检测结果 -->
+          {{ ImgResult }} <!-- 显示检测结果 -->
         </div>
         <div v-if="processedImageUrl" class="image-preview">
           <img :src="processedImageUrl" alt="Processed Image" class="preview-img" />
@@ -68,7 +68,7 @@
   import { Upload } from '@element-plus/icons-vue';
   import axios from 'axios';
   import { useRouter } from 'vue-router';
-  
+  import {jwtDecode} from 'jwt-decode';
   const router = useRouter();
   const downloadImageUrl = ref(''); // 存储上传后的可下载图片路径
   const uploadedFile = ref(null); // 存储上传的文件
@@ -90,9 +90,21 @@
       },
     });
   };
+
+  const getFormattedDate=()=> {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0'); // 注意：getMonth() 返回的是 0-11
+    const day = String(now.getDate()).padStart(2, '0');
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    const seconds = String(now.getSeconds()).padStart(2, '0');
+
+    return `${year}${month}${day}${hours}${minutes}${seconds}`;
+  }
   
   const beforeUpload = async (file) => {
-    filename.value = Date.now().toString()+'.jpg';
+    filename.value = getFormattedDate()+'.jpg';
     const formData = new FormData();
     formData.append('file', file);
     formData.append('userName', "spalling-detection");
@@ -110,7 +122,8 @@
         uploadedFile.value = file; // 存储上传的文件
         imagePreviewUrl.value = URL.createObjectURL(file); // 创建图片预览的 URL
     } catch (error) {
-        console.error('上传失败：', error.response?.data?.message || error.message);
+      ElMessage.error('上传失败');
+      console.error('上传失败：', error.response?.data?.message || error.message);
     }
 
     // 返回 false 会阻止默认的上传行为，交给自定义处理
@@ -122,10 +135,23 @@
     imagePreviewUrl.value = null; // 清空图片预览
     uploadedFile.value = null; // 清空上传的文件
     downloadImageUrl.value = ''; // 清空图片的 URL
-    filename.value = '';
+    filename = '';
   };
 
   const startDetection = () => {
+    //从localstorage获取token
+    // const authToken = localStorage.getItem('authToken');
+    // if(!authToken)
+    // {
+    //   ElMessage.error('请先登录');
+    //   return;
+    // }
+    // console.log("authToken:",authToken);
+    // // 解析token获取用户信息
+    // const decoded =jwtDecode(authToken);
+    // console.log("user name:",decoded.username);
+
+
     if (!uploadedFile.value) {
         console.error('请先上传图片');
         return;
@@ -133,6 +159,7 @@
 
     // 返回给后端图片下载地址
     let formData = new FormData();
+    formData.append('username', "zwj");
     formData.append('url', downloadImageUrl.value);
     console.log("下载原图的url：", downloadImageUrl.value);
 
@@ -140,19 +167,20 @@
         .post('http://localhost:8080/defect/classify', formData)
         .then((response) => {
         console.log('检测结果：', response.data);
-        ImgResult.value = response.data.result; // 只提取结果部分
-        console.log(ImgResult.value)
+        ImgResult.value = response.data.result=='defect'?"爆裂":"未爆裂"; // 只提取结果部分
+
         if (ImgResult.value === 'defect') {
-          let formData = new FormData();
-          formData.append('url', downloadImageUrl.value);
             // 如果检测到 defect，调用 process_image 后端 API
+            let form = new FormData();
+            form.append('username', decoded.username);
+            form.append('url', downloadImageUrl.value);
             axios
-            .post('http://localhost:8080/defect/showDefect', formData)
+            .post('http://localhost:8080/defect/showDefect', form)
             .then((processResponse) => {
-                console.log("处理后的图片url：", processResponse.data.downloadUrl); // 后端返回处理后图片的可下载url
+                console.log("处理后的图片url：", processResponse.data.url); // 后端返回处理后图片的可下载url
                 try {
                   // 从oss下载处理后的图片并显示到界面
-                  axios.get(processResponse.data.downloadUrl,{
+                  axios.get(processResponse.data.url,{
                     responseType: 'blob', // 返回 blob 数据
                   })
                   .then((downloadResponse) => {
@@ -160,11 +188,13 @@
                   processedImageUrl.value = URL.createObjectURL(downloadResponse.data);
                   })
                 } catch (error) {
-                    console.error('下载失败：', error.response?.data?.message || error.message);
+                  ElMessage.error('下载失败');
+                  console.error('下载失败：', error.response?.data?.message || error.message);
                 }
             })
             .catch((error) => {
-                console.error('处理图片失败：', error);
+              ElMessage.error('处理图片失败');
+              console.error('处理图片失败：', error);
             });
         } else {
             // 如果检测到 undefect，直接显示原图
@@ -172,7 +202,8 @@
         }
         })
         .catch((error) => {
-        console.error('检测失败：', error);
+          ElMessage.error('检测失败');
+          console.error('检测失败：', error);
         });
 };
 
