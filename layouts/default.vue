@@ -330,18 +330,6 @@ const links = reactive([
         to: "/resilienceAssessment/dangerAssess",
       },
     ],
-<<<<<<< HEAD
-  },
-  {
-    id: "userInfo",
-    label: "个人信息",
-    to: "/userInfo",
-    icon: "i-heroicons-user-circle",
-    tooltip: {
-      text: "个人信息",
-    },
-=======
->>>>>>> 51b815b230f67f8e849bd08a05d36e63dcdcf8ec
   },
   {
     id: "userInfo",
