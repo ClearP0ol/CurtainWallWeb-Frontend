@@ -282,13 +282,61 @@ const links = reactive([
     },
   },
   {
-    id: "glassToughnessJudge",
+    id: "resilienceAssessment",
     label: "幕墙韧性评估",
-    // to: "/explosion",
+    to: "/resilienceAssessment",
     icon: "i-simple-icons-testcafe",
-    click: gotoGlassToughness,
+    defaultOpen: false,
+    // click: gotoGlassToughness,
     tooltip: {
       text: "幕墙韧性评估",
+    },
+    children: [
+      {
+        label: "评估数据上传",
+        to: "/resilienceAssessment/dataUpload",
+      },
+      {
+        label: "粗糙集评估",
+        to: "/resilienceAssessment/dangerAssess",
+        exact: true,
+        defaultOpen: false,
+        children:[
+          {
+            label: "危险系数评估",
+            to: "/resilienceAssessment/RS_dangerAssess",
+          },
+          {
+            label: "决策规则分析",
+            to: "/resilienceAssessment/deciRules",
+          },
+        ]
+      },
+      {
+        label: "熵权法评估",
+        to: "/resilienceAssessment/dangerAssess",
+        exact: true,
+        defaultOpen: false,
+        children:[
+          {
+            label: "危险系数评估",
+            to: "/resilienceAssessment/ETP_dangerAssess",
+          },
+        ]
+      },
+      {
+        label: "综合危险系数评估",
+        to: "/resilienceAssessment/dangerAssess",
+      },
+    ],
+  },
+  {
+    id: "userInfo",
+    label: "个人信息",
+    to: "/userInfo",
+    icon: "i-heroicons-user-circle",
+    tooltip: {
+      text: "个人信息",
     },
   },
   {
