@@ -260,6 +260,7 @@ const links = reactive([
         label: "查看历史记录",
         to: "/segment/history",
       },
+      
     ],
   },
   {
@@ -329,6 +330,7 @@ const links = reactive([
         to: "/resilienceAssessment/dangerAssess",
       },
     ],
+<<<<<<< HEAD
   },
   {
     id: "userInfo",
@@ -338,6 +340,8 @@ const links = reactive([
     tooltip: {
       text: "个人信息",
     },
+=======
+>>>>>>> 51b815b230f67f8e849bd08a05d36e63dcdcf8ec
   },
   {
     id: "userInfo",

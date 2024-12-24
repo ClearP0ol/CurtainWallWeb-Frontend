@@ -122,7 +122,6 @@ export default defineComponent({
       }
     };
 
-
     const getList = async () => {
       listLoading.value = true;
       try{
