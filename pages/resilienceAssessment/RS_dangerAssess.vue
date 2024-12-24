@@ -141,6 +141,11 @@ export default defineComponent({
       }
     };
 
+    // 在页面加载完成后调用 getList
+    onMounted(() => {
+      getList();
+    });
+
     const formatDate = (timestamp: string) =>
     new Date(timestamp).toLocaleString();
 

@@ -4,6 +4,7 @@ import { defineComponent, ref } from "vue";
 import {UploadFilled} from "@element-plus/icons-vue";
 import type { UploadRequestOptions } from "element-plus";
 import { useFetch } from '#app';
+import { BASE_URL } from '@/api/resilienceAssess/public';
 
 const upload = ref<UploadInstance>()
 const fileList = ref<UploadUserFile[]>([])
@@ -55,57 +56,64 @@ const fileUpload = async (options: UploadRequestOptions) => {
   });
 
   try {
-    const { data, error } = await useFetch<ApiResponse<number>>("http://110.42.214.164:8005/data/", {
-      method: "POST",
+    // 使用$fetch替代useFetch，因为它处理代理更可靠
+    const response = await $fetch<ApiResponse>('http://110.42.214.164:8005/data/', {
+      method: 'POST',
       body: formData,
-      
+      headers: {
+        // 如果需要的话添加必要的headers
+        'Accept': 'application/json'
+      }
     });
 
     loading.close();
 
-    if (error.value) {
-      console.error("接口错误:", error.value);
+    if (!response) {
+      console.error("响应为空");
       ElMessage.error({
-        message: `上传失败，请重试！错误信息：${error.value.message}`,
-        type: "error",
+        message: "上传失败，服务器响应为空",
+        type: "error"
       });
       return;
     }
 
-    if (data.value?.code === 200) {
+    if (response.code === 200) {
       ElMessage.success({
         message: "上传成功!",
-        type: "success",
+        type: "success"
       });
-
-      const batchID = data.value.data;
+      
+      const batchID = response.data;
       if (batchID !== undefined) {
-        router.push(`/calculating/${batchID}`);
+        router.push({
+          path: '/resilienceAssessment/Calculating',
+          query: { batchID }
+        });
       } else {
         console.error("返回的批次号为空");
         ElMessage.error("上传成功，但未收到批次号");
       }
     } else {
       ElMessage.error({
-        message: `错误：${data.value?.message}（错误码：${data.value?.code}）`,
-        type: "error",
+        message: `错误：${response.message}（错误码：${response.code}）`,
+        type: "error"
       });
     }
   } catch (err) {
     loading.close();
-
+    
+    console.error("完整错误信息:", err);
+    
     if (err instanceof Error) {
       ElMessage.error({
         message: `上传失败，请重试！错误信息：${err.message}`,
-        type: "error",
+        type: "error"
       });
-      console.error("请求异常:", err);
     } else {
       ElMessage.error({
         message: "上传失败，请重试！未知错误。",
-        type: "error",
+        type: "error"
       });
-      console.error("未知异常:", err);
     }
   }
 };
