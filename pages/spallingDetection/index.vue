@@ -68,7 +68,7 @@
   import { Upload } from '@element-plus/icons-vue';
   import axios from 'axios';
   import { useRouter } from 'vue-router';
-  import {jwtDecode} from 'jwt-decode';
+
   const router = useRouter();
   const downloadImageUrl = ref(''); // 存储上传后的可下载图片路径
   const uploadedFile = ref(null); // 存储上传的文件
