@@ -91,7 +91,7 @@ const handleSubmit = async () => {
   selectedAbnormalTypes.value = [
     document.querySelector('input[value="0"]').checked,
     document.querySelector('input[value="1"]').checked,
-    document.querySelector('input[value="2"]').checked
+    document.querySelector('input[value="2"]').checked,
   ];
 
   console.log(selectedAbnormalTypes.value);
@@ -101,6 +101,9 @@ const handleSubmit = async () => {
     alert('请选择异常类型');
     return; // 如果没有选择任何异常类型，退出函数
   }
+
+  // 提示用户提交成功
+  alert('提交成功');
 
   // 获取文件内容
   const fileInput = document.getElementById('file-upload');
@@ -114,9 +117,15 @@ const handleSubmit = async () => {
     // 将文件内容按行分割成数组
     const lines = fileContent.split('\n');
 
+    // 用于统计上传完成的计数
+    let successCount = 0;
+
     // 遍历每一行URL并发送POST请求
     for (let line of lines) {
       const imagePath = line.trim(); // 每一行作为imagePath
+
+      // 如果该行为空，跳过
+      if (!imagePath) continue;
 
       // 组装请求数据
       const requestData = {
@@ -128,12 +137,14 @@ const handleSubmit = async () => {
       try {
         await uploadImage(requestData);
         console.log(`成功上传图片: ${imagePath}`);
-
+        successCount++; // 成功计数
       } catch (error) {
         console.error(`上传图片失败: ${imagePath}`, error);
       }
     }
 
+    // 所有图片上传结束后提示
+    alert(`上传完成！成功上传了 ${successCount} 张图片`);
   } else {
     alert('请先选择一个txt文件!');
   }
