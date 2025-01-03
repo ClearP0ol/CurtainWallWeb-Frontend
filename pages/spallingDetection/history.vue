@@ -19,14 +19,16 @@
           </el-table-column>
           <el-table-column prop="inputImg" label="原图">
             <template #default="scope">
-              <el-image style="width: 400px; height: 200px" :src="scope.row.photo" :fit="cover"></el-image>
+              <el-image style="width: 400px; height: 200px" :src="scope.row.inputImg" :fit="'cover'"></el-image>
             </template>
           </el-table-column>
+
           <el-table-column prop="outputImg" label="检测图">
             <template #default="scope">
-              <el-image style="width: 400px; height: 200px" :src="scope.row.photo" :fit="cover"></el-image>
+              <el-image style="width: 400px; height: 200px" :src="scope.row.outputImg" :fit="'cover'"></el-image>
             </template>
           </el-table-column>
+
         </el-table>
       </div>
     </div>
@@ -59,33 +61,24 @@
     // console.log("user name:",decoded.username);
 
     try {
-      const response = await axios.get(`http://localhost:8080/defect/history?username=zwj`);
+      const response = await axios.get(`http://110.42.214.164:8006/defect/history?username=zwj`, { timeout: 10000 });
+      console.log(response);
 
-      // 使用 Promise.all 来并发处理所有图片URL转换
+      // 使用 Promise.all 来并发处理所有数据
       const processedTableData = await Promise.all(
-          response.data.history.map(async (item) => {
-            // 获取 input 图片的 URL
-            const inputImageResponse = await axios.get(item.inputImg, {
-              responseType: 'blob', // 返回 blob 数据
-            });
-            const inputImageUrl = URL.createObjectURL(inputImageResponse.data);
-
-            // 获取 output 图片的 URL
-            const outputImageResponse = await axios.get(item.outputImg, {
-              responseType: 'blob', // 返回 blob 数据
-            });
-            const outputImageUrl = URL.createObjectURL(outputImageResponse.data);
-
+          response.data.history.map((item) => {
             return {
               time: item.timestamp || '',
               result: item.result === 0 ? "未爆裂" : "爆裂",
-              inputImg: inputImageUrl,
-              outputImg: outputImageUrl,
+              inputImg: item.inputImg,  // 直接使用返回的图片 URL
+              outputImg: item.outputImg,  // 直接使用返回的图片 URL
             };
           })
       );
+
       // 将处理后的数据赋值给 tableData
       tableData.value = processedTableData;
+
     } catch (error) {
       ElMessage.error('获取历史失败');
       console.error("获取历史失败", error);

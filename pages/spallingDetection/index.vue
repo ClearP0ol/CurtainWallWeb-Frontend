@@ -164,23 +164,24 @@
     console.log("下载原图的url：", downloadImageUrl.value);
 
     axios
-        .post('http://localhost:8080/defect/classify', formData)
+        .post('http://110.42.214.164:8006/defect/classify', formData)
         .then((response) => {
         console.log('检测结果：', response.data);
         ImgResult.value = response.data.result=='defect'?"爆裂":"未爆裂"; // 只提取结果部分
-
-        if (ImgResult.value === 'defect') {
+        console.log(ImgResult.value)
+        if (ImgResult.value === '爆裂') {
+          console.log("12lasdjfklajflkasdjfklasdjflkasjfklasjdfklasj")
             // 如果检测到 defect，调用 process_image 后端 API
             let form = new FormData();
-            form.append('username', decoded.username);
+            form.append('username', 'zwj');
             form.append('url', downloadImageUrl.value);
             axios
-            .post('http://localhost:8080/defect/showDefect', form)
+            .post('http://110.42.214.164:8006/defect/showDefect', form)
             .then((processResponse) => {
-                console.log("处理后的图片url：", processResponse.data.url); // 后端返回处理后图片的可下载url
+                console.log("处理后的图片url：", processResponse.data.downloadUrl); // 后端返回处理后图片的可下载url
                 try {
                   // 从oss下载处理后的图片并显示到界面
-                  axios.get(processResponse.data.url,{
+                  axios.get(processResponse.data.downloadUrl,{
                     responseType: 'blob', // 返回 blob 数据
                   })
                   .then((downloadResponse) => {

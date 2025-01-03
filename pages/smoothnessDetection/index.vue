@@ -65,7 +65,6 @@
   import { Upload } from '@element-plus/icons-vue';
   import axios from 'axios';
   import { useRouter } from 'vue-router';
-  // import {jwtDecode} from 'jwt-decode';
   const router = useRouter();
   const downloadImageUrl = ref(''); // 存储上传后的可下载图片路径
   const uploadedFile = ref(null); // 存储上传的文件
@@ -155,7 +154,7 @@
     }
 
     axios
-        .post('http://localhost:8080/flatness/detect', {
+        .post('http://110.42.214.164:8002/flatness/detect', {
             username:"zwj",
             url:downloadImageUrl.value
         })
