@@ -7,7 +7,8 @@ export default defineConfig({
   plugins: [vue()],
   resolve: {
     alias: {
-      '@': fileURLToPath(new URL('./src', import.meta.url))  // 为 src 创建一个别名
+      '@': fileURLToPath(new URL('./src', import.meta.url)),
+      '@langchain/openai': fileURLToPath(new URL('./node_modules/@langchain/openai', import.meta.url))
     }
   },
   server: {

@@ -113,7 +113,9 @@ const gotoGlassToughness = () => {
   // window.open("http://localhost:5173", "_blank");
   window.location.href = "http://111.231.168.12:8999";
 };
-
+const gotoGlassShock = () => {
+  window.location.href = "/vibration/mainpage";
+};  
 
 const links = reactive([
   {
@@ -194,7 +196,7 @@ const links = reactive([
   },
   {
     id: "wind",
-    label: "风振数据检测",
+    label: "震动数据检测",
     icon: "i-simple-icons-tailwindcss",
     to: "/monitor",
     defaultOpen: false,
@@ -211,28 +213,19 @@ const links = reactive([
         },
         children: [
           {
-            label: "实时监测",
-            to: "/monitor",
+            label: "参数设置",
+            to: "/monitor/parameter",
           },
           {
-            label: "历史趋势",
-            to: "/monitor/historical",
+            label: "实时监测",
+            to: "/monitor",
           },
           {
             label: "异常数据",
             to: "/monitor/abnormal",
           },
+          
         ],
-      },
-      {
-        id: "equipments",
-        label: "设备中心",
-        icon: "i-heroicons-cpu-chip",
-        to: "/equipments",
-        tooltip: {
-          text: "设备中心",
-          shortcuts: ["G", "E"],
-        },
       },
       {
         id: "alarm",
@@ -245,29 +238,18 @@ const links = reactive([
         },
       },
       {
-        id: "settings",
-        label: "设置",
-        to: "/settings",
-        icon: "i-heroicons-cog-8-tooth",
-        defaultOpen: false,
-        children: [
-          {
-            label: "常规",
-            to: "/settings",
-          },
-          {
-            label: "通知",
-            to: "/settings/notifications",
-          },
-        ],
+        id: "bot",
+        label: "智能助手",
+        icon: "i-heroicons-cpu-chip",
+        to: "/bot",
         tooltip: {
-          text: "Settings",
-          shortcuts: ["G", "S"],
+          text: "BOT",
+          shortcuts: ["G", "W"],
         },
       },
     ],
     tooltip: {
-      text: "风振数据检测",
+      text: "震动数据检测",
       // shortcuts: ["G", "H"],
     },
   },
