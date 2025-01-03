@@ -120,7 +120,7 @@ const links = reactive([
     id: "home",
     label: "首页",
     icon: "i-heroicons-home",
-    to: "/stonedirty/mainpage",
+    to: "/",
     tooltip: {
       text: "首页",
       shortcuts: ["G", "H"],
