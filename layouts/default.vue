@@ -161,7 +161,7 @@ const links = reactive([
 
   },
   {
-    id: "stoneDirty",
+    id: "corrosiondetection",
     label: "金属锈蚀检测",
     //icon: "i-amazon-s3",
     icon: "i-simple-icons-amazons3",

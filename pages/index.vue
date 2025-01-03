@@ -10,8 +10,7 @@
               <span class="line-clamp-2">{{ module.description }}</span>
             </template>
           </UPageCard>
-          <div></div>
-          <div></div>
+
           <UPageCard v-for="(module, index) in modulesLine2" :key="index" v-bind="module"
                      @click="checkPermissionAndRedirect(module)" class="hover-effect">
             <template #description>
@@ -55,39 +54,9 @@ definePageMeta({
   middleware: "auth",
 });
 
-/*const getUserAuth = async () => {
-  try {
-    const authToken = localStorage.getItem("authToken");
-    if (!authToken) {
-      console.warn('No authentication token found');
-      return navigateTo('/login'); // 或者其他处理方式
-    }
-    const response = await axios.get("/api/account/custom/getPermissions", {
-      headers: {
-        Authorization: `Bearer ${authToken}`,
-      },
-    });
-    userAuth.value = response.data.data;
-    console.log(userAuth.value);
-  } catch (error) {
-    console.error("Failed to fetch permissions");
-    ElMessage.error("获取用户权限失败");
-  }
-};
-getUserAuth();*/
+
 
 const modulesLine1 = reactive([
-  {
-    title: "实时数据检测",
-    description: "检测建筑风振数据，及时报告异常风振情况",
-    // to: "",
-    target_address: "/monitor/parameter",
-    permissionKey: "access_system_e",
-    icon: "i-simple-icons-tailwindcss",
-  }
-]);
-
-const modulesLine2 = reactive([
   {
     title: "3D建筑模型",
     description: "用于查看3D建筑模型，可视化反映建筑问题",
@@ -112,7 +81,7 @@ const modulesLine2 = reactive([
   },
 ]);
 
-const modulesLine3 = reactive([
+const modulesLine2 = reactive([
   {
     title: "幕墙材质分割",
     description: "给定一张建筑幕墙图片，分割出其中的各种材质",
@@ -139,7 +108,7 @@ const modulesLine3 = reactive([
   },
 ]);
 
-const modulesLine4 = reactive([
+const modulesLine3 = reactive([
   {
     title: "幕墙韧性评估",
     description: "用于查看评估幕墙韧性",
@@ -149,75 +118,21 @@ const modulesLine4 = reactive([
     target_address: "http://111.231.168.12:8999",
     icon: "i-simple-icons-testcafe",
   },
-]);
-
-const modulesLine5 = reactive([
-  // ... existing modules ...
   {
-    title: "幕墙振动数据检测与展示",
+    title: "震动数据检测",
     description: "用于检测和展示幕墙的振动数据",
     target_address: "/monitor/parameter",
     permissionKey: "access_system_v",
-    icon: "i-simple-icons-vibration",
+    icon: "i-simple-icons-tailwindcss",
+  },
+  {
+    title: "金属锈蚀检测",
+    description: "用于检测金属锈蚀",
+    target_address: "/corrosiondetection/detect",
+    permissionKey: "access_system_z",
+    icon: "i-simple-icons-amazons3",
   },
 ]);
-
-// const modules = reactive([
-//   {
-//     title: "3D建筑模型",
-//     description: "用于查看3D建筑模型，可视化反映建筑问题",
-//     // to: "http://localhost:5173",
-//     target_address: "http://120.46.136.85:5173",
-//     icon: "i-simple-icons-googlehome",
-//     permissionKey: "access_system_a",
-//   },
-//   {
-//     title: "石材污渍检测",
-//     description: "用于识别建筑石材幕墙表面污渍",
-//     target_address: "/stonedirty/mainpage",
-//     icon: "i-heroicons-fire",
-//     permissionKey: "access_system_b",
-//   },
-//   {
-//     title: "石材裂缝检测",
-//     description: "用于识别建筑石材幕墙表面裂缝",
-//     target_address: "http://1.92.72.113:5050",
-//     permissionKey: "access_system_c",
-//     icon: "i-simple-icons-affinitypublisher",
-//   },
-//   {
-//     title: "玻璃自爆检测",
-//     description: "通过图片检测玻璃自爆风险",
-//     target_address: "/explosion",
-//     // to: "https://github.com/nuxt-community/eslint-module",
-//     permissionKey: "access_system_d",
-//     icon: "i-material-symbols-sound-detection-glass-break-sharp",
-//   },
-//   {
-//     title: "震动数据检测",
-//     description: "震动数据检测",
-//     // to: "",
-//     target_address: "/monitor",
-//     permissionKey: "access_system_e",
-//     icon: "i-simple-icons-tailwindcss",
-//   },
-//   {
-//     title: "幕墙材质分割",
-//     description: "给定一张建筑幕墙图片，分割出其中的各种材质",
-//     // to: "",
-//     target_address: "/segment",
-//     permissionKey: "access_system_f",
-//     icon: "i-simple-icons-homeassistantcommunitystore",
-//   },
-//   {
-//     title: "玻璃平整度检测",
-//     description: "给定一张建筑玻璃图片，检测其平整度",
-//     // to: "https://github.com/vueuse/vueuse",
-//     target_address: "http://111.231.168.12:3000",
-//     permissionKey: "access_system_g",
-//     icon: "i-simple-icons-edgeimpulse",
-//   },
-// ]);
 
 const checkPermissionAndRedirect = (module) => {
   // if (userAuth.value.is_superuser || userAuth.value[module.permissionKey]) {
