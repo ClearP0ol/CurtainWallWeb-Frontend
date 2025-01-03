@@ -115,7 +115,7 @@ const gotoGlassToughness = () => {
 };
 const gotoGlassShock = () => {
   window.location.href = "/vibration/mainpage";
-};  
+};
 
 const links = reactive([
   {
@@ -136,7 +136,7 @@ const links = reactive([
     tooltip: {
       text: "3D建筑模型",
     },
-    click: goto3DModel,
+    //click: goto3DModel,
   },
   {
     id: "stoneDirty",
@@ -224,7 +224,7 @@ const links = reactive([
             label: "异常数据",
             to: "/monitor/abnormal",
           },
-          
+
         ],
       },
       {
@@ -269,7 +269,7 @@ const links = reactive([
         label: "查看历史记录",
         to: "/segment/history",
       },
-      
+
     ],
   },
   {
@@ -297,7 +297,7 @@ const links = reactive([
     label: "玻璃平整度检测",
     to: "/smoothnessDetection",
     icon: "i-simple-icons-edgeimpulse",
-    click: gotoGlassFlatness,
+    //click: gotoGlassFlatness,
     tooltip: {
       text: "玻璃平整度检测",
     },
