@@ -13,7 +13,7 @@ import Message from "~/server/segment/Message.js"  // 在每个 api 文件里都
  *   - 在获取失败的情况下：
  *     - 无输出。
  */
-export function UploadImg(FormData) {  // 在 src/views/login/index.vue 里调用，可以去看看是如何调用的
+export function UploadImg(FormData) {  // 在 src/views/login/detect.vue 里调用，可以去看看是如何调用的
     return Request({  // 发送请求
         method: 'POST',
         headers: {
