@@ -23,6 +23,12 @@
             </template>
           </el-table-column>
 
+          <el-table-column prop="outputImg" label="检测图">
+            <template #default="scope">
+              <el-image style="width: 400px; height: 200px" :src="scope.row.outputImg" :fit="'cover'"></el-image>
+            </template>
+          </el-table-column>
+
         </el-table>
       </div>
     </div>
@@ -43,27 +49,29 @@
   
   onMounted(async() => {
     //从localstorage获取token
-    // const authToken = localStorage.getItem('authToken');
-    // if(!authToken)
-    // {
-    //   ElMessage.error('请先登录');
-    //   return;
-    // }
+    const authToken = localStorage.getItem('authToken');
+    if(!authToken)
+    {
+      ElMessage.error('请先登录');
+      return;
+    }
     // console.log("authToken:",authToken);
     // // 解析token获取用户信息
-    // const decoded =iwtDecode(authToken);
+    // const decoded =jwtDecode(authToken);
     // console.log("user name:",decoded.username);
 
     try {
-      const response = await axios.get(`http://110.42.214.164:8002/flatness/history?username=zwj`);
+      const response = await axios.get(`http://110.42.214.164:8006/defect/history?username=zwj`, { timeout: 10000 });
+      console.log(response);
 
       // 使用 Promise.all 来并发处理所有数据
       const processedTableData = await Promise.all(
           response.data.history.map((item) => {
             return {
               time: item.timestamp || '',
-              result: item.result == 0 ? "不平整" : "平整",
+              result: item.result === 0 ? "未爆裂" : "爆裂",
               inputImg: item.inputImg,  // 直接使用返回的图片 URL
+              outputImg: item.outputImg,  // 直接使用返回的图片 URL
             };
           })
       );
@@ -90,4 +98,5 @@
     overflow: auto;
   }
   </style>
-  
+
+

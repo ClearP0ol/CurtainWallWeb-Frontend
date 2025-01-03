@@ -54,6 +54,9 @@
         <div v-if="ImgResult" class="result">
           {{ ImgResult }} <!-- 显示检测结果 -->
         </div>
+        <div v-if="processedImageUrl" class="image-preview">
+          <img :src="processedImageUrl" alt="Processed Image" class="preview-img" />
+        </div>
       </el-scrollbar>
       
     </div>
@@ -65,6 +68,7 @@
   import { Upload } from '@element-plus/icons-vue';
   import axios from 'axios';
   import { useRouter } from 'vue-router';
+  import {jwtDecode} from 'jwt-decode';
   const router = useRouter();
   const downloadImageUrl = ref(''); // 存储上传后的可下载图片路径
   const uploadedFile = ref(null); // 存储上传的文件
@@ -103,8 +107,8 @@
     filename.value = getFormattedDate()+'.jpg';
     const formData = new FormData();
     formData.append('file', file);
-    formData.append('userName', "flatness-detection");
-    formData.append('password', "tongji-icw-3455");
+    formData.append('userName', "spalling-detection");
+    formData.append('password', "tongji-icw-1805");
 
     try {
       // 文件名只包含数字，字母和-
@@ -153,14 +157,50 @@
         return;
     }
 
+    // 返回给后端图片下载地址
+    let formData = new FormData();
+    formData.append('username', "zwj");
+    formData.append('url', downloadImageUrl.value);
+    console.log("下载原图的url：", downloadImageUrl.value);
+
     axios
-        .post('http://110.42.214.164:8002/flatness/detect', {
-            username:"zwj",
-            url:downloadImageUrl.value
-        })
+        .post('http://110.42.214.164:8006/defect/classify', formData)
         .then((response) => {
-        console.log('检测结果：', response.data.result);
-        ImgResult.value = response.data.result; // 只提取结果部分
+        console.log('检测结果：', response.data);
+        ImgResult.value = response.data.result=='defect'?"爆裂":"未爆裂"; // 只提取结果部分
+        console.log(ImgResult.value)
+        if (ImgResult.value === '爆裂') {
+          console.log("12lasdjfklajflkasdjfklasdjflkasjfklasjdfklasj")
+            // 如果检测到 defect，调用 process_image 后端 API
+            let form = new FormData();
+            form.append('username', 'zwj');
+            form.append('url', downloadImageUrl.value);
+            axios
+            .post('http://110.42.214.164:8006/defect/showDefect', form)
+            .then((processResponse) => {
+                console.log("处理后的图片url：", processResponse.data.downloadUrl); // 后端返回处理后图片的可下载url
+                try {
+                  // 从oss下载处理后的图片并显示到界面
+                  axios.get(processResponse.data.downloadUrl,{
+                    responseType: 'blob', // 返回 blob 数据
+                  })
+                  .then((downloadResponse) => {
+                  console.log(downloadResponse.data);
+                  processedImageUrl.value = URL.createObjectURL(downloadResponse.data);
+                  })
+                } catch (error) {
+                  ElMessage.error('下载失败');
+                  console.error('下载失败：', error.response?.data?.message || error.message);
+                }
+            })
+            .catch((error) => {
+              ElMessage.error('处理图片失败');
+              console.error('处理图片失败：', error);
+            });
+        } else {
+            // 如果检测到 undefect，直接显示原图
+            processedImageUrl.value = imagePreviewUrl.value;
+        }
         })
         .catch((error) => {
           ElMessage.error('检测失败');
@@ -204,7 +244,7 @@
 
   .result {
     color: brown;
-    background-color: #e0bebe;
+    background: #e0bebe;
     padding: 5px;
     width: 65px;
     border-radius: 5px;
