@@ -54,21 +54,22 @@ definePageMeta({
   middleware: "auth",
 });
 
-
+onMounted(() => {
+  getUserAuth();
+});
 
 const modulesLine1 = reactive([
   {
     title: "3D建筑模型",
     description: "用于查看3D建筑模型，可视化反映建筑问题",
-    // to: "http://localhost:5173",
-    target_address: "http://120.46.136.85:5173",
+    target_address: "/3DModel",
     icon: "i-simple-icons-googlehome",
     permissionKey: "access_system_a",
   },
   {
     title: "石材裂缝检测",
     description: "用于识别建筑石材幕墙表面裂缝",
-    target_address: "http://1.92.72.113:5050",
+    target_address: "/crackdetect",
     permissionKey: "access_system_c",
     icon: "i-simple-icons-affinitypublisher",
   },
@@ -85,7 +86,6 @@ const modulesLine2 = reactive([
   {
     title: "幕墙材质分割",
     description: "给定一张建筑幕墙图片，分割出其中的各种材质",
-    // to: "",
     target_address: "/segment",
     permissionKey: "access_system_f",
     icon: "i-simple-icons-homeassistantcommunitystore",
@@ -93,16 +93,14 @@ const modulesLine2 = reactive([
   {
     title: "玻璃自爆检测",
     description: "通过图片检测玻璃自爆风险",
-    //target_address: "/explosion",
-    to: "/spallingDetection/index.vue",
+    target_address: "/spallingDetection",
     permissionKey: "access_system_d",
     icon: "i-material-symbols-sound-detection-glass-break-sharp",
   },
   {
     title: "玻璃平整度检测",
     description: "给定一张建筑玻璃图片，检测其平整度",
-    to: "/smoothnessDetection/index.vue",
-    //target_address: "http://111.231.168.12:3000",
+    target_address:"/smoothnessDetection",
     permissionKey: "access_system_g",
     icon: "i-simple-icons-edgeimpulse",
   },
@@ -112,10 +110,8 @@ const modulesLine3 = reactive([
   {
     title: "幕墙韧性评估",
     description: "用于查看评估幕墙韧性",
-    // to: "",
-    target_address: "/segment",
+    target_address: "/resilienceAssessment/dataUpload",
     permissionKey: "access_system_h",
-    target_address: "http://111.231.168.12:8999",
     icon: "i-simple-icons-testcafe",
   },
   {
@@ -133,15 +129,19 @@ const modulesLine3 = reactive([
     icon: "i-simple-icons-amazons3",
   },
 ]);
-
+const getUserAuth = async () => {
+    const authToken = localStorage.getItem("authToken");
+    const response = await axios.get("/api/account/custom/getPermissions", {
+      headers: {
+        Authorization: `Bearer ${authToken}`,
+      },
+    });
+    userAuth.value = response.data.data;
+    console.log(userAuth.value)
+};
 const checkPermissionAndRedirect = (module) => {
-  // if (userAuth.value.is_superuser || userAuth.value[module.permissionKey]) {
-  if(1){
-    if (module.title === "3D建筑模型" || module.title === "玻璃平整度检测" || module.title === "石材裂缝检测" || module.title === "幕墙韧性评估" || module.title ==="幕墙振动数据检测与展示") {
-      window.location.href = module.target_address; // 使用window.location.href进行跳转
-    } else {
+    if (userAuth.value.is_superuser || userAuth.value[module.permissionKey]) {
       router.push({path: module.target_address}); // 使用router.push进行跳转
-    }
   } else {
     ElMessage.error("您没有权限访问此模块");
   }

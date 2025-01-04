@@ -181,7 +181,7 @@ const links = reactive([
     icon: "i-simple-icons-affinitypublisher",
     to: "/crackdetect",
     //to: "http://1.92.72.113:5050",
-    defaultOpen: true,
+    defaultOpen: false,
     children: [
       {
         label: "检测中心",
@@ -258,7 +258,7 @@ const links = reactive([
     label: "幕墙材质分割",
     icon: "i-simple-icons-homeassistantcommunitystore",
     to: "/segment",
-    defaultOpen: true,
+    defaultOpen: false,
     children: [
       {
         label: "幕墙分割识别",
@@ -398,10 +398,11 @@ const userAuth = ref({
   access_system_b: false,
   access_system_c: false,
   access_system_d: false,
-  access_system_e: false,
+  access_system_v: false,
   access_system_f: false,
   access_system_g: false,
   access_system_h: false,
+  access_system_z: false,
 });
 
 function removeLinkById(linkId: any) {
@@ -436,7 +437,7 @@ const getUserAuth = async () => {
     if (!userAuth.value.access_system_d) {
       removeLinkById("explosion");
     }
-    if (!userAuth.value.access_system_e) {
+    if (!userAuth.value.access_system_v) {
       removeLinkById("wind");
     }
     if (!userAuth.value.access_system_f) {
@@ -447,6 +448,9 @@ const getUserAuth = async () => {
     }
     if (!userAuth.value.access_system_h) {
       removeLinkById("glassToughnessJudge");
+    }
+    if (!userAuth.value.access_system_z) {
+      removeLinkById("corrosiondetection");
     }
     if (!userAuth.value.is_superuser) {
       removeLinkById("userManage");

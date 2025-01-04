@@ -548,9 +548,17 @@ const removeImage = (index) => {
 
 
 onUnmounted(() => {
+  // 获取 threejs-container 元素
   const container = document.getElementById('threejs-container');
-  container.removeEventListener('click', onPointerClick);
-  container.removeEventListener('mousemove', onPointerMove);
+
+  // 检查容器是否存在
+  if (container) {
+    // 移除事件监听器
+    container.removeEventListener('click', onPointerClick);
+    container.removeEventListener('mousemove', onPointerMove);
+  } else {
+    console.warn('threejs-container 元素未找到，无法移除事件监听器');
+  }
 });
 </script>
 
