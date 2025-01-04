@@ -4,12 +4,6 @@
       <UDashboardNavbar title="首页"></UDashboardNavbar>
       <div class="main-page">
         <UPageGrid class="custom-margin">
-          <UPageCard v-for="(module, index) in modulesLine1" :key="index" v-bind="module"
-                     @click="checkPermissionAndRedirect(module)" class="hover-effect">
-            <template #description>
-              <span class="line-clamp-2">{{ module.description }}</span>
-            </template>
-          </UPageCard>
           <div></div>
           <div></div>
           <UPageCard v-for="(module, index) in modulesLine2" :key="index" v-bind="module"
@@ -25,6 +19,12 @@
             </template>
           </UPageCard>
           <UPageCard v-for="(module, index) in modulesLine4" :key="index" v-bind="module"
+                     @click="checkPermissionAndRedirect(module)" class="hover-effect">
+            <template #description>
+              <span class="line-clamp-2">{{ module.description }}</span>
+            </template>
+          </UPageCard>
+          <UPageCard v-for="(module, index) in modulesLine5" :key="index" v-bind="module"
                      @click="checkPermissionAndRedirect(module)" class="hover-effect">
             <template #description>
               <span class="line-clamp-2">{{ module.description }}</span>
@@ -66,16 +66,6 @@ const getUserAuth = async () => {
 };
 getUserAuth();
 
-const modulesLine1 = reactive([
-  {
-    title: "实时数据检测",
-    description: "检测建筑风振数据，及时报告异常风振情况",
-    // to: "",
-    target_address: "/monitor",
-    permissionKey: "access_system_e",
-    icon: "i-simple-icons-tailwindcss",
-  }
-]);
 
 const modulesLine2 = reactive([
   {
@@ -141,6 +131,17 @@ const modulesLine4 = reactive([
   },
 ]);
 
+const modulesLine5 = reactive([
+  // ... existing modules ...
+  {
+    title: "幕墙振动数据检测与展示",
+    description: "用于检测和展示幕墙的振动数据",
+    target_address: "/subindex",
+    permissionKey: "access_system_v",
+    icon: "i-simple-icons-tailwindcss",
+  },
+]);
+
 // const modules = reactive([
 //   {
 //     title: "3D建筑模型",
@@ -173,8 +174,8 @@ const modulesLine4 = reactive([
 //     icon: "i-material-symbols-sound-detection-glass-break-sharp",
 //   },
 //   {
-//     title: "风振数据检测",
-//     description: "检测建筑风振数据，及时报告异常风振情况",
+//     title: "震动数据检测",
+//     description: "震动数据检测",
 //     // to: "",
 //     target_address: "/monitor",
 //     permissionKey: "access_system_e",
@@ -199,8 +200,9 @@ const modulesLine4 = reactive([
 // ]);
 
 const checkPermissionAndRedirect = (module) => {
-  if (userAuth.value.is_superuser || userAuth.value[module.permissionKey]) {
-    if (module.title === "3D建筑模型" || module.title === "玻璃平整度检测" || module.title === "石材裂缝检测" || module.title === "幕墙韧性评估") {
+  // if (userAuth.value.is_superuser || userAuth.value[module.permissionKey]) {
+  if(1){
+    if (module.title === "3D建筑模型" || module.title === "玻璃平整度检测" || module.title === "石材裂缝检测" || module.title === "幕墙韧性评估" || module.title ==="幕墙振动数据检测与展示") {
       window.location.href = module.target_address; // 使用window.location.href进行跳转
     } else {
       router.push({path: module.target_address}); // 使用router.push进行跳转

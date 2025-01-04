@@ -19,23 +19,18 @@ const links = [[
   id: 'parameter',
   label: '参数设置',
   icon: 'i-heroicons-arrow-trending-up',
-  to: '/monitor/parameter'
+  to: '/vibration/parameter'
 },
   {
   id: 'reatime',
   label: '实时监测',
   icon: 'i-heroicons-chart-bar',
-  to: '/monitor',
+  to: '/vibration',
   exact: true
 },  {
   id: 'abnormal',
   label: '异常数据',
   icon: 'i-heroicons-exclaimation-triangle',
-  to: '/monitor/abnormal'
-},{
-  id: 'bot',
-  label: '智能助手',
-  icon: 'i-heroicons-cpu-chip',
-  to: '/bot'
+  to: '/vibration/abnormal'
 }]]
 </script>
