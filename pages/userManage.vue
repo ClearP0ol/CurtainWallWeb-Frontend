@@ -1,6 +1,14 @@
 <template>
   <div class="page">
-    <!-- 搜索栏 -->
+    <!-- /*
+     * 搜索栏
+     * 该部分包含输入框和选择权限的下拉菜单，用于用户权限的管理。
+     * 输入：
+     *   - filterKeyword: 用户输入的邮箱，用于过滤用户列表。
+     *   - selectedPermission: 当前选择的权限，用于批量启用或禁用。
+     * 输出：
+     *   - 无直接输出。根据用户操作更新权限。
+     */ -->
     <div class="search-container">
       <el-input
           v-model="filterKeyword"
@@ -20,7 +28,14 @@
       <el-button @click="handlePermissionChange(true)" class="input-with-button"> 开启权限</el-button>
       <el-button @click="handlePermissionChange(false)" class="input-with-button"> 关闭权限</el-button>
     </div>
-
+    <!-- /**
+     * 权限表格
+     * 该部分展示用户的权限信息，并提供权限切换的开关。
+     * 输入：
+     *   - itemList: 用户列表，包含每个用户的邮箱和权限状态。
+     * 输出：
+     *   - 用户可以通过切换开关来修改权限，更新后触发handleSwitchChange函数。
+     */ -->
     <div class="table_container">
       <el-table
           border
@@ -109,8 +124,18 @@
 </template>
 
 <script setup>
+/**
+ * Vue组件逻辑
+ * 本部分处理组件的状态管理和与后端的交互。
+ */
 import {ref, reactive, onMounted, nextTick} from "vue";
 import axios from "axios";
+
+/**
+ * filterKeyword: 绑定用户搜索输入的邮箱。
+ * selectedPermission: 当前选择的权限。
+ * permissions: 权限选项列表。
+ */
 
 const filterKeyword = ref("");
 
@@ -157,6 +182,15 @@ const permissions = [
   },
 ]
 
+/**
+ * handlePermissionChange
+ * 根据用户选择的权限和输入的邮箱开启或关闭权限。
+ * 输入：
+ *   - isEnabled: 布尔值，指示权限是否开启。
+ * 输出：
+ *   - 调用handleSwitchChange更新权限状态。
+ */
+
 const handlePermissionChange = async (isEnabled) => {
   const item = {email: filterKeyword.value, [selectedPermission.value]: isEnabled};
   await handleSwitchChange(item, selectedPermission.value, "email");
@@ -168,6 +202,16 @@ const handleSelect = (key, keyPath) => {
 
 const itemList = ref([]);
 
+/**
+ * handleSwitchChange
+ * 处理权限开关的变化。
+ * 输入：
+ *   - item: 包含用户信息的对象。
+ *   - key: 权限的键名。
+ *   - updatemethod: 更新方法，指示更新的来源。
+ * 输出：
+ *   - 调用接口更新权限。
+ */
 const handleSwitchChange = async (item, key, updatemethod) => {
   // 判断是否为管理员并且管理员权限不可更改，仅可更改管理员权限
   if (item.is_superuser && key !== 'is_superuser') {
@@ -204,7 +248,10 @@ const handleSwitchChange = async (item, key, updatemethod) => {
     }
   }
 };
-
+/**
+ * formData
+ * 存储搜索关键字的反应式对象。
+ */
 const formData = reactive({
   // 用 reactive，而不用 ref
   keyword: "",
@@ -216,7 +263,14 @@ onMounted(() => {
     window.addEventListener("keydown", enterDown);
   });
 });
-
+/**
+ * enterDown
+ * 处理键盘按下事件，用于搜索操作。
+ * 输入：
+ *   - 无
+ * 输出：
+ *   - 在输入为空时显示错误消息。
+ */
 const enterDown = async () => {
   if (!formData.keyword) {
     Message.error("请输入用户关键词！");
@@ -224,7 +278,14 @@ const enterDown = async () => {
   }
   //进行搜索操作
 };
-
+/**
+ * getAllPermission
+ * 获取所有用户权限并更新itemList。
+ * 输入：
+ *   - 无
+ * 输出：
+ *   - 更新itemList以展示用户权限。
+ */
 const getAllPermission = async () => {
   try {
     const authToken = localStorage.getItem("authToken");
