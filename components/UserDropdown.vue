@@ -67,11 +67,6 @@ const items = computed(() => [
   ],
   [
     {
-      label: "设置",
-      icon: "i-heroicons-cog-8-tooth",
-      to: "/settings",
-    },
-    {
       label: "命令菜单",
       icon: "i-heroicons-command-line",
       shortcuts: [metaSymbol.value, "K"],

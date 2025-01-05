@@ -112,6 +112,8 @@ import userService from "~/api/user.js";
 import {onMounted, ref} from "vue";
 import {useRouter} from "vue-router";
 import {ElMessage, ElLoading} from "element-plus";
+import * as jwtDecode from 'jwt-decode';
+
 // import store from '@/store/index.js'
 
 // const GoToLayout = () => {
@@ -147,9 +149,6 @@ const focusNextInput = () => {
 
 //todo: 暂时不发请求，需要统一api，先直接写死
 const login = async () => {
-  // localStorage.setItem("authToken", "fakeAuthToken");
-  // localStorage.setItem("email", loginForm.value.email);
-  // router.push({path: "/"});
   let loadingInstance = null;
   try {
     loadingInstance = ElLoading.service({
@@ -167,20 +166,38 @@ const login = async () => {
         password: loginForm.value.password,
       },
     });
-    console.log(response);
+    console.log('登录响应:', response); // 添加日志
+
     if (loadingInstance) loadingInstance.close();
-    if (response.authentication) {
-      localStorage.setItem("authToken", response.token);
+    
+    // 检查响应结构
+    const token = response.token || response.data?.token;
+    if (token) {
+      localStorage.setItem("authToken", token);
       localStorage.setItem("email", loginForm.value.email);
-      console.log("authToken stored:", localStorage.getItem("authToken"));
+      
+      // 验证 token 是否正确存储
+      const storedToken = localStorage.getItem("authToken");
+      console.log("存储的 token:", storedToken);
+      
+      // 尝试解析 token
+      try {
+        const decoded = jwtDecode(storedToken);
+        console.log("解析后的 token:", decoded);
+      } catch (e) {
+        console.error("Token 解析失败:", e);
+      }
+      
       router.push({path: "/"});
     } else {
-      console.log("登陆失败");
-      ElMessage.error("登录失败，请检查您的用户名和密码。");
+      console.error("登录响应中没有 token:", response);
+      ElMessage.error("登录失败，未获取到认证信息");
     }
   } catch (error) {
-    console.error(error);
-    ElMessage.error(error.message || "登录过程中发生错误");
+    console.error('登录错误:', error);
+    ElMessage.error(error.data?.message || "登录失败，请检查用户名和密码");
+  } finally {
+    if (loadingInstance) loadingInstance.close();
   }
 };
 

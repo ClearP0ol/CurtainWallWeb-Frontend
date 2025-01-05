@@ -113,7 +113,9 @@ const gotoGlassToughness = () => {
   // window.open("http://localhost:5173", "_blank");
   window.location.href = "http://111.231.168.12:8999";
 };
-
+const gotoGlassShock = () => {
+  window.location.href = "/vibration/mainpage";
+};
 
 const links = reactive([
   {
@@ -129,12 +131,12 @@ const links = reactive([
   {
     id: "3DBuildingModel",
     label: "3D建筑模型",
-    // to: "/userManage",
+    to: "/3DModel",
     icon: "i-simple-icons-googlehome",
     tooltip: {
       text: "3D建筑模型",
     },
-    click: goto3DModel,
+    //click: goto3DModel,
   },
   {
     id: "stoneDirty",
@@ -159,6 +161,21 @@ const links = reactive([
 
   },
   {
+    id: "corrosiondetection",
+    label: "金属锈蚀检测",
+    //icon: "i-amazon-s3",
+    icon: "i-simple-icons-amazons3",
+    defaultOpen: false,
+    children: [
+      {
+        label: "上传图片",
+        to: "/corrosiondetection/detect",
+        exact: true,
+      },
+    ],
+
+  },
+  {
     id: "stoneCrack",
     label: "石材裂缝检测",
     icon: "i-simple-icons-affinitypublisher",
@@ -175,11 +192,15 @@ const links = reactive([
         label:"历史记录",
         to : "/crackdetect/history",
       },
+      {
+        label: "数据集一览",
+        to: "/crackdetect/datasets",
+      }
     ]
   },
   {
     id: "wind",
-    label: "风振数据检测",
+    label: "震动数据检测",
     icon: "i-simple-icons-tailwindcss",
     to: "/monitor",
     defaultOpen: false,
@@ -196,28 +217,19 @@ const links = reactive([
         },
         children: [
           {
-            label: "实时监测",
-            to: "/monitor",
+            label: "参数设置",
+            to: "/monitor/parameter",
           },
           {
-            label: "历史趋势",
-            to: "/monitor/historical",
+            label: "实时监测",
+            to: "/monitor",
           },
           {
             label: "异常数据",
             to: "/monitor/abnormal",
           },
+
         ],
-      },
-      {
-        id: "equipments",
-        label: "设备中心",
-        icon: "i-heroicons-cpu-chip",
-        to: "/equipments",
-        tooltip: {
-          text: "设备中心",
-          shortcuts: ["G", "E"],
-        },
       },
       {
         id: "alarm",
@@ -230,29 +242,18 @@ const links = reactive([
         },
       },
       {
-        id: "settings",
-        label: "设置",
-        to: "/settings",
-        icon: "i-heroicons-cog-8-tooth",
-        defaultOpen: false,
-        children: [
-          {
-            label: "常规",
-            to: "/settings",
-          },
-          {
-            label: "通知",
-            to: "/settings/notifications",
-          },
-        ],
+        id: "bot",
+        label: "智能助手",
+        icon: "i-heroicons-cpu-chip",
+        to: "/bot",
         tooltip: {
-          text: "Settings",
-          shortcuts: ["G", "S"],
+          text: "BOT",
+          shortcuts: ["G", "W"],
         },
       },
     ],
     tooltip: {
-      text: "风振数据检测",
+      text: "震动数据检测",
       // shortcuts: ["G", "H"],
     },
   },
@@ -261,7 +262,7 @@ const links = reactive([
     label: "幕墙材质分割",
     icon: "i-simple-icons-homeassistantcommunitystore",
     to: "/segment",
-    defaultOpen: true,
+    defaultOpen: false,
     children: [
       {
         label: "幕墙分割识别",
@@ -272,36 +273,98 @@ const links = reactive([
         label: "查看历史记录",
         to: "/segment/history",
       },
+
     ],
   },
   {
     id: "explosion",
     label: "玻璃自爆检测",
-    to: "/explosion",
+    to: "/spallingDetection",
     icon: "i-material-symbols-sound-detection-glass-break-sharp",
     tooltip: {
       text: "玻璃自爆检测",
     },
+    children: [
+      {
+        label: "玻璃自爆检测",
+        to: "/spallingDetection",
+        exact: true,
+      },
+      {
+        label: "查看历史记录",
+        to: "/spallingDetection/history",
+      },
+    ],
   },
   {
     id: "glassFlatness",
     label: "玻璃平整度检测",
-    // to: "/explosion",
+    to: "/smoothnessDetection",
     icon: "i-simple-icons-edgeimpulse",
-    click: gotoGlassFlatness,
+    //click: gotoGlassFlatness,
     tooltip: {
-      text: "玻璃自爆检测",
+      text: "玻璃平整度检测",
     },
+    children: [
+      {
+        label: "玻璃平整度检测",
+        to: "/smoothnessDetection",
+        exact: true,
+      },
+      {
+        label: "查看历史记录",
+        to: "/smoothnessDetection/history",
+      },
+    ],
   },
   {
     id: "glassToughnessJudge",
     label: "幕墙韧性评估",
-    // to: "/explosion",
+    to: "/resilienceAssessment",
     icon: "i-simple-icons-testcafe",
-    click: gotoGlassToughness,
+    defaultOpen: false,
+    // click: gotoGlassToughness,
     tooltip: {
       text: "幕墙韧性评估",
     },
+    children: [
+      {
+        label: "评估数据上传",
+        to: "/resilienceAssessment/dataUpload",
+      },
+      {
+        label: "粗糙集评估",
+        to: "/resilienceAssessment/dangerAssess",
+        exact: true,
+        defaultOpen: false,
+        children:[
+          {
+            label: "危险系数评估",
+            to: "/resilienceAssessment/RS_dangerAssess",
+          },
+          {
+            label: "决策规则分析",
+            to: "/resilienceAssessment/deciRules",
+          },
+        ]
+      },
+      {
+        label: "熵权法评估",
+        to: "/resilienceAssessment/dangerAssess",
+        exact: true,
+        defaultOpen: false,
+        children:[
+          {
+            label: "危险系数评估",
+            to: "/resilienceAssessment/ETP_dangerAssess",
+          },
+        ]
+      },
+      {
+        label: "综合危险系数评估",
+        to: "/resilienceAssessment/dangerAssess",
+      },
+    ],
   },
   {
     id: "userInfo",
@@ -339,10 +402,11 @@ const userAuth = ref({
   access_system_b: false,
   access_system_c: false,
   access_system_d: false,
-  access_system_e: false,
+  access_system_v: false,
   access_system_f: false,
   access_system_g: false,
   access_system_h: false,
+  access_system_z: false,
 });
 
 function removeLinkById(linkId: any) {
@@ -377,7 +441,7 @@ const getUserAuth = async () => {
     if (!userAuth.value.access_system_d) {
       removeLinkById("explosion");
     }
-    if (!userAuth.value.access_system_e) {
+    if (!userAuth.value.access_system_v) {
       removeLinkById("wind");
     }
     if (!userAuth.value.access_system_f) {
@@ -388,6 +452,9 @@ const getUserAuth = async () => {
     }
     if (!userAuth.value.access_system_h) {
       removeLinkById("glassToughnessJudge");
+    }
+    if (!userAuth.value.access_system_z) {
+      removeLinkById("corrosiondetection");
     }
     if (!userAuth.value.is_superuser) {
       removeLinkById("userManage");

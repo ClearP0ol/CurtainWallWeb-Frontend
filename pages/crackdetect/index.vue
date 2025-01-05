@@ -81,7 +81,7 @@ const startProject = async () => {
       const decoded = jwtDecode(authToken)
       console.log("user_name:",decoded.username)
 
-      const response = await axios.post('http://127.0.0.1:5000/createProject', 
+      const response = await axios.post('/crackdetection/createProject', 
         {
           project_name: projectForm.value.projectName,
           user_name: decoded.username
