@@ -41,6 +41,11 @@ export default defineNuxtConfig({
       '/oss': {
         target: 'http://110.42.214.164:9000',
         changeOrigin: true,
+      },
+      '/crackdetection': {
+        //target: 'http://110.42.214.164:8001',
+        target: 'http://127.0.0.1:8080',
+        changeOrigin: true,
       }
     }
   },

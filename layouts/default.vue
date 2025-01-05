@@ -181,7 +181,7 @@ const links = reactive([
     icon: "i-simple-icons-affinitypublisher",
     to: "/crackdetect",
     //to: "http://1.92.72.113:5050",
-    defaultOpen: false,
+    defaultOpen: true,
     children: [
       {
         label: "检测中心",
@@ -192,6 +192,10 @@ const links = reactive([
         label:"历史记录",
         to : "/crackdetect/history",
       },
+      {
+        label: "数据集一览",
+        to: "/crackdetect/datasets",
+      }
     ]
   },
   {

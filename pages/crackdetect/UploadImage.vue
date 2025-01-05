@@ -8,8 +8,7 @@
         simple
       >
         <el-step title="上传图片" class="step-item" />
-        <el-step title="幕墙块目标检测" class="step-item" />
-        <el-step title="幕墙块分割" class="step-item" />
+        <el-step title="幕墙块检测分割" class="step-item" />
         <el-step title="裂缝检测" class="step-item" />
         <el-step title="裂缝测量" class="step-item" />
       </el-steps>
@@ -35,8 +34,21 @@
               </div>
               <el-scrollbar class="image-scroll">
                 <div v-for="(image, index) in uploadedImages" :key="index" class="image-row" :data-status="image.status">
-                  <el-image :src="image.url" fit="fill" />
-                  <p class="image-info">{{ image.name }}</p>
+                  <div class="image-container">
+                    <div class="image-actions">
+                      <el-button
+                        type="danger"
+                        size="small"
+                        circle
+                        @click="removeImage(index)"
+                        class="delete-btn"
+                      >
+                        <el-icon><Delete /></el-icon>
+                      </el-button>
+                    </div>
+                    <el-image :src="image.url" fit="fill" />
+                    <p class="image-info">{{ image.name }}</p>
+                  </div>
                 </div>
               </el-scrollbar>
             </el-card>
@@ -70,10 +82,10 @@
   </template>
   
   <script setup>
-  import { ref, watch, onBeforeUnmount } from "vue";
+  import { ref, watch, onBeforeUnmount, onMounted } from "vue";
   import axios from 'axios';
   import { ElMessage } from 'element-plus';
-  import { Upload } from '@element-plus/icons-vue'
+  import { Upload, Delete } from '@element-plus/icons-vue'
   import { useRouter, useRoute } from 'vue-router';
   
   const uploadedImages = ref([]);
@@ -119,6 +131,12 @@
       return;
     }
   
+    if (!route.query.project_id) {
+      ElMessage.error('项目ID不存在，请重新创建项目');
+      router.push('/crackdetect');
+      return;
+    }
+  
     try {
       ElMessage.info('正在上传图片...');
       
@@ -144,12 +162,12 @@
             },
           }
         );
-        console.log("response.data:",localStorage.getItem('currentProject').project_id)
+        
         if (response.data) {
-          console.log("response.data:",route.query.project_id)
+          // console.log("response.data:",localStorage.getItem('currentProject')?.project_id)
           // 调用upload_image_url接口
           try {
-            const imageResponse = await axios.post('http://127.0.0.1:5000/upload_image_url', {
+            const imageResponse = await axios.post('/crackdetection/upload_image_url', {
               project_id: route.query.project_id,
               image_path: response.data
             });
@@ -180,11 +198,7 @@
       router.push({
         path: '/crackdetect/ObjectDetection',
         query: {
-          images: JSON.stringify(uploadedImages.value.map(img => ({
-            ...img,
-            image_id: img.image_id,  // 传递image_id到下一个页面
-            project_id: route.query.project_id  // 传递project_id到下一个页面
-          })))
+          project_id: route.query.project_id
         }
       });
       
@@ -196,6 +210,21 @@
     }
   };
   
+  const removeImage = (index) => {
+    // 如果是blob URL，需要释放
+    if (uploadedImages.value[index].url.startsWith('blob:')) {
+      URL.revokeObjectURL(uploadedImages.value[index].url);
+    }
+    // 从待上传文件列表中移除
+    const fileName = uploadedImages.value[index].name;
+    const fileIndex = pendingFiles.value.findIndex(file => file.name === fileName);
+    if (fileIndex > -1) {
+      pendingFiles.value.splice(fileIndex, 1);
+    }
+    // 从显示列表中移除
+    uploadedImages.value.splice(index, 1);
+  };
+  
   onBeforeUnmount(() => {
     uploadedImages.value.forEach(image => {
       if (image.url.startsWith('blob:')) {
@@ -203,6 +232,27 @@
       }
     });
   });
+  
+  const handleUploadSuccess = () => {
+    // 从当前路由获取 project_id
+    const projectId = route.query.project_id
+
+    router.push({
+      path: '/crackdetect/ObjectDetection',
+      query: {
+        project_id: projectId
+      }
+    })
+  }
+  
+  onMounted(() => {
+    const projectId = route.query.project_id
+    if (!projectId) {
+      ElMessage.error('项目ID不存在')
+      router.push('/crackdetect/history')
+      return
+    }
+  })
   </script>
   
   <style scoped>
@@ -283,6 +333,7 @@
     color: white;
     padding: 2px 8px;
     border-radius: 4px;
+    z-index: 2;
   }
   
   .image-row[data-status="uploaded"]::after {
@@ -294,6 +345,7 @@
     color: white;
     padding: 2px 8px;
     border-radius: 4px;
+    z-index: 2;
   }
   
   .step-item {
@@ -313,6 +365,37 @@
   :deep(.el-button--primary:hover) {
     background-color: #409EFF;
     border-color: #409EFF;
+  }
+  
+  .image-container {
+    position: relative;
+  }
+  
+  .image-actions {
+    position: absolute;
+    top: 50px;
+    right: 10px;
+    z-index: 1;
+  }
+  
+  .delete-btn {
+    opacity: 0.8;
+    transition: opacity 0.3s;
+    background-color: rgba(245, 108, 108, 0.9);
+  }
+  
+  .delete-btn:hover {
+    opacity: 1;
+  }
+  
+  :deep(.el-button--danger) {
+    background-color: #F56C6C;
+    border-color: #F56C6C;
+  }
+  
+  :deep(.el-button--danger:hover) {
+    background-color: #f78989;
+    border-color: #f78989;
   }
   </style>
   
