@@ -1,10 +1,9 @@
 <template>
-  <div class="page-wrapper">
     <div class="main-container">
       <!-- 顶部导航栏 -->
       <div class="header-bar">
         <h2 class="page-title">历史记录</h2>
-        
+
         <!-- 添加时间筛选 -->
         <div class="filter-section">
           <el-date-picker
@@ -21,8 +20,8 @@
             ]"
             @change="handleDateChange"
           />
-          <el-button 
-            type="primary" 
+          <el-button
+            type="primary"
             class="filter-button"
             @click="applyFilter"
           >
@@ -31,8 +30,8 @@
             </template>
             筛选
           </el-button>
-          <el-button 
-            type="info" 
+          <el-button
+            type="info"
             class="reset-button"
             @click="resetFilter"
           >
@@ -43,8 +42,8 @@
           </el-button>
         </div>
 
-        <el-button 
-          type="primary" 
+        <el-button
+          type="primary"
           class="detect-button back-button"
           @click="backToMain"
         >
@@ -60,9 +59,9 @@
         <div class="section">
           <h3 class="section-title">历史检测记录</h3>
           <div class="results-wall">
-            <div 
-              v-for="(item, index) in tableData" 
-              :key="index" 
+            <div
+              v-for="(item, index) in filteredData"
+              :key="index"
               class="result-item"
             >
               <!-- 图片分析部分 -->
@@ -71,24 +70,26 @@
                 <div class="image-comparison">
                   <div class="image-box">
                     <div class="image-label">原始图片</div>
-                    <el-image 
+                    <el-image
                       :src="validateImageUrl(item.input_url)"
                       :preview-src-list="item.input_url ? [validateImageUrl(item.input_url)] : []"
                       :initial-index="0"
                       fit="contain"
                       preview-teleported
-                      hide-on-click-modal>
+                      hide-on-click-modal
+                      lazy>
                     </el-image>
                   </div>
                   <div class="image-box" v-if="item.annotated_image_url">
                     <div class="image-label">标注结果</div>
-                    <el-image 
+                    <el-image
                       :src="validateImageUrl(item.annotated_image_url)"
                       :preview-src-list="item.annotated_image_url ? [validateImageUrl(item.annotated_image_url)] : []"
                       :initial-index="0"
                       fit="contain"
                       preview-teleported
-                      hide-on-click-modal>
+                      hide-on-click-modal
+                      lazy>
                     </el-image>
                   </div>
                 </div>
@@ -98,30 +99,31 @@
               <div class="section">
                 <h3 class="section-title">检测结果</h3>
                 <div class="results-wall">
-                  <div 
-                    v-for="(result, resultIndex) in item.detectionResults" 
+                  <div
+                    v-for="(result, resultIndex) in item.detectionResults"
                     :key="resultIndex"
                     class="detection-result"
                   >
                     <div class="image-pair">
                       <div class="stain-image" v-if="result.warped_image_url">
                         <div class="image-label">污渍区域 {{ resultIndex + 1 }}</div>
-                        <el-image 
+                        <el-image
                           :src="validateImageUrl(result.warped_image_url)"
                           :preview-src-list="[validateImageUrl(result.warped_image_url)]"
                           :initial-index="0"
                           preview-teleported
                           hide-on-click-modal
                           fit="cover"
-                          class="result-image">
+                          class="result-image"
+                          lazy>
                         </el-image>
                       </div>
-                      
+
                       <div class="arrow-icon">→</div>
 
                       <div class="processed-image" v-if="result.result_image_url">
                         <div class="image-label">处理结果 {{ resultIndex + 1 }}</div>
-                        <el-image 
+                        <el-image
                           :src="validateImageUrl(result.result_image_url)"
                           :preview-src-list="[validateImageUrl(result.result_image_url)]"
                           :initial-index="0"
@@ -131,7 +133,7 @@
                           class="result-image"
                           @error="handleImageError"
                           @load="handleImageSuccess"
-                        >
+                          lazy>
                           <template #error>
                             <div class="image-error">
                               <el-icon><Warning /></el-icon>
@@ -176,15 +178,15 @@
         </div>
       </div>
     </div>
-  </div>
 </template>
+
+
 
 <script setup lang="ts">
 import { ref, onMounted } from "vue";
 import { useRouter } from "vue-router";
-import { ArrowLeft, Clock, Document, Warning, Loading, Search, Refresh } from '@element-plus/icons-vue';
-import { getHistory } from '../../api/stain';
 import { ElMessage } from 'element-plus';
+import { getHistory } from '../../api/stain';
 
 // 路由
 const router = useRouter();
@@ -203,7 +205,8 @@ interface TableItem {
   history_id: number;
 }
 
-const tableData = ref<TableItem[]>([]);
+const tableData = ref<TableItem[]>([]); // 存储所有数据
+const filteredData = ref<TableItem[]>([]); // 存储筛选后的数据
 const loading = ref(true);
 
 // 添加日期相关变量
@@ -244,8 +247,8 @@ const dateShortcuts = [
   },
 ];
 
-// 修改数据获取部分
-const fetchHistory = async (startTime?: string, endTime?: string) => {
+// 获取数据
+const fetchHistory = async () => {
   try {
     loading.value = true;
 
@@ -257,12 +260,11 @@ const fetchHistory = async (startTime?: string, endTime?: string) => {
     }
 
     try {
-      // 从 token 中获取用户名
       const jwtModule = await import('jwt-decode');
-      const decode = typeof jwtModule.default === 'function' 
+      const decode = typeof jwtModule.default === 'function'
         ? jwtModule.default(token)
         : jwtModule.jwtDecode(token);
-      
+
       const username = decode.username;
       if (!username) {
         console.error('Token 中未找到用户名:', decode);
@@ -271,30 +273,20 @@ const fetchHistory = async (startTime?: string, endTime?: string) => {
         return;
       }
 
-      // 构建请求参数
       const params: any = { username };
-      if (startTime && endTime) {
-        params.start_time = startTime;
-        params.end_time = endTime;
-      }
-
-      // 使用 username 获取历史记录
       const response = await getHistory(params);
       console.log('历史记录响应:', response);
 
       if (response.status === 'success' && response.data?.length > 0) {
-        // 处理每条历史记录
         tableData.value = response.data.map((record: any) => {
           console.log('处理单条记录:', record);
-          
-          // 1. 处理基础信息
+
           const baseInfo = {
             input_url: record.input_url,
             created_at: record.created_at,
             history_id: record.history_id
           };
 
-          // 2. 处理输出图片和数据
           let processedData = {
             annotated_image_url: '',
             warped_image_url: '',
@@ -302,15 +294,12 @@ const fetchHistory = async (startTime?: string, endTime?: string) => {
             stain_percentage: 0
           };
 
-          // 遍历 output_url 数组处理每个结果
           if (Array.isArray(record.output_url)) {
-            // 找到标注图片
             const annotatedImage = record.output_url.find(item => item.annotated_image_url);
             if (annotatedImage) {
               processedData.annotated_image_url = annotatedImage.annotated_image_url;
             }
 
-            // 收集所有有效的检测结果
             const detectionResults = record.output_url
               .filter(item => item.warped_image_url && item.result_image_url && item.result_image_url !== null)
               .map(item => ({
@@ -319,13 +308,11 @@ const fetchHistory = async (startTime?: string, endTime?: string) => {
                 stain_percentage: item.stain_percentage
               }));
 
-            // 如果有检测结果，添加到处理后的数据中
             if (detectionResults.length > 0) {
               processedData.detectionResults = detectionResults;
             }
           }
 
-          // 3. 合并信息并返回
           const processedRecord = {
             ...baseInfo,
             ...processedData
@@ -334,6 +321,9 @@ const fetchHistory = async (startTime?: string, endTime?: string) => {
           console.log('处理后的记录:', processedRecord);
           return processedRecord;
         });
+
+        // 初始化时展示所有记录
+        filteredData.value = [...tableData.value];
 
         console.log('最终处理后的数据:', tableData.value);
       } else {
@@ -372,34 +362,47 @@ const formatDate = (dateString: string) => {
   });
 };
 
-// 修改错误处理函数
-const handleImageError = (e: any) => {
-  console.error('图片加载失败:', e);
-  const img = e.target;
-  if (img && img.src) {
-    try {
-      // 添加时间戳避免缓存
-      const timestamp = new Date().getTime();
-      const baseUrl = img.src.split('?')[0];
-      // 使用完整的 URL
-      if (!baseUrl.startsWith('http')) {
-        img.src = `http://110.42.214.164:9000${baseUrl}?t=${timestamp}`;
-      } else {
-        img.src = `${baseUrl}?t=${timestamp}`;
-      }
-      console.log('重试加载图片:', img.src);
-    } catch (error) {
-      console.error('重试加载图片失败:', error);
+// 处理日期变化
+const handleDateChange = (val: any) => {
+  console.log('日期范围变化:', val);
+};
+
+// 应用筛选（在前端进行）
+const applyFilter = () => {
+  if (dateRange.value && dateRange.value.length === 2) {
+    let [start, end] = dateRange.value;
+
+    // 确保 start 和 end 是 Date 对象
+    if (!(start instanceof Date)) {
+      start = new Date(start);
     }
+    if (!(end instanceof Date)) {
+      end = new Date(end);
+    }
+
+    // 修正时间格式：开始日期设置为 00:00:00，结束日期设置为 23:59:59
+    start.setHours(0, 0, 0, 0);
+    end.setHours(23, 59, 59, 999);
+
+    // 筛选数据
+    filteredData.value = tableData.value.filter(item => {
+      const createdAt = new Date(item.created_at);
+      return createdAt >= start && createdAt <= end;
+    });
+
+    console.log('筛选后的数据:', filteredData.value);
+  } else {
+    ElMessage.warning('请选择完整的日期范围');
   }
 };
 
-// 添加图片加载成功的处理函数
-const handleImageSuccess = (e: any) => {
-  console.log('图片加载成功:', e);
+// 重置筛选
+const resetFilter = () => {
+  dateRange.value = [];
+  filteredData.value = [...tableData.value]; // 恢复所有数据
 };
 
-// 修改 validateImageUrl 函数
+// 图片 URL 验证
 const validateImageUrl = (url: string) => {
   if (!url) return '';
   try {
@@ -414,34 +417,10 @@ const validateImageUrl = (url: string) => {
     return '';
   }
 };
-
-// 处理日期变化
-const handleDateChange = (val: any) => {
-  console.log('日期范围变化:', val);
-};
-
-// 应用筛选
-const applyFilter = () => {
-  if (dateRange.value && dateRange.value.length === 2) {
-    let [start, end] = dateRange.value;
-    
-    start = start.replace(/\d{2}:\d{2}:\d{2}$/, '00:00:00');
-    
-    end = end.replace(/\d{2}:\d{2}:\d{2}$/, '23:59:59');
-    
-    console.log('筛选时间范围:', { start, end });
-    fetchHistory(start, end);
-  } else {
-    ElMessage.warning('请选择完整的日期范围');
-  }
-};
-
-// 重置筛选
-const resetFilter = () => {
-  dateRange.value = [];
-  fetchHistory();
-};
 </script>
+
+
+
 
 <style scoped>
 .page-wrapper {
@@ -660,7 +639,7 @@ const resetFilter = () => {
   .image-pair {
     gap: 24px;
   }
-  
+
   .result-image {
     height: 240px;
   }
@@ -670,12 +649,12 @@ const resetFilter = () => {
   .image-pair {
     flex-direction: column;
   }
-  
+
   .arrow-icon {
     transform: rotate(90deg);
     margin: 20px 0;
   }
-  
+
   .result-image {
     height: 200px;
   }
