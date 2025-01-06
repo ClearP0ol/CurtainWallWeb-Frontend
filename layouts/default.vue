@@ -225,6 +225,7 @@ const links = reactive([
           {
             label: "实时监测",
             to: "/monitor",
+            exact: true,
           },
           {
             label: "异常数据",
