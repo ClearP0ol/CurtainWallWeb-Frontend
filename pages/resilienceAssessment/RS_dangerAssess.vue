@@ -169,7 +169,8 @@ export default defineComponent({
 
   <div class="app-container">
     <!-- 筛选部分 -->
-    <div class="filter-container">
+    <div class="filter-container" style="margin-left: 10px; margin-top: 10px;">
+      <label for="batch-input" style="margin-left: 10px; margin-right: 5px; font-size: 16px; color: #606266;">Batch: </label>
       <el-input
         v-model="listQuery.batch"
         placeholder="Batch"
@@ -177,13 +178,13 @@ export default defineComponent({
         style="width: 100px;"
         @keyup.enter="getList"
       />
-      <el-input
+      <!-- <el-input
         v-model="listQuery.limit"
         placeholder="Limit"
         class="filter-item"
         style="width: 100px;"
         @keyup.enter="getList"
-      />
+      /> -->
       <el-button
         type="primary"
         class="filter-item"
@@ -193,6 +194,7 @@ export default defineComponent({
         Search
       </el-button>
 
+      <label for="thresholds-input" style="margin-left: 30px; margin-right: 5px; font-size: 16px; color: #606266;">Thresholds: </label>
       <el-input
         v-model="tempThresholds.low"
         placeholder="Danger"
@@ -222,7 +224,7 @@ export default defineComponent({
       :data="list"
       v-loading="listLoading.value"
       border
-      style="width: 100%;"
+      style="width: 100%; margin-top: 10px; margin-left: 10px;"
     >
       <el-table-column prop="id" label="ID" width="60" align="center" />
       <el-table-column label="Status" width="100">

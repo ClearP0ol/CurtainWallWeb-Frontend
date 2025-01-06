@@ -304,7 +304,7 @@ const links = reactive([
         defaultOpen: false,
         children:[
           {
-            label: "危险系数评估",
+            label: "粗糙集危险系数评估",
             to: "/resilienceAssessment/RS_dangerAssess",
           },
           {
@@ -320,7 +320,7 @@ const links = reactive([
         defaultOpen: false,
         children:[
           {
-            label: "危险系数评估",
+            label: "熵权法危险系数评估",
             to: "/resilienceAssessment/ETP_dangerAssess",
           },
         ]
