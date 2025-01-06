@@ -66,9 +66,11 @@ const userPermissions = ref({
   access_system_b: false,
   access_system_c: false,
   access_system_d: false,
-  access_system_e: false,
+  access_system_v: false,
   access_system_f: false,
   access_system_g: false,
+  access_system_h: false,
+  access_system_z: false,
 });
 
 const checkPressmission = async () => {

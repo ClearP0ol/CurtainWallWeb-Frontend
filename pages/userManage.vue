@@ -49,11 +49,11 @@
             ></el-switch>
           </template>
         </el-table-column>
-        <el-table-column label="震动数据检测权限" prop="access_system_e">
+        <el-table-column label="震动数据检测权限" prop="access_system_v">
           <template #default="{ row }">
             <el-switch
-                v-model="row.access_system_e"
-                @change="() => handleSwitchChange(row, 'access_system_e','table')"
+                v-model="row.access_system_v"
+                @change="() => handleSwitchChange(row, 'access_system_v','table')"
             ></el-switch>
           </template>
         </el-table-column>
@@ -73,7 +73,7 @@
             ></el-switch>
           </template>
         </el-table-column>
-        <el-table-column label="幕墙韧性评估权限" prop="access_system_g">
+        <el-table-column label="幕墙韧性评估权限" prop="access_system_h">
           <template #default="{ row }">
             <el-switch
                 v-model="row.access_system_h"
@@ -81,10 +81,10 @@
             ></el-switch>
           </template>
         </el-table-column>
-        <el-table-column label="金属锈蚀检测权限" prop="access_system_g">
+        <el-table-column label="金属锈蚀检测权限" prop="access_system_z">
           <template #default="{ row }">
             <el-switch
-                v-model="row.access_system_h"
+                v-model="row.access_system_z"
                 @change="() => handleSwitchChange(row, 'access_system_z','table')"
             ></el-switch>
           </template>
@@ -128,7 +128,7 @@ const permissions = [
     label: '玻璃自爆检测权限',
   },
   {
-    value: 'access_system_e',
+    value: 'access_system_v',
     label: '震动数据检测权限',
   },
   {
