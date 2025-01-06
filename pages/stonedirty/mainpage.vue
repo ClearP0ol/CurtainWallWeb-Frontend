@@ -1,11 +1,10 @@
 <template>
-  <div class="page-wrapper">
     <div class="main-container">
       <!-- 顶部导航栏 -->
       <div class="header-bar">
         <h2 class="page-title">污渍检测</h2>
-        <el-button 
-          type="primary" 
+        <el-button
+          type="primary"
           class="detect-button back-button"
           @click="backToMain"
         >
@@ -31,7 +30,7 @@
           @error="handleUploadError"
         >
           <el-icon class="el-icon--upload">
-            <upload-filled/>
+            <UploadFilled />
           </el-icon>
           <div class="el-upload__text">
             {{ isUploading ? '上传中...' : '拖动文件至框内或点击上传' }}
@@ -44,8 +43,8 @@
 
       <!-- 操作区域 -->
       <div class="action-bar">
-        <el-button 
-          type="primary" 
+        <el-button
+          type="primary"
           class="detect-button"
           :loading="isProcessing"
           :disabled="!imageUrl || isProcessing"
@@ -56,9 +55,9 @@
           </template>
           {{ isProcessing ? '检测中' : '开始检测' }}
         </el-button>
-        
+
         <div class="progress-wrapper" v-if="progressPercentage > 0">
-          <el-progress 
+          <el-progress
             :percentage="progressPercentage"
             :status="progressPercentage === 100 ? 'success' : ''"
             :stroke-width="15"
@@ -70,15 +69,15 @@
       <!-- 结果展示区域 -->
       <div v-loading="isProcessing" class="results-section">
         <div v-if="showTable">
-          <!-- 修改原始图片和标注图片展示部分 -->
+          <!-- 图片分析展示 -->
           <div class="section">
             <h3 class="section-title">图片分析</h3>
             <div class="image-comparison">
               <div class="image-box">
                 <div class="image-label">原始图片</div>
-                <el-image 
+                <el-image
                   class="input-image"
-                  :src="imageUrl" 
+                  :src="imageUrl"
                   :preview-src-list="[imageUrl]"
                   :initial-index="0"
                   fit="contain"
@@ -88,9 +87,9 @@
               </div>
               <div class="image-box">
                 <div class="image-label">标注结果</div>
-                <el-image 
+                <el-image
                   class="input-image"
-                  :src="annotatedImageUrl" 
+                  :src="annotatedImageUrl"
                   :preview-src-list="[annotatedImageUrl]"
                   :initial-index="0"
                   fit="contain"
@@ -105,16 +104,15 @@
           <div class="section">
             <h3 class="section-title">检测结果</h3>
             <div class="results-wall">
-              <div 
-                v-for="(item, index) in tableData" 
-                :key="index" 
+              <div
+                v-for="(item, index) in tableData"
+                :key="index"
                 class="result-item">
                 <div class="image-pair">
-                  <!-- 修改污渍区域图片部分 -->
                   <div class="stain-image" v-if="item.warped_image_url">
                     <div class="image-label">污渍区域</div>
-                    <el-image 
-                      :src="item.warped_image_url" 
+                    <el-image
+                      :src="item.warped_image_url"
                       :preview-src-list="[item.warped_image_url]"
                       :initial-index="0"
                       preview-teleported
@@ -123,15 +121,13 @@
                       class="result-image">
                     </el-image>
                   </div>
-                  
-                  <!-- 箭头 -->
+
                   <div class="arrow-icon">→</div>
 
-                  <!-- 修改处理结果图片部分 -->
                   <div class="processed-image" v-if="item.result_image_url">
                     <div class="image-label">处理结果</div>
-                    <el-image 
-                      :src="item.result_image_url" 
+                    <el-image
+                      :src="item.result_image_url"
                       :preview-src-list="[item.result_image_url]"
                       :initial-index="0"
                       preview-teleported
@@ -141,9 +137,8 @@
                     </el-image>
                   </div>
 
-                  <!-- 修改污渍百分比显示部分 -->
                   <div class="percentage-badge" v-if="item.stain_percentage !== undefined">
-                    <el-icon class="percentage-icon"><warning /></el-icon>
+                    <el-icon class="percentage-icon"><Warning /></el-icon>
                     <span class="percentage-text">污渍占比</span>
                     <span class="percentage-value">
                       {{ Number(item.stain_percentage).toFixed(2) }}%
@@ -156,7 +151,6 @@
         </div>
       </div>
     </div>
-  </div>
 </template>
 
 <script lang="ts" setup>
@@ -262,7 +256,7 @@ const handleBeforeUpload = async (file: File) => {
   // 生成符合规则的文件名
   const timestamp = Date.now();
   const cleanFileName = file.name.replace(/[^a-zA-Z0-9.-]/g, '-');
-  
+
   // 构建上传路径
     uploadUrl.value = `http://110.42.214.164:9000/oss/upload/upload/${timestamp}-${cleanFileName}`;
     ElMessage.info('上传中');
@@ -272,11 +266,13 @@ const handleBeforeUpload = async (file: File) => {
 
 const fetchData = async () => {
   try {
+    // 上传图片的检查
     if (!imageUrl.value) {
       ElMessage.warning('请先上传图片');
       return;
     }
 
+    // 获取并检查 token
     const token = localStorage.getItem('authToken');
     console.log('获取到的 token:', token);
 
@@ -286,22 +282,22 @@ const fetchData = async () => {
     }
 
     try {
+      // 解码 token，获取 userId
       const jwtModule = await import('jwt-decode');
-      const decode = typeof jwtModule.default === 'function' 
-        ? jwtModule.default(token)
-        : jwtModule.jwtDecode(token);
-      
+      const decode = jwtModule.default(token);  // 简化解码方式
       console.log('解码后的 token 数据:', decode);
 
       const userId = decode.username;
-      
+
       if (!userId) {
         console.error('Token 中未找到用户名:', decode);
         ElMessage.warning('未获取到用户信息，请重新登录');
+        localStorage.removeItem('authToken');
         router.push('/login');
         return;
       }
 
+      // 启动处理状态和进度条
       isProcessing.value = true;
       progressPercentage.value = 0;
 
@@ -311,26 +307,26 @@ const fetchData = async () => {
         }
       }, 1000);
 
-      console.log('发送请求参数:', {
-        imageUrl: imageUrl.value,
-        username: userId
-      });
+      // 请求污渍检测数据
+      console.log('发送请求参数:', { imageUrl: imageUrl.value, username: userId });
 
       const result = await detectStain(imageUrl.value, userId);
       console.log('API 响应:', result);
-      
+
+      // 清除进度条定时器，并设置进度条为 100
       clearInterval(intervalId);
       progressPercentage.value = 100;
 
-      if (result.results && result.results.length > 0) {
-        // 找到标注图片的数据
-        const annotatedImage = result.results.find(item => item.annotated_image_url);
+      // 处理返回结果
+      if (result.status === 'success' && result.data && result.data.length > 0) {
+        // 找到标注后的图片 URL
+        const annotatedImage = result.data.find(item => item.annotated_image_url);
         if (annotatedImage) {
           annotatedImageUrl.value = annotatedImage.annotated_image_url;
         }
 
-        // 过滤出污渍检测结果
-        tableData.value = result.results
+        // 过滤并映射污渍检测结果
+        tableData.value = result.data
           .filter(item => item.result_image_url && item.warped_image_url)
           .map(item => ({
             warped_image_url: item.warped_image_url,
@@ -352,8 +348,8 @@ const fetchData = async () => {
       router.push('/login');
       return;
     }
-
   } catch (error) {
+    // 处理 API 错误和记录详细信息
     console.error('API 错误详情:', {
       status: error.response?.status,
       statusText: error.response?.statusText,
@@ -365,18 +361,20 @@ const fetchData = async () => {
         data: error.config?.data
       }
     });
-    handleError(error);
+    handleError(error);  // 你可以自定义这个函数来处理错误
   } finally {
+    // 无论如何，确保进度条最终设置为100并且停止
     isProcessing.value = false;
     progressPercentage.value = 100;
   }
 };
 
+
 // 增强错误处理函数
 const handleError = (error: any) => {
   console.error('处理失败:', error);
   let message = '检测失败，请重试';
-  
+
   if (error.response?.status === 404) {
     message = 'API 接口不存在，请检查接口地址';
   } else if (error.code === 'ECONNABORTED') {
@@ -386,7 +384,7 @@ const handleError = (error: any) => {
   } else if (error.request) {
     message = '网络连接失败，请检查网络';
   }
-  
+
   ElMessage.error(message);
   progressPercentage.value = 0;
 };
@@ -402,43 +400,6 @@ const getProgressText = () => {
   return `处理中 ${progressPercentage.value}%`;
 };
 
-// const tableData: Photo[] = [
-//   {
-//     id: "12987122",
-//     name: "Tom",
-//     mark_photo: "234",
-//     num_photo: "3.2",
-//     pre_photo: 10
-//   },
-//   {
-//     id: "12987123",
-//     name: "Tom",
-//     mark_photo: "165",
-//     num_photo: "4.43",
-//     pre_photo: 12
-//   },
-//   {
-//     id: "12987124",
-//     name: "Tom",
-//     mark_photo: "324",
-//     num_photo: "1.9",
-//     pre_photo: 9
-//   },
-//   {
-//     id: "12987125",
-//     name: "Tom",
-//     mark_photo: "621",
-//     num_photo: "2.2",
-//     pre_photo: 17
-//   },
-//   {
-//     id: "12987126",
-//     name: "Tom",
-//     mark_photo: "539",
-//     num_photo: "4.1",
-//     pre_photo: 15
-//   },
-// ];
 </script>
 
 <style scoped>
@@ -774,7 +735,7 @@ const getProgressText = () => {
   .image-pair {
     gap: 24px;
   }
-  
+
   .result-image {
     height: 240px;
   }
@@ -785,21 +746,21 @@ const getProgressText = () => {
     width: 100%;
     max-width: 500px;
   }
-  
+
   .action-bar {
     width: 100%;
     max-width: 500px;
   }
-  
+
   .image-pair {
     flex-direction: column;
   }
-  
+
   .arrow-icon {
     transform: rotate(90deg);
     margin: 20px 0;
   }
-  
+
   .result-image {
     height: 200px;
   }
@@ -899,4 +860,3 @@ const getProgressText = () => {
   display: block;
 }
 </style>
-
