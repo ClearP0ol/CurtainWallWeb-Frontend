@@ -183,7 +183,7 @@ const links = reactive([
     icon: "i-simple-icons-affinitypublisher",
     to: "/crackdetect",
     //to: "http://1.92.72.113:5050",
-    defaultOpen: true,
+    defaultOpen: false,
     children: [
       {
         label: "检测中心",
@@ -283,6 +283,7 @@ const links = reactive([
     label: "玻璃自爆检测",
     to: "/spallingDetection",
     icon: "i-material-symbols-sound-detection-glass-break-sharp",
+    defaultOpen: false,
     tooltip: {
       text: "玻璃自爆检测",
     },
@@ -303,6 +304,7 @@ const links = reactive([
     label: "玻璃平整度检测",
     to: "/smoothnessDetection",
     icon: "i-simple-icons-edgeimpulse",
+    defaultOpen: false,
     //click: gotoGlassFlatness,
     tooltip: {
       text: "玻璃平整度检测",
