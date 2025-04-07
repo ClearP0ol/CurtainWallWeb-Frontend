@@ -474,7 +474,7 @@ const footerLinks = [
   },
 ];
 
-const groups = [
+const groups = computed(() => [
   {
     key: "links",
     label: "Go to",
@@ -500,7 +500,7 @@ const groups = [
       },
     ],
   },
-];
+]);
 
 const defaultColors = ref(
     ["green", "teal", "cyan", "sky", "blue", "indigo", "violet"].map((color) => ({
