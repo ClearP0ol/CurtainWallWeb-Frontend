@@ -169,17 +169,17 @@ const login = async () => {
     console.log('登录响应:', response); // 添加日志
 
     if (loadingInstance) loadingInstance.close();
-    
+
     // 检查响应结构
     const token = response.token || response.data?.token;
     if (token) {
       localStorage.setItem("authToken", token);
       localStorage.setItem("email", loginForm.value.email);
-      
+
       // 验证 token 是否正确存储
       const storedToken = localStorage.getItem("authToken");
       console.log("存储的 token:", storedToken);
-      
+
       // 尝试解析 token
       try {
         const decoded = jwtDecode(storedToken);
@@ -187,7 +187,7 @@ const login = async () => {
       } catch (e) {
         console.error("Token 解析失败:", e);
       }
-      
+
       router.push({path: "/"});
     } else {
       console.error("登录响应中没有 token:", response);
@@ -209,15 +209,28 @@ const sendVerificationCode = async () => {
   if (disableButton.value) {
     return;
   }
+
+  // 2. 验证邮箱格式
+  const email = registerForm.value.email;
+  if (!email) {
+    ElMessage.error('请输入邮箱地址');
+    return;
+  }
+
+  // 邮箱正则表达式
+  const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+  if (!emailRegex.test(email)) {
+    ElMessage.error('请输入有效的邮箱地址');
+    return;
+  }
+
+  disableButton.value = true;
+  startCountdown();
   try {
     const response = await $fetch("/api/account/sendCode", {
       method: "POST",
       body: {email: registerForm.value.email},
     });
-    if (response) {
-      disableButton.value = true;
-      startCountdown();
-    }
   } catch (error) {
     console.error('Error response:', error.response);
     ElMessage.error(error.response._data.message);

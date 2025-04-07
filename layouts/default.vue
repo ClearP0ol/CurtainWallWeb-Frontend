@@ -372,15 +372,6 @@ const links = reactive([
     ],
   },
   {
-    id: "userInfo",
-    label: "个人信息",
-    to: "/userInfo",
-    icon: "i-heroicons-user-circle",
-    tooltip: {
-      text: "个人信息",
-    },
-  },
-  {
     id: "notification",
     label: "通知",
     icon: "i-heroicons-bell-alert",
