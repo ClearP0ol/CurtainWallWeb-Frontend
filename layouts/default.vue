@@ -220,16 +220,16 @@ const links = reactive([
         children: [
           {
             label: "参数设置",
-            to: "/monitor/parameter",
+            to: "/vibration/parameter",
           },
           {
             label: "实时监测",
-            to: "/monitor",
+            to: "/vibration",
             exact: true,
           },
           {
             label: "异常数据",
-            to: "/monitor/abnormal",
+            to: "/vibration/abnormal",
           },
 
         ],

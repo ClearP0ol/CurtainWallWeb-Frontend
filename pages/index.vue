@@ -117,7 +117,7 @@ const modulesLine3 = reactive([
   {
     title: "震动数据检测",
     description: "用于检测和展示幕墙的振动数据",
-    target_address: "/monitor/parameter",
+    target_address: "/subindex",
     permissionKey: "access_system_v",
     icon: "i-simple-icons-tailwindcss",
   },

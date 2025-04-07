@@ -1,6 +1,7 @@
 <template>
+    
   <div class="chat-container">
-    <!-- 快捷操作按钮区 -->
+    <!-- 快捷操作按钮区 --> <el-button type="primary" @click="backToMain" style="position: absolute; right: 0; top: 0;">返回主页</el-button>
     <div class="quick-actions">
       <el-button type="primary" @click="showAnalysisDialog">
         <el-icon><DataAnalysis /></el-icon>
@@ -81,7 +82,6 @@
         
         <el-form-item label="分析尺度">
           <el-select v-model="analysisForm.timeScale" placeholder="请选择分析尺度">
-            <el-option label="最近1分钟" value="minute" />
             <el-option label="最近1小时" value="hour" />
             <el-option label="最近1天" value="day" />
           </el-select>
@@ -100,15 +100,30 @@
 </template>
 
 <script>
+
+const router = useRouter();
 import { ChatOpenAI } from "@langchain/openai";
+import {useRouter} from "vue-router";
 import axios from 'axios';
 import { DataAnalysis } from '@element-plus/icons-vue'
 import MarkdownIt from 'markdown-it';
 import { ref, onMounted, onBeforeUnmount } from 'vue';
-
+const backToMain = () => {
+  router.push("/subindex");
+};
 const md = new MarkdownIt();
 
 export default {
+  setup() {
+    const router = useRouter();
+    const backToMain = () => {
+      router.push("/subindex");
+    };
+
+    return {
+      backToMain
+    };
+  },
   components: {
     DataAnalysis
   },
@@ -136,7 +151,7 @@ export default {
       ],
       analysisForm: {
         device: '',
-        timeScale: 'minute'
+        timeScale: 'hour'
       },
       socket1: null,
       devices: [], // 存储设备状态
@@ -156,6 +171,7 @@ export default {
   },
 
   methods: {
+
     async initChatModel() {
       try {
         this.chatModel = new ChatOpenAI({
