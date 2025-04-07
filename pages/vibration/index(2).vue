@@ -341,7 +341,7 @@ const fetchLatestData = async () => {
         num: 1
       }
     });
-    
+
     if (response.data.status === 'success' && response.data.data) {
       const { x, y, z } = response.data.data;
 
@@ -349,8 +349,8 @@ const fetchLatestData = async () => {
       if (!accumulatedData.value.x.times.includes(x[0][0]) &&
           !accumulatedData.value.y.times.includes(y[0][0]) &&
           !accumulatedData.value.z.times.includes(z[0][0])) {
-        
-        
+
+
         console.log("新数据");
         // 检查每个轴的数据并发送相应的警报
         for (const [axis, data] of [[x[0][1], 'X'], [y[0][1], 'Y'], [z[0][1], 'Z']]) {
@@ -390,7 +390,7 @@ const startFetchingLatestData = () => {
 
 const router = useRouter();
 const backToMain = () => {
-  router.push("/");
+  router.push("/subindex");
 };
 
 
@@ -571,7 +571,7 @@ const handleDeviceChange = (value: CascaderValue): void => {
     if (deviceId) {
       const device = deviceList.value.find(d => d.deviceId === deviceId);
       const online = devices.value?.find((d: { deviceId: string }) => d.deviceId === deviceId)?.online ?? false;
-      
+
       if (device) {
         selectedDevice.value = {
           deviceId: deviceId,
@@ -963,7 +963,7 @@ watch([selectedDevice, dataSource], async ([newDevice, newDataSource]) => {
       socket1.send(JSON.stringify(request2));
     };
   //接收到socket消息
-      
+
   }
   else if (newDataSource === 'api_minute') {
     if (socket1) {
@@ -997,7 +997,7 @@ watch([selectedDevice, dataSource], async ([newDevice, newDataSource]) => {
     // 使用 API 获取年级别数据
     await loadData('yearly', 5);
   }
-    
+
   socket1.onmessage = (event) => {
         const message = JSON.parse(event.data);
         if (message.code = 20001) {

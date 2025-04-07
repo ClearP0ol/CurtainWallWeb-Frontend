@@ -15,8 +15,8 @@
 
       <UDashboardToolbar>
         <template #left>
-          <select 
-            v-model="selectedDevice" 
+          <select
+            v-model="selectedDevice"
             @change="handleSelectDevice"
             style="width: 200px; height: 32px; margin-left: 10px;"
           >
@@ -51,7 +51,7 @@ import axios from 'axios';
 
 const router = useRouter();
 const backToMain = () => {
-  router.push("/");
+  router.push("/subindex");
 };
 
 // 基础数据
