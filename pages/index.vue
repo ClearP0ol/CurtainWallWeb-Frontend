@@ -50,9 +50,9 @@ import {useRouter} from "vue-router";
 const router = useRouter();
 const userAuth = ref({});
 
-definePageMeta({
-  middleware: "auth",
-});
+//definePageMeta({
+//  middleware: "auth",
+//});
 
 onMounted(() => {
   getUserAuth();

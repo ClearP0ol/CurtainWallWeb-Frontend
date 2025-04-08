@@ -113,6 +113,7 @@ import {onMounted, ref} from "vue";
 import {useRouter} from "vue-router";
 import {ElMessage, ElLoading} from "element-plus";
 import * as jwtDecode from 'jwt-decode';
+import axios from "axios";
 
 // import store from '@/store/index.js'
 
@@ -187,6 +188,24 @@ const login = async () => {
       } catch (e) {
         console.error("Token 解析失败:", e);
       }
+      //  立即获取用户权限并保存
+      try {
+        const permissionRes = await axios.get("/api/account/custom/getPermissions", {
+          headers: {
+            Authorization: `Bearer ${storedToken}`,
+          },
+        });
+        //保存权限结构
+        localStorage.setItem("userAuth", JSON.stringify(permissionRes.data.data));
+        //验证权限是否正确存储
+        console.log("已保存权限结构:", permissionRes.data.data);
+      } catch (err) {
+        console.error("权限获取失败:", err);
+        ElMessage.error("权限获取失败，请联系管理员");
+        return;
+      }
+
+      // //  权限写入成功，再跳转首页
 
       router.push({path: "/"});
     } else {
