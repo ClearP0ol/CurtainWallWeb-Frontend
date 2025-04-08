@@ -20,14 +20,6 @@
         :table-layout="auto"
       >
         <el-table-column prop="email" label="Email"></el-table-column>
-        <el-table-column label="是否为管理员">
-          <template #default="{ row }">
-            <el-switch
-              v-model="row.is_superuser"
-              @change="() => handleSwitchChange(row, 'is_superuser','table')"
-            ></el-switch>
-          </template>
-        </el-table-column>
         <el-table-column label="3D模型权限" prop="access_system_a">
           <template #default="{ row }">
             <el-switch
