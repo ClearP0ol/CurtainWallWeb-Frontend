@@ -20,6 +20,14 @@
         :table-layout="auto"
       >
         <el-table-column prop="email" label="Email"></el-table-column>
+        <el-table-column label="转让管理员">
+          <template #default="{ row }">
+            <el-switch
+              v-model="row.is_superuser"
+              @change="() => handleSwitchChange(row, 'is_superuser','table')"
+            ></el-switch>
+          </template>
+        </el-table-column>
         <el-table-column label="3D模型权限" prop="access_system_a">
           <template #default="{ row }">
             <el-switch
@@ -124,6 +132,61 @@ const paginatedList = computed(() => {
 });
 
 const handleSwitchChange = async (item, key, updatemethod) => {
+  const currentUserEmail = localStorage.getItem("email");
+
+
+  // 管理员权限转让逻辑
+  if (key === 'is_superuser' && item[key]) {
+    const confirm = await ElMessageBox.confirm(
+      `确定要将管理员权限转让给 ${item.email} 吗？此操作将撤销你自己的管理员权限。`,
+      '确认转让管理员权限',
+      {
+        confirmButtonText: '确认',
+        cancelButtonText: '取消',
+        type: 'warning',
+      }
+    ).catch(() => null);
+
+    if (!confirm) {
+      item[key] = false;
+      return;
+    }
+
+    const dataToSend = {
+      [item.email]: {
+        is_superuser: true,
+        method: updatemethod,
+      },
+      [currentUserEmail]: {
+        is_superuser: false,
+        method: updatemethod,
+      },
+    };
+
+    console.log("准备发送的管理员转让数据:", dataToSend);
+
+    try {
+      const response = await $fetch("/api/account/super/updatePermission", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("authToken")}`,
+        },
+        body: dataToSend,
+      });
+
+      console.log("转让接口响应:", response);
+
+      ElMessage.success("管理员权限转让成功");
+      await getAllPermission(); // 重新获取数据
+    } catch (error) {
+      console.error("转让请求出错:", error);
+      ElMessage.error("权限转让失败");
+      item[key] = false;
+    }
+    return;
+  }
+
+  // 其他权限处理逻辑
   if (item.is_superuser && key !== 'is_superuser') {
     ElMessage.warning("管理员固定获得全部权限，不可修改");
     await nextTick();
@@ -152,13 +215,10 @@ const handleSwitchChange = async (item, key, updatemethod) => {
     );
   } catch (error) {
     console.error(error);
-    if (updatemethod === "email") {
-      ElMessage.error("邮箱不存在，或权限已满足要求，无需修改");
-    } else {
-      ElMessage.error("权限修改出错");
-    }
+    ElMessage.error("权限修改出错");
   }
 };
+
 
 const getAllPermission = async () => {
   try {
