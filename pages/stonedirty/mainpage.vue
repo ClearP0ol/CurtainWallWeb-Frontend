@@ -56,6 +56,18 @@
           {{ isProcessing ? '检测中' : '开始检测' }}
         </el-button>
 
+        <el-button
+          type="warning"
+          class="export-pdf-button"
+          :disabled="!showTable"
+          @click="exportPDF"
+        >
+          <template #icon>
+            <el-icon><Document /></el-icon>
+          </template>
+          导出报告
+        </el-button>
+
         <div class="progress-wrapper" v-if="progressPercentage > 0">
           <el-progress
             :percentage="progressPercentage"
@@ -162,9 +174,11 @@ import axios from "axios";
 import {useRouter} from "vue-router";
 import {detectStain} from '../../api/stain';
 import { Warning } from '@element-plus/icons-vue'
-import { ArrowLeft, Search } from '@element-plus/icons-vue'
+import { ArrowLeft, Search, Document } from '@element-plus/icons-vue'
 import userService from '../../api/user';
 import { ElMessage } from 'element-plus'
+import html2canvas from 'html2canvas';
+import { jsPDF } from 'jspdf';
 
 const router = useRouter();
 const backToMain = () => {
@@ -398,6 +412,161 @@ const getProgressText = () => {
     return '等待处理';
   }
   return `处理中 ${progressPercentage.value}%`;
+};
+
+// 修改PDF导出功能
+const exportPDF = async () => {
+  if (!tableData.value || tableData.value.length === 0) {
+    ElMessage.warning('没有可导出的结果');
+    return;
+  }
+
+  try {
+    ElMessage.info('正在生成PDF，请稍候...');
+
+    // 创建 PDF 实例
+    const doc = new jsPDF({
+      orientation: 'portrait',
+      unit: 'mm',
+      format: 'a4'
+    });
+
+    // 添加字体
+    doc.addFont('/assets/simsun.ttf', 'simsun', 'normal');
+    doc.setFont('simsun');
+
+    // 页面高度和宽度
+    const pageHeight = doc.internal.pageSize.getHeight();
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const imgWidth = 80; // 图片宽度（mm）
+    let currentY = 20; // 当前Y坐标
+
+    // 检查是否需要新页面
+    const checkNewPage = (contentHeight: number) => {
+      if (currentY + contentHeight > pageHeight - 20) { // 预留20mm底部边距
+        doc.addPage();
+        currentY = 20; // 新页面从顶部开始
+      }
+    };
+
+    // 添加标题函数
+    const addTitle = (text: string, level: number = 1) => {
+      const fontSize = level === 1 ? 20 : level === 2 ? 16 : 14;
+      const marginTop = level === 1 ? 0 : level === 2 ? 3 : 2; // 进一步减小标题间距
+      
+      checkNewPage(fontSize + marginTop);
+      doc.setFontSize(fontSize);
+      const textWidth = doc.getTextWidth(text);
+      const x = level === 1 ? (pageWidth - textWidth) / 2 : 20;
+      doc.text(text, x, currentY);
+      currentY += fontSize + marginTop;
+    };
+
+    // 添加内容函数
+    const addContent = (text: string, fontSize: number = 12) => {
+      checkNewPage(fontSize + 2); // 进一步减小内容间距
+      doc.setFontSize(fontSize);
+      doc.text(text, 20, currentY);
+      currentY += fontSize + 2; // 进一步减小行距
+    };
+
+    // 加载图片函数
+    const loadImage = (url: string) => {
+      return new Promise<HTMLImageElement>((resolve, reject) => {
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.onload = () => resolve(img);
+        img.onerror = reject;
+        img.src = url;
+      });
+    };
+
+    // 1. 报告标题
+    addTitle("污渍检测报告", 1);
+
+    // 2. 基本信息
+    addTitle("一、基本信息", 2);
+    const currentDate = new Date().toLocaleDateString('zh-CN');
+    addContent(`生成日期：${currentDate}`);
+    addContent(`检测数量：${tableData.value.length}处`);
+
+    // 3. 原始图片分析
+    if (imageUrl.value && annotatedImageUrl.value) {
+      addTitle("二、原始图片分析", 2);
+
+      const originalImg = await loadImage(imageUrl.value);
+      const annotatedImg = await loadImage(annotatedImageUrl.value);
+
+      // 计算图片尺寸
+      const imgHeight1 = (originalImg.height * imgWidth) / originalImg.width;
+      const imgHeight2 = (annotatedImg.height * imgWidth) / annotatedImg.height;
+
+      // 添加原始图片
+      addTitle("1. 原始图片", 3);
+      checkNewPage(imgHeight1 + 8); // 进一步减小图片间距
+      doc.addImage(originalImg, 'JPEG', 20, currentY, imgWidth, imgHeight1);
+      currentY += imgHeight1 + 6; // 进一步减小图片间距
+
+      // 添加标注图片
+      addTitle("2. 标注结果", 3);
+      checkNewPage(imgHeight2 + 8);
+      doc.addImage(annotatedImg, 'JPEG', 20, currentY, imgWidth, imgHeight2);
+      currentY += imgHeight2 + 10; // 进一步减小图片间距
+    }
+
+    // 4. 检测结果
+    addTitle("三、检测结果", 2);
+    addContent(`共检测到 ${tableData.value.length} 处污渍，具体分析如下：`);
+
+    // 添加每个污渍的检测结果
+    for (let i = 0; i < tableData.value.length; i++) {
+      const item = tableData.value[i];
+      addTitle(`${i + 1}. 第 ${i + 1} 处污渍`, 3);
+
+      // 加载污渍区域图片
+      const stainImg = await loadImage(item.warped_image_url);
+      const stainImgHeight = (stainImg.height * imgWidth) / stainImg.width;
+      
+      // 加载处理结果图片
+      const resultImg = await loadImage(item.result_image_url);
+      const resultImgHeight = (resultImg.height * imgWidth) / resultImg.width;
+
+      // 计算当前项的总高度
+      const itemTotalHeight = stainImgHeight + resultImgHeight + 20; // 进一步减小总高度
+
+      // 添加污渍区域图片
+      addTitle("(1) 污渍区域", 3);
+      checkNewPage(stainImgHeight + 8);
+      doc.addImage(stainImg, 'JPEG', 20, currentY, imgWidth, stainImgHeight);
+      currentY += stainImgHeight + 6; // 进一步减小图片间距
+
+      // 添加处理结果图片
+      addTitle("(2) 处理结果", 3);
+      checkNewPage(resultImgHeight + 8);
+      doc.addImage(resultImg, 'JPEG', 20, currentY, imgWidth, resultImgHeight);
+      currentY += resultImgHeight + 6; // 进一步减小图片间距
+
+      // 添加污渍百分比
+      addTitle("(3) 污渍分析", 3);
+      addContent(`污渍占比：${Number(item.stain_percentage).toFixed(2)}%`);
+      addContent("处理建议：建议及时清理，避免污渍扩散");
+      currentY += 3; // 进一步减小分析部分间距
+    }
+
+    // 5. 总结
+    addTitle("四、总结", 2);
+    const totalPercentage = tableData.value.reduce((sum, item) => sum + item.stain_percentage, 0);
+    const averagePercentage = totalPercentage / tableData.value.length;
+    addContent(`本次检测共发现 ${tableData.value.length} 处污渍，平均污渍占比 ${averagePercentage.toFixed(2)}%。`);
+    addContent("建议及时处理发现的污渍，保持墙面清洁。");
+
+    // 保存 PDF
+    doc.save(`污渍检测报告-${new Date().getTime()}.pdf`);
+    ElMessage.success('PDF导出成功');
+  } catch (error) {
+    console.error('PDF导出错误:', error);
+    ElMessage.error('PDF导出失败，请重试');
+  }
 };
 
 </script>
@@ -858,5 +1027,71 @@ const getProgressText = () => {
   color: #606266;
   margin-top: 4px;
   display: block;
+}
+
+.export-button {
+  min-width: 120px;
+  height: 40px;
+  font-size: 15px;
+  font-weight: 500;
+  padding: 0 24px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #67C23A, #95D475);
+  border: none;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: 12px;
+}
+
+.export-button:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(103, 194, 58, 0.3);
+  background: linear-gradient(135deg, #85CE61, #A8E986);
+}
+
+.export-button:disabled {
+  background: #B3E19D;
+  cursor: not-allowed;
+  border: none;
+}
+
+.export-button .el-icon {
+  font-size: 18px;
+  margin-right: 4px;
+}
+
+.export-pdf-button {
+  min-width: 120px;
+  height: 40px;
+  font-size: 15px;
+  font-weight: 500;
+  padding: 0 24px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #E6A23C, #F5C77E);
+  border: none;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: 12px;
+}
+
+.export-pdf-button:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(230, 162, 60, 0.3);
+  background: linear-gradient(135deg, #EFB755, #F8D399);
+}
+
+.export-pdf-button:disabled {
+  background: #F3D19E;
+  cursor: not-allowed;
+  border: none;
+}
+
+.export-pdf-button .el-icon {
+  font-size: 18px;
+  margin-right: 4px;
 }
 </style>
