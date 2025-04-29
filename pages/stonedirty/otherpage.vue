@@ -65,7 +65,7 @@
           <h3 class="section-title">历史检测记录</h3>
           <div class="results-wall">
             <div
-              v-for="(item, index) in filteredData"
+              v-for="(item, index) in pagedData"
               :key="index"
               class="result-item"
             >
@@ -159,7 +159,7 @@
                         <el-icon class="percentage-icon"><Warning /></el-icon>
                         <span class="percentage-text">污渍占比</span>
                         <span class="percentage-value">
-                          {{ Number(result.stain_percentage).toFixed(2) }}%
+                          {{ (Number(result.stain_percentage) * 100).toFixed(2) }}%
                         </span>
                       </div>
                     </div>
@@ -194,13 +194,22 @@
           </div>
         </div>
       </div>
+      <!-- 分页控件 -->
+      <el-pagination
+        v-model:current-page="currentPage"
+        :page-size="pageSize"
+        :total="filteredData.length"
+        layout="prev, pager, next"
+        background
+        style="margin-top: 24px; justify-content: center;"
+      />
     </div>
 </template>
 
 
 
 <script setup lang="ts">
-import { ref, onMounted } from "vue";
+import { ref, onMounted, computed } from "vue";
 import { useRouter } from "vue-router";
 import { ElMessage } from 'element-plus';
 import { getHistory } from '../../api/stain';
@@ -265,6 +274,13 @@ const dateShortcuts = [
     },
   },
 ];
+
+const currentPage = ref(1);
+const pageSize = ref(5);
+const pagedData = computed(() => {
+  const start = (currentPage.value - 1) * pageSize.value;
+  return filteredData.value.slice(start, start + pageSize.value);
+});
 
 // 获取数据
 const fetchHistory = async () => {
@@ -341,8 +357,12 @@ const fetchHistory = async () => {
           return processedRecord;
         });
 
+        // 按时间倒序排序
+        tableData.value.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+
         // 初始化时展示所有记录
         filteredData.value = [...tableData.value];
+        currentPage.value = 1;
 
         console.log('最终处理后的数据:', tableData.value);
       } else {
@@ -409,6 +429,10 @@ const applyFilter = () => {
       return createdAt >= start && createdAt <= end;
     });
 
+    // 按时间倒序排序
+    filteredData.value.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+    currentPage.value = 1;
+
     console.log('筛选后的数据:', filteredData.value);
   } else {
     ElMessage.warning('请选择完整的日期范围');
@@ -419,6 +443,7 @@ const applyFilter = () => {
 const resetFilter = () => {
   dateRange.value = [];
   filteredData.value = [...tableData.value]; // 恢复所有数据
+  currentPage.value = 1;
 };
 
 // 图片 URL 验证
@@ -563,7 +588,7 @@ const exportSingleRecord = async (record: TableItem) => {
 
         // 添加污渍百分比
         addTitle("(3) 污渍分析", 3);
-        addContent(`污渍占比：${Number(result.stain_percentage).toFixed(2)}%`);
+        addContent(`污渍占比：${(Number(result.stain_percentage) * 100).toFixed(2)}%`);
         addContent("处理建议：建议及时清理，避免污渍扩散");
         currentY += 3;
       }
@@ -574,7 +599,7 @@ const exportSingleRecord = async (record: TableItem) => {
     if (record.detectionResults && record.detectionResults.length > 0) {
       const totalPercentage = record.detectionResults.reduce((sum, item) => sum + item.stain_percentage, 0);
       const averagePercentage = totalPercentage / record.detectionResults.length;
-      addContent(`本次检测共发现 ${record.detectionResults.length} 处污渍，平均污渍占比 ${averagePercentage.toFixed(2)}%。`);
+      addContent(`本次检测共发现 ${record.detectionResults.length} 处污渍，平均污渍占比 ${(averagePercentage * 100).toFixed(2)}%。`);
     }
     addContent("建议及时处理发现的污渍，保持墙面清洁。");
 
