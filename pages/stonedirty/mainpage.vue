@@ -97,7 +97,7 @@
                   hide-on-click-modal>
                 </el-image>
               </div>
-              <div class="image-box">
+              <div class="image-box" v-if="annotatedImageUrl">
                 <div class="image-label">标注结果</div>
                 <el-image
                   class="input-image"
@@ -115,7 +115,10 @@
           <!-- 检测结果展示 -->
           <div class="section">
             <h3 class="section-title">检测结果</h3>
-            <div class="results-wall">
+            <div v-if="tableData.length === 0" class="no-stain-message">
+              <el-empty description="未检测到污渍" />
+            </div>
+            <div v-else class="results-wall">
               <div
                 v-for="(item, index) in tableData"
                 :key="index"
@@ -153,7 +156,7 @@
                     <el-icon class="percentage-icon"><Warning /></el-icon>
                     <span class="percentage-text">污渍占比</span>
                     <span class="percentage-value">
-                      {{ Number(item.stain_percentage).toFixed(2) }}%
+                      {{ (item.stain_percentage * 100).toFixed(2) }}%
                     </span>
                   </div>
                 </div>
@@ -351,9 +354,9 @@ const fetchData = async () => {
         showTable.value = true;
         ElMessage.success('检测完成');
       } else {
-        console.log('未检测到污渍:', result.message);
+        showTable.value = true; // 即使没有检测到污渍也显示结果区域
+        tableData.value = []; // 清空数据
         ElMessage.info(result.message || '未检测到污渍');
-        showTable.value = false;
       }
     } catch (decodeError) {
       console.error('Token 解析失败:', decodeError);
@@ -548,7 +551,7 @@ const exportPDF = async () => {
 
       // 添加污渍百分比
       addTitle("(3) 污渍分析", 3);
-      addContent(`污渍占比：${Number(item.stain_percentage).toFixed(2)}%`);
+      addContent(`污渍占比：${(item.stain_percentage * 100).toFixed(2)}%`);
       addContent("处理建议：建议及时清理，避免污渍扩散");
       currentY += 3; // 进一步减小分析部分间距
     }
@@ -556,7 +559,7 @@ const exportPDF = async () => {
     // 5. 总结
     addTitle("四、总结", 2);
     const totalPercentage = tableData.value.reduce((sum, item) => sum + item.stain_percentage, 0);
-    const averagePercentage = totalPercentage / tableData.value.length;
+    const averagePercentage = (totalPercentage / tableData.value.length) * 100;
     addContent(`本次检测共发现 ${tableData.value.length} 处污渍，平均污渍占比 ${averagePercentage.toFixed(2)}%。`);
     addContent("建议及时处理发现的污渍，保持墙面清洁。");
 
