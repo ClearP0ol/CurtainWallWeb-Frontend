@@ -40,6 +40,11 @@
             </template>
             重置
           </el-button>
+
+          <!-- 添加显示总条数的文本 -->
+          <span class="total-count">
+            共 {{ filteredData.length }} 条记录
+          </span>
         </div>
 
         <el-button
@@ -172,6 +177,18 @@
                   <el-icon><Document /></el-icon>
                   记录ID: {{ item.history_id }}
                 </span>
+                <!-- 添加导出单个记录按钮 -->
+                <el-button
+                  type="primary"
+                  size="small"
+                  class="export-single-button"
+                  @click="exportSingleRecord(item)"
+                >
+                  <template #icon>
+                    <el-icon><Document /></el-icon>
+                  </template>
+                  导出报告
+                </el-button>
               </div>
             </div>
           </div>
@@ -187,6 +204,8 @@ import { ref, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import { ElMessage } from 'element-plus';
 import { getHistory } from '../../api/stain';
+import { jsPDF } from 'jspdf';
+import { ArrowLeft, Search, Document, Refresh, Clock, Warning, Loading } from '@element-plus/icons-vue';
 
 // 路由
 const router = useRouter();
@@ -415,6 +434,156 @@ const validateImageUrl = (url: string) => {
   } catch (error) {
     console.error('处理图片 URL 失败:', error);
     return '';
+  }
+};
+
+// 添加导出单个历史记录的函数
+const exportSingleRecord = async (record: TableItem) => {
+  try {
+    ElMessage.info('正在生成PDF，请稍候...');
+
+    // 创建 PDF 实例
+    const doc = new jsPDF({
+      orientation: 'portrait',
+      unit: 'mm',
+      format: 'a4'
+    });
+
+    // 添加字体
+    doc.addFont('/assets/simsun.ttf', 'simsun', 'normal');
+    doc.setFont('simsun');
+
+    // 页面高度和宽度
+    const pageHeight = doc.internal.pageSize.getHeight();
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const imgWidth = 80; // 图片宽度（mm）
+    let currentY = 20; // 当前Y坐标
+
+    // 检查是否需要新页面
+    const checkNewPage = (contentHeight: number) => {
+      if (currentY + contentHeight > pageHeight - 20) {
+        doc.addPage();
+        currentY = 20;
+      }
+    };
+
+    // 添加标题函数
+    const addTitle = (text: string, level: number = 1) => {
+      const fontSize = level === 1 ? 20 : level === 2 ? 16 : 14;
+      const marginTop = level === 1 ? 0 : level === 2 ? 3 : 2;
+      
+      checkNewPage(fontSize + marginTop);
+      doc.setFontSize(fontSize);
+      const textWidth = doc.getTextWidth(text);
+      const x = level === 1 ? (pageWidth - textWidth) / 2 : 20;
+      doc.text(text, x, currentY);
+      currentY += fontSize + marginTop;
+    };
+
+    // 添加内容函数
+    const addContent = (text: string, fontSize: number = 12) => {
+      checkNewPage(fontSize + 2);
+      doc.setFontSize(fontSize);
+      doc.text(text, 20, currentY);
+      currentY += fontSize + 2;
+    };
+
+    // 加载图片函数
+    const loadImage = (url: string) => {
+      return new Promise<HTMLImageElement>((resolve, reject) => {
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.onload = () => resolve(img);
+        img.onerror = reject;
+        img.src = validateImageUrl(url);
+      });
+    };
+
+    // 1. 报告标题
+    addTitle("污渍检测报告", 1);
+
+    // 2. 基本信息
+    addTitle("一、基本信息", 2);
+    addContent(`检测时间：${formatDate(record.created_at)}`);
+    addContent(`记录ID：${record.history_id}`);
+
+    // 3. 原始图片分析
+    if (record.input_url && record.annotated_image_url) {
+      addTitle("二、原始图片分析", 2);
+
+      const originalImg = await loadImage(record.input_url);
+      const annotatedImg = await loadImage(record.annotated_image_url);
+
+      // 计算图片尺寸
+      const imgHeight1 = (originalImg.height * imgWidth) / originalImg.width;
+      const imgHeight2 = (annotatedImg.height * imgWidth) / annotatedImg.height;
+
+      // 添加原始图片
+      addTitle("1. 原始图片", 3);
+      checkNewPage(imgHeight1 + 8);
+      doc.addImage(originalImg, 'JPEG', 20, currentY, imgWidth, imgHeight1);
+      currentY += imgHeight1 + 6;
+
+      // 添加标注图片
+      addTitle("2. 标注结果", 3);
+      checkNewPage(imgHeight2 + 8);
+      doc.addImage(annotatedImg, 'JPEG', 20, currentY, imgWidth, imgHeight2);
+      currentY += imgHeight2 + 10;
+    }
+
+    // 4. 检测结果
+    if (record.detectionResults && record.detectionResults.length > 0) {
+      addTitle("三、检测结果", 2);
+      addContent(`共检测到 ${record.detectionResults.length} 处污渍，具体分析如下：`);
+
+      // 添加每个污渍的检测结果
+      for (let i = 0; i < record.detectionResults.length; i++) {
+        const result = record.detectionResults[i];
+        addTitle(`${i + 1}. 第 ${i + 1} 处污渍`, 3);
+
+        // 加载污渍区域图片
+        const stainImg = await loadImage(result.warped_image_url);
+        const stainImgHeight = (stainImg.height * imgWidth) / stainImg.width;
+        
+        // 加载处理结果图片
+        const resultImg = await loadImage(result.result_image_url);
+        const resultImgHeight = (resultImg.height * imgWidth) / resultImg.width;
+
+        // 添加污渍区域图片
+        addTitle("(1) 污渍区域", 3);
+        checkNewPage(stainImgHeight + 8);
+        doc.addImage(stainImg, 'JPEG', 20, currentY, imgWidth, stainImgHeight);
+        currentY += stainImgHeight + 6;
+
+        // 添加处理结果图片
+        addTitle("(2) 处理结果", 3);
+        checkNewPage(resultImgHeight + 8);
+        doc.addImage(resultImg, 'JPEG', 20, currentY, imgWidth, resultImgHeight);
+        currentY += resultImgHeight + 6;
+
+        // 添加污渍百分比
+        addTitle("(3) 污渍分析", 3);
+        addContent(`污渍占比：${Number(result.stain_percentage).toFixed(2)}%`);
+        addContent("处理建议：建议及时清理，避免污渍扩散");
+        currentY += 3;
+      }
+    }
+
+    // 5. 总结
+    addTitle("四、总结", 2);
+    if (record.detectionResults && record.detectionResults.length > 0) {
+      const totalPercentage = record.detectionResults.reduce((sum, item) => sum + item.stain_percentage, 0);
+      const averagePercentage = totalPercentage / record.detectionResults.length;
+      addContent(`本次检测共发现 ${record.detectionResults.length} 处污渍，平均污渍占比 ${averagePercentage.toFixed(2)}%。`);
+    }
+    addContent("建议及时处理发现的污渍，保持墙面清洁。");
+
+    // 保存 PDF
+    doc.save(`污渍检测报告-${record.history_id}-${new Date().getTime()}.pdf`);
+    ElMessage.success('PDF导出成功');
+  } catch (error) {
+    console.error('PDF导出错误:', error);
+    ElMessage.error('PDF导出失败，请重试');
   }
 };
 </script>
@@ -745,5 +914,42 @@ const validateImageUrl = (url: string) => {
 .image-label {
   font-weight: 500;
   color: #409EFF;
+}
+
+.export-button {
+  margin-left: 10px;
+}
+
+.export-single-button {
+  margin-left: auto;
+  background-color: #409EFF;
+  border-color: #409EFF;
+}
+
+.export-single-button:hover {
+  background-color: #66b1ff;
+  border-color: #66b1ff;
+}
+
+.record-info {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin-top: 10px;
+  padding: 10px;
+  background-color: #f5f7fa;
+  border-radius: 4px;
+}
+
+/* 添加总条数显示样式 */
+.total-count {
+  margin-left: 16px;
+  font-size: 14px;
+  color: #606266;
+  font-weight: 500;
+  padding: 8px 12px;
+  background-color: #f5f7fa;
+  border-radius: 4px;
+  border: 1px solid #dcdfe6;
 }
 </style>
