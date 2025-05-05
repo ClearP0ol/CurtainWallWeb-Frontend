@@ -162,22 +162,21 @@ const links = reactive([
     ],
 
   },
-  {
-    id: "corrosiondetection",
-    label: "金属锈蚀检测",
-    //icon: "i-amazon-s3",
-    icon: "i-simple-icons-amazons3",
-    to: "/corrosiondetection/detect",
-    defaultOpen: false,
-    children: [
-      {
-        label: "上传图片",
-        to: "/corrosiondetection/detect",
-        exact: true,
-      },
-    ],
+  // {
+  //   id: "corrosiondetection",
+  //   label: "金属锈蚀检测",
+  //   //icon: "i-amazon-s3",
+  //   icon: "i-simple-icons-amazons3",
+  //   defaultOpen: false,
+  //   children: [
+  //     {
+  //       label: "上传图片",
+  //       to: "/corrosiondetection/detect",
+  //       exact: true,
+  //     },
+  //   ],
 
-  },
+  // },
   {
     id: "stoneCrack",
     label: "石材裂缝检测",
@@ -323,55 +322,55 @@ const links = reactive([
       },
     ],
   },
-  {
-    id: "glassToughnessJudge",
-    label: "幕墙韧性评估",
-    to: "/resilienceAssessment/dataUpload",
-    icon: "i-simple-icons-testcafe",
-    defaultOpen: false,
-    // click: gotoGlassToughness,
-    tooltip: {
-      text: "幕墙韧性评估",
-    },
-    children: [
-      {
-        label: "评估数据上传",
-        to: "/resilienceAssessment/dataUpload",
-      },
-      {
-        label: "粗糙集评估",
-        to: "/resilienceAssessment/dangerAssess",
-        exact: true,
-        defaultOpen: false,
-        children:[
-          {
-            label: "危险系数评估",
-            to: "/resilienceAssessment/RS_dangerAssess",
-          },
-          {
-            label: "决策规则分析",
-            to: "/resilienceAssessment/deciRules",
-          },
-        ]
-      },
-      {
-        label: "熵权法评估",
-        to: "/resilienceAssessment/dangerAssess",
-        exact: true,
-        defaultOpen: false,
-        children:[
-          {
-            label: "危险系数评估",
-            to: "/resilienceAssessment/ETP_dangerAssess",
-          },
-        ]
-      },
-      {
-        label: "综合危险系数评估",
-        to: "/resilienceAssessment/dangerAssess",
-      },
-    ],
-  },
+  // {
+  //   id: "glassToughnessJudge",
+  //   label: "幕墙韧性评估",
+  //   to: "/resilienceAssessment",
+  //   icon: "i-simple-icons-testcafe",
+  //   defaultOpen: false,
+  //   // click: gotoGlassToughness,
+  //   tooltip: {
+  //     text: "幕墙韧性评估",
+  //   },
+  //   children: [
+  //     {
+  //       label: "评估数据上传",
+  //       to: "/resilienceAssessment/dataUpload",
+  //     },
+  //     {
+  //       label: "粗糙集评估",
+  //       to: "/resilienceAssessment/dangerAssess",
+  //       exact: true,
+  //       defaultOpen: false,
+  //       children:[
+  //         {
+  //           label: "危险系数评估",
+  //           to: "/resilienceAssessment/RS_dangerAssess",
+  //         },
+  //         {
+  //           label: "决策规则分析",
+  //           to: "/resilienceAssessment/deciRules",
+  //         },
+  //       ]
+  //     },
+  //     {
+  //       label: "熵权法评估",
+  //       to: "/resilienceAssessment/dangerAssess",
+  //       exact: true,
+  //       defaultOpen: false,
+  //       children:[
+  //         {
+  //           label: "危险系数评估",
+  //           to: "/resilienceAssessment/ETP_dangerAssess",
+  //         },
+  //       ]
+  //     },
+  //     {
+  //       label: "综合危险系数评估",
+  //       to: "/resilienceAssessment/dangerAssess",
+  //     },
+  //   ],
+  // },
   {
     id: "notification",
     label: "通知",

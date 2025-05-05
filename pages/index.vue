@@ -107,13 +107,13 @@ const modulesLine2 = reactive([
 ]);
 
 const modulesLine3 = reactive([
-  {
-    title: "幕墙韧性评估",
-    description: "用于查看评估幕墙韧性",
-    target_address: "/resilienceAssessment/dataUpload",
-    permissionKey: "access_system_h",
-    icon: "i-simple-icons-testcafe",
-  },
+  // {
+  //   title: "幕墙韧性评估",
+  //   description: "用于查看评估幕墙韧性",
+  //   target_address: "/resilienceAssessment/dataUpload",
+  //   permissionKey: "access_system_h",
+  //   icon: "i-simple-icons-testcafe",
+  // },
   {
     title: "震动数据检测",
     description: "用于检测和展示幕墙的振动数据",
@@ -121,13 +121,13 @@ const modulesLine3 = reactive([
     permissionKey: "access_system_v",
     icon: "i-simple-icons-tailwindcss",
   },
-  {
-    title: "金属锈蚀检测",
-    description: "用于检测金属锈蚀",
-    target_address: "/corrosiondetection/detect",
-    permissionKey: "access_system_z",
-    icon: "i-simple-icons-amazons3",
-  },
+  // {
+  //   title: "金属锈蚀检测",
+  //   description: "用于检测金属锈蚀",
+  //   target_address: "/corrosiondetection/detect",
+  //   permissionKey: "access_system_z",
+  //   icon: "i-simple-icons-amazons3",
+  // },
 ]);
 const getUserAuth = async () => {
     const authToken = localStorage.getItem("authToken");
