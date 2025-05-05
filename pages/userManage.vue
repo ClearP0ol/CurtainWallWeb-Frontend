@@ -84,22 +84,22 @@
             ></el-switch>
           </template>
         </el-table-column>
-        <el-table-column label="幕墙韧性评估权限" prop="access_system_h">
+        <!-- <el-table-column label="幕墙韧性评估权限" prop="access_system_h">
           <template #default="{ row }">
             <el-switch
               v-model="row.access_system_h"
               @change="() => handleSwitchChange(row, 'access_system_h','table')"
             ></el-switch>
           </template>
-        </el-table-column>
-        <el-table-column label="金属锈蚀检测权限" prop="access_system_z">
+        </el-table-column> -->
+        <!-- <el-table-column label="金属锈蚀检测权限" prop="access_system_z">
           <template #default="{ row }">
             <el-switch
               v-model="row.access_system_z"
               @change="() => handleSwitchChange(row, 'access_system_z','table')"
             ></el-switch>
           </template>
-        </el-table-column>
+        </el-table-column> -->
       </el-table>
 
       <!-- 分页组件 -->
