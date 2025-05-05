@@ -167,6 +167,7 @@ const links = reactive([
     label: "金属锈蚀检测",
     //icon: "i-amazon-s3",
     icon: "i-simple-icons-amazons3",
+    to: "/corrosiondetection/detect",
     defaultOpen: false,
     children: [
       {
@@ -325,7 +326,7 @@ const links = reactive([
   {
     id: "glassToughnessJudge",
     label: "幕墙韧性评估",
-    to: "/resilienceAssessment",
+    to: "/resilienceAssessment/dataUpload",
     icon: "i-simple-icons-testcafe",
     defaultOpen: false,
     // click: gotoGlassToughness,
