@@ -143,6 +143,7 @@ const links = reactive([
   {
     id: "stoneDirty",
     label: "石材污渍检测",
+    to: "/stonedirty/mainpage",
     // to: "/userManage",
     icon: "i-heroicons-fire",
     tooltip: {
