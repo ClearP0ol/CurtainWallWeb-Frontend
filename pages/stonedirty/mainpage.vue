@@ -41,6 +41,26 @@
         </el-upload>
       </div>
 
+      <!-- 图片管理表格 -->
+      <div class="image-table-section" style="max-width:1200px;margin:20px auto;">
+        <el-table :data="imageList" style="width: 100%" v-if="imageList.length > 0" :row-class-name="tableRowClassName" border>
+          <el-table-column prop="name" label="图片名" min-width="200" show-overflow-tooltip />
+          <el-table-column prop="uploadTime" label="上传时间" width="180" />
+          <el-table-column label="预览" width="120">
+            <template #default="scope">
+              <el-image :src="scope.row.url" :preview-src-list="[scope.row.url]" style="width:60px;height:60px;object-fit:cover;" />
+            </template>
+          </el-table-column>
+          <el-table-column label="操作" width="180" fixed="right">
+            <template #default="scope">
+              <el-button size="small" @click="selectImage(scope.row.url)" :type="imageUrl === scope.row.url ? 'primary' : 'default'">选择检测</el-button>
+              <el-button size="small" type="danger" @click="deleteImage(scope.$index)">删除</el-button>
+            </template>
+          </el-table-column>
+        </el-table>
+        <div v-else style="text-align:center;color:#aaa;padding:20px;">暂无已上传图片</div>
+      </div>
+
       <!-- 操作区域 -->
       <div class="action-bar">
         <el-button
@@ -179,7 +199,7 @@ import {detectStain} from '../../api/stain';
 import { Warning } from '@element-plus/icons-vue'
 import { ArrowLeft, Search, Document } from '@element-plus/icons-vue'
 import userService from '../../api/user';
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
 
@@ -244,6 +264,15 @@ const handleUploadSuccess = async (response: any) => {
     if (response) {
       isUploading.value = false; // 重置上传状态
       ElMessage.success('上传成功');
+      // 新增到图片表
+      const imgInfo = {
+        url: response,
+        name: response.split('/').pop()?.split('-').slice(1).join('-') || '图片',
+        uploadTime: new Date().toLocaleString()
+      };
+      imageList.value.push(imgInfo);
+      localStorage.setItem('stainImageList', JSON.stringify(imageList.value));
+      // 默认选中最新上传图片
       imageUrl.value = response;
       console.log(imageUrl.value);
     } else {
@@ -270,15 +299,31 @@ const handleBeforeUpload = async (file: File) => {
     return false;
   }
 
-  // 生成符合规则的文件名
-  const timestamp = Date.now();
-  const cleanFileName = file.name.replace(/[^a-zA-Z0-9.-]/g, '-');
+  try {
+    // 弹出对话框让用户输入图片名
+    const { value: imageName } = await ElMessageBox.prompt('请输入图片名称', '图片名称', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      inputPattern: /^.{1,50}$/,
+      inputErrorMessage: '图片名称长度应在1-50个字符之间',
+      inputValue: file.name.split('.')[0], // 默认使用原文件名（不含扩展名）
+    });
 
-  // 构建上传路径
+    // 生成符合规则的文件名
+    const timestamp = Date.now();
+    const cleanFileName = (imageName || file.name).replace(/[^a-zA-Z0-9.-]/g, '-');
+
+    // 构建上传路径
     uploadUrl.value = `http://110.42.214.164:9000/oss/upload/upload/${timestamp}-${cleanFileName}`;
     ElMessage.info('上传中');
 
-  return true;
+    return true;
+  } catch (error) {
+    if (error !== 'cancel') {
+      ElMessage.error('图片名称输入错误');
+    }
+    return false;
+  }
 };
 
 const fetchData = async () => {
@@ -300,8 +345,8 @@ const fetchData = async () => {
 
     try {
       // 解码 token，获取 userId
-      const jwtModule = await import('jwt-decode');
-      const decode = jwtModule.default(token);  // 简化解码方式
+      const { jwtDecode } = await import('jwt-decode');
+      const decode = jwtDecode(token);
       console.log('解码后的 token 数据:', decode);
 
       const userId = decode.username;
@@ -570,6 +615,38 @@ const exportPDF = async () => {
     console.error('PDF导出错误:', error);
     ElMessage.error('PDF导出失败，请重试');
   }
+};
+
+const imageList = ref<{ url: string, name: string, uploadTime: string }[]>([]);
+
+onMounted(() => {
+  const saved = localStorage.getItem('stainImageList');
+  if (saved) imageList.value = JSON.parse(saved);
+});
+
+const selectImage = (url: string) => {
+  imageUrl.value = url;
+  ElMessage({
+    message: '已选择图片进行检测',
+    type: 'success',
+    duration: 2000,
+    showClose: true
+  });
+};
+
+const deleteImage = (index: number) => {
+  const delUrl = imageList.value[index].url;
+  imageList.value.splice(index, 1);
+  localStorage.setItem('stainImageList', JSON.stringify(imageList.value));
+  ElMessage.success('图片已删除');
+  // 如果删除的是当前检测图片，清空 imageUrl
+  if (imageUrl.value === delUrl) {
+    imageUrl.value = '';
+  }
+};
+
+const tableRowClassName = ({ row }: { row: { url: string } }) => {
+  return row.url === imageUrl.value ? 'selected-row' : '';
 };
 
 </script>
@@ -1096,5 +1173,33 @@ const exportPDF = async () => {
 .export-pdf-button .el-icon {
   font-size: 18px;
   margin-right: 4px;
+}
+
+:deep(.selected-row) {
+  background-color: #f0f9ff !important;
+}
+:deep(.selected-row:hover > td) {
+  background-color: #e6f7ff !important;
+}
+
+:deep(.el-table) {
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+:deep(.el-table__header) {
+  background-color: #f5f7fa;
+}
+
+:deep(.el-table__row) {
+  transition: all 0.3s;
+}
+
+:deep(.el-table__row:hover) {
+  background-color: #f5f7fa;
+}
+
+:deep(.el-table__cell) {
+  padding: 12px 0;
 }
 </style>

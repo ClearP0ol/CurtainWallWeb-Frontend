@@ -295,10 +295,8 @@ const fetchHistory = async () => {
     }
 
     try {
-      const jwtModule = await import('jwt-decode');
-      const decode = typeof jwtModule.default === 'function'
-        ? jwtModule.default(token)
-        : jwtModule.jwtDecode(token);
+      const { jwtDecode } = await import('jwt-decode');
+      const decode = jwtDecode(token);
 
       const username = decode.username;
       if (!username) {
