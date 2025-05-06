@@ -345,8 +345,8 @@ const fetchData = async () => {
 
     try {
       // 解码 token，获取 userId
-      const jwtModule = await import('jwt-decode');
-      const decode = jwtModule.default(token);  // 简化解码方式
+      const { jwtDecode } = await import('jwt-decode');
+      const decode = jwtDecode(token);
       console.log('解码后的 token 数据:', decode);
 
       const userId = decode.username;
