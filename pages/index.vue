@@ -67,28 +67,36 @@ const modulesLine1 = reactive([
     permissionKey: "access_system_a",
   },
   {
-    title: "石材裂缝检测",
-    description: "用于识别建筑石材幕墙表面裂缝",
-    target_address: "/crackdetect",
-    permissionKey: "access_system_c",
-    icon: "i-simple-icons-affinitypublisher",
-  },
-  {
     title: "石材污渍检测",
     description: "用于识别建筑石材幕墙表面污渍",
     target_address: "/stonedirty/mainpage",
     icon: "i-heroicons-fire",
     permissionKey: "access_system_b",
   },
+  {
+    title: "石材裂缝检测",
+    description: "用于识别建筑石材幕墙表面裂缝",
+    target_address: "/crackdetect",
+    permissionKey: "access_system_c",
+    icon: "i-simple-icons-affinitypublisher",
+  },
+
 ]);
 
 const modulesLine2 = reactive([
+  // {
+  //   title: "幕墙材质分割",
+  //   description: "给定一张建筑幕墙图片，分割出其中的各种材质",
+  //   target_address: "/segment",
+  //   permissionKey: "access_system_f",
+  //   icon: "i-simple-icons-homeassistantcommunitystore",
+  // },
   {
-    title: "幕墙材质分割",
-    description: "给定一张建筑幕墙图片，分割出其中的各种材质",
-    target_address: "/segment",
-    permissionKey: "access_system_f",
-    icon: "i-simple-icons-homeassistantcommunitystore",
+    title: "震动数据检测",
+    description: "用于检测和展示幕墙的振动数据",
+    target_address: "/subindex",
+    permissionKey: "access_system_v",
+    icon: "i-simple-icons-tailwindcss",
   },
   {
     title: "玻璃自爆检测",
@@ -114,13 +122,7 @@ const modulesLine3 = reactive([
   //   permissionKey: "access_system_h",
   //   icon: "i-simple-icons-testcafe",
   // },
-  {
-    title: "震动数据检测",
-    description: "用于检测和展示幕墙的振动数据",
-    target_address: "/subindex",
-    permissionKey: "access_system_v",
-    icon: "i-simple-icons-tailwindcss",
-  },
+
   // {
   //   title: "金属锈蚀检测",
   //   description: "用于检测金属锈蚀",

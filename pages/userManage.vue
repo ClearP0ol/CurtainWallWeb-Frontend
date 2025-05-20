@@ -68,14 +68,14 @@
             ></el-switch>
           </template>
         </el-table-column>
-        <el-table-column label="幕墙材质分割权限" prop="access_system_f">
-          <template #default="{ row }">
-            <el-switch
-              v-model="row.access_system_f"
-              @change="() => handleSwitchChange(row, 'access_system_f','table')"
-            ></el-switch>
-          </template>
-        </el-table-column>
+<!--        <el-table-column label="幕墙材质分割权限" prop="access_system_f">-->
+<!--          <template #default="{ row }">-->
+<!--            <el-switch-->
+<!--              v-model="row.access_system_f"-->
+<!--              @change="() => handleSwitchChange(row, 'access_system_f','table')"-->
+<!--            ></el-switch>-->
+<!--          </template>-->
+<!--        </el-table-column>-->
         <el-table-column label="玻璃平整度权限" prop="access_system_g">
           <template #default="{ row }">
             <el-switch

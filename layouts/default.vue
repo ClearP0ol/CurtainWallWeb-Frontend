@@ -261,25 +261,25 @@ const links = reactive([
       // shortcuts: ["G", "H"],
     },
   },
-  {
-    id: "segment",
-    label: "幕墙材质分割",
-    icon: "i-simple-icons-homeassistantcommunitystore",
-    to: "/segment",
-    defaultOpen: false,
-    children: [
-      {
-        label: "幕墙分割识别",
-        to: "/segment",
-        exact: true,
-      },
-      {
-        label: "查看历史记录",
-        to: "/segment/history",
-      },
-
-    ],
-  },
+  // {
+  //   id: "segment",
+  //   label: "幕墙材质分割",
+  //   icon: "i-simple-icons-homeassistantcommunitystore",
+  //   to: "/segment",
+  //   defaultOpen: false,
+  //   children: [
+  //     {
+  //       label: "幕墙分割识别",
+  //       to: "/segment",
+  //       exact: true,
+  //     },
+  //     {
+  //       label: "查看历史记录",
+  //       to: "/segment/history",
+  //     },
+  //
+  //   ],
+  // },
   {
     id: "explosion",
     label: "玻璃自爆检测",
