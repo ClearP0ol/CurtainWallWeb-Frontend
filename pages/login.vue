@@ -36,12 +36,18 @@
               没有账户？点击注册
             </p>
           </el-form-item>
+          <el-form-item style="text-align: center">
+            <p @click="showResetForm = true; showLoginForm = false" style="color: rgb(193, 193, 193); cursor: pointer; font-size: 15px">
+              忘记密码？
+            </p>
+          </el-form-item>
+
         </el-form>
       </form>
     </div>
-
+    
     <!-- 注册表单 -->
-    <div v-else>
+    <div v-else-if="!showLoginForm && !showResetForm">
       <form @submit.prevent="register">
         <el-form class="form2">
           <span style="margin-bottom: 20px; font-size: 20px;">欢迎！请输入注册信息</span>
@@ -103,6 +109,64 @@
         </el-form>
       </form>
     </div>
+    <!-- 忘记密码表单 -->
+    <div v-if="showResetForm">
+      <form @submit.prevent="resetPassword">
+        <el-form class="form2">
+          <span style="margin-bottom: 20px; font-size: 20px;">重置密码</span>
+
+          <el-form-item>
+            <el-input v-model="resetForm.email" placeholder="邮箱" required />
+          </el-form-item>
+
+          <el-form-item>
+            <el-input v-model="resetForm.code" placeholder="验证码" required>
+              <template #suffix>
+                <button
+                  @click.prevent="sendVerificationCode('reset')"
+                  :disabled="disableButton"
+                  style="color: white; background-color: RGB(0,102,204); padding: 0 10px; border-radius: 5px; cursor: pointer;"
+                >
+                  {{ buttonText }}
+                </button>
+              </template>
+            </el-input>
+          </el-form-item>
+
+          <el-form-item>
+            <el-input
+              v-model="resetForm.password"
+              type="password"
+              placeholder="新密码"
+              required
+            />
+          </el-form-item>
+
+          <el-form-item>
+            <el-input
+              v-model="resetForm.confirmPassword"
+              type="password"
+              placeholder="确认新密码"
+              required
+            />
+          </el-form-item>
+
+          <el-form-item>
+            <el-button @click="resetPassword">重置密码</el-button>
+          </el-form-item>
+
+          <el-form-item>
+            <p
+              @click="showResetForm = false; showLoginForm = true"
+              style="color: rgb(193, 193, 193); cursor: pointer; font-size:15px"
+            >
+              返回登录
+            </p>
+          </el-form-item>
+        </el-form>
+      </form>
+    </div>
+
     <!-- <el-button @click="GoToLayout">点击跳转排版页面</el-button> -->
   </div>
 </template>
@@ -131,6 +195,7 @@ const showLoginForm = ref(true);
 const userStore = userService;
 const inputEmail = ref(null);
 const inputPassword = ref(null);
+const showResetForm = ref(false);
 
 const loginForm = ref({
   email: "",
@@ -138,6 +203,13 @@ const loginForm = ref({
 });
 
 const registerForm = ref({
+  email: "",
+  code: "",
+  password: "",
+  confirmPassword: "",
+});
+
+const resetForm = ref({
   email: "",
   code: "",
   password: "",
@@ -224,19 +296,50 @@ const disableButton = ref(false);
 const buttonText = ref("发送验证码");
 const countdown = ref(60);
 
-const sendVerificationCode = async () => {
-  if (disableButton.value) {
-    return;
-  }
+// const sendVerificationCode = async () => {
+//   if (disableButton.value) {
+//     return;
+//   }
 
-  // 2. 验证邮箱格式
-  const email = registerForm.value.email;
+//   // 2. 验证邮箱格式
+//   const email = registerForm.value.email;
+//   if (!email) {
+//     ElMessage.error('请输入邮箱地址');
+//     return;
+//   }
+
+//   // 邮箱正则表达式
+//   const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+//   if (!emailRegex.test(email)) {
+//     ElMessage.error('请输入有效的邮箱地址');
+//     return;
+//   }
+
+//   disableButton.value = true;
+//   startCountdown();
+//   try {
+//     const response = await $fetch("/api/account/sendCode", {
+//       method: "POST",
+//       // body: {email: registerForm.value.email},
+//       body: {
+//         email,
+//         method: type, // 使用 "register" 或 "reset"
+//       },
+//     });
+//   } catch (error) {
+//     console.error('Error response:', error.response);
+//     ElMessage.error(error.response._data.message);
+//   }
+// };
+
+const sendVerificationCode = async (method = "register") => {
+  const email = method === 'reset' ? resetForm.value.email : registerForm.value.email;
+
   if (!email) {
     ElMessage.error('请输入邮箱地址');
     return;
   }
 
-  // 邮箱正则表达式
   const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
   if (!emailRegex.test(email)) {
     ElMessage.error('请输入有效的邮箱地址');
@@ -245,14 +348,19 @@ const sendVerificationCode = async () => {
 
   disableButton.value = true;
   startCountdown();
+
   try {
-    const response = await $fetch("/api/account/sendCode", {
+    await $fetch("/api/account/sendCode", {
       method: "POST",
-      body: {email: registerForm.value.email},
+      body: {
+        email,
+        method, // "register" or "reset"
+      },
     });
+    ElMessage.success('验证码发送成功');
   } catch (error) {
-    console.error('Error response:', error.response);
-    ElMessage.error(error.response._data.message);
+    console.error('验证码发送失败:', error);
+    ElMessage.error(error?.response?._data?.message || '验证码发送失败');
   }
 };
 
@@ -274,6 +382,36 @@ const resetCountdown = () => {
   disableButton.value = false;
   buttonText.value = "发送验证码";
 };
+
+const resetPassword = async () => {
+  if (resetForm.value.password !== resetForm.value.confirmPassword) {
+    ElMessage.error("两次输入的密码不一致");
+    return;
+  }
+
+  try {
+    const response = await $fetch("/api/account/validate", {
+      method: "POST",
+      body: {
+        email: resetForm.value.email,
+        code: resetForm.value.code,
+        password: resetForm.value.password,
+      },
+    });
+
+    if (response?.code === 200) {
+      ElMessage.success("密码重置成功，请登录");
+      showResetForm.value = false;
+      showLoginForm.value = true;
+    } else {
+      ElMessage.error(response.message || "密码重置失败");
+    }
+  } catch (err) {
+    console.error("密码重置错误:", err);
+    ElMessage.error(err?.response?._data?.message || "密码重置失败");
+  }
+};
+
 
 const register = async () => {
   if (registerForm.value.password != registerForm.value.confirmPassword) {

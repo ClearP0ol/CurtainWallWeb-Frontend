@@ -44,7 +44,7 @@ import {onMounted} from 'vue';
 const loginUser = ref(localStorage.getItem("email"));
 const router = useRouter();
 const state = reactive({
-  name: "Curtain Wall Admin",
+  name: localStorage.getItem("email"),
   email: "admin@tongji.edu.cn",
   username: "Admin",
   avatar: "",
