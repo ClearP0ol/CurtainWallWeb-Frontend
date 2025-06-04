@@ -73,13 +73,7 @@ const modulesLine1 = reactive([
     icon: "i-heroicons-fire",
     permissionKey: "access_system_b",
   },
-  {
-    title: "石材裂缝检测",
-    description: "用于识别建筑石材幕墙表面裂缝",
-    target_address: "/crackdetect",
-    permissionKey: "access_system_c",
-    icon: "i-simple-icons-affinitypublisher",
-  },
+
 
 ]);
 
@@ -92,12 +86,23 @@ const modulesLine2 = reactive([
   //   icon: "i-simple-icons-homeassistantcommunitystore",
   // },
   {
+    title: "石材裂缝检测",
+    description: "用于识别建筑石材幕墙表面裂缝",
+    target_address: "/crackdetect",
+    permissionKey: "access_system_c",
+    icon: "i-simple-icons-affinitypublisher",
+  },
+  {
     title: "震动数据检测",
     description: "用于检测和展示幕墙的振动数据",
     target_address: "/subindex",
     permissionKey: "access_system_v",
     icon: "i-simple-icons-tailwindcss",
   },
+
+]);
+
+const modulesLine3 = reactive([
   {
     title: "玻璃自爆检测",
     description: "通过图片检测玻璃自爆风险",
@@ -112,9 +117,6 @@ const modulesLine2 = reactive([
     permissionKey: "access_system_g",
     icon: "i-simple-icons-edgeimpulse",
   },
-]);
-
-const modulesLine3 = reactive([
   // {
   //   title: "幕墙韧性评估",
   //   description: "用于查看评估幕墙韧性",
@@ -156,7 +158,10 @@ const checkPermissionAndRedirect = (module) => {
 }
 
 .custom-margin {
-  margin: 20px;
+  margin: 50px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(500px, 1fr)); /* 这里280px是每列的最小宽度 */
+  gap: 50px; /* 卡片间距 */
 }
 
 .hover-effect:hover {
