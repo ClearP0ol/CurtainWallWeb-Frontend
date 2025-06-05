@@ -64,7 +64,7 @@
             <el-input v-model="registerForm.code" placeholder="验证码" required>
               <template #suffix>
                 <button
-                    @click.prevent="sendVerificationCode"
+                    @click.prevent="sendVerificationCode()"
                     :disabled="disableButton"
                     style="color: white; background-color: RGB(0,102,204); padding: 0 10px; border-radius: 5px; cursor: pointer;"
                 >
