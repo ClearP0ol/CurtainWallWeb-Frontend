@@ -491,16 +491,16 @@ const exportPDF = async () => {
 
     // 检查是否需要新页面
     const checkNewPage = (contentHeight: number) => {
-      if (currentY + contentHeight > pageHeight - 20) { // 预留20mm底部边距
+      if (currentY + contentHeight > pageHeight - 20) {
         doc.addPage();
-        currentY = 20; // 新页面从顶部开始
+        currentY = 20;
       }
     };
 
     // 添加标题函数
     const addTitle = (text: string, level: number = 1) => {
       const fontSize = level === 1 ? 20 : level === 2 ? 16 : 14;
-      const marginTop = level === 1 ? 0 : level === 2 ? 3 : 2; // 进一步减小标题间距
+      const marginTop = level === 1 ? 0 : level === 2 ? 3 : 2;
       
       checkNewPage(fontSize + marginTop);
       doc.setFontSize(fontSize);
@@ -512,10 +512,10 @@ const exportPDF = async () => {
 
     // 添加内容函数
     const addContent = (text: string, fontSize: number = 12) => {
-      checkNewPage(fontSize + 2); // 进一步减小内容间距
+      checkNewPage(fontSize + 2);
       doc.setFontSize(fontSize);
       doc.text(text, 20, currentY);
-      currentY += fontSize + 2; // 进一步减小行距
+      currentY += fontSize + 2;
     };
 
     // 加载图片函数
@@ -532,15 +532,35 @@ const exportPDF = async () => {
     // 1. 报告标题
     addTitle("污渍检测报告", 1);
 
-    // 2. 基本信息
-    addTitle("一、基本信息", 2);
-    const currentDate = new Date().toLocaleDateString('zh-CN');
-    addContent(`生成日期：${currentDate}`);
-    addContent(`检测数量：${tableData.value.length}处`);
+    // 2. 用户信息
+    addTitle("一、用户信息", 2);
+    const token = localStorage.getItem('authToken');
+    if (token) {
+      try {
+        const { jwtDecode } = await import('jwt-decode');
+        const decode = jwtDecode(token);
+        addContent(`用户名：${decode.username || '未知'}`);
+        addContent(`生成时间：${new Date().toLocaleString('zh-CN')}`);
+      } catch (error) {
+        console.error('Token解析失败:', error);
+        addContent('用户信息获取失败');
+      }
+    } else {
+      addContent('未登录用户');
+    }
 
-    // 3. 原始图片分析
+    // 3. 图片信息
+    addTitle("二、图片信息", 2);
+    const selectedImage = imageList.value.find(img => img.url === imageUrl.value);
+    if (selectedImage) {
+      addContent(`图片名称：${selectedImage.name}`);
+      addContent(`上传时间：${selectedImage.uploadTime}`);
+      addContent(`图片路径：${selectedImage.url}`);
+    }
+
+    // 4. 原始图片分析
     if (imageUrl.value && annotatedImageUrl.value) {
-      addTitle("二、原始图片分析", 2);
+      addTitle("三、原始图片分析", 2);
 
       const originalImg = await loadImage(imageUrl.value);
       const annotatedImg = await loadImage(annotatedImageUrl.value);
@@ -551,19 +571,19 @@ const exportPDF = async () => {
 
       // 添加原始图片
       addTitle("1. 原始图片", 3);
-      checkNewPage(imgHeight1 + 8); // 进一步减小图片间距
+      checkNewPage(imgHeight1 + 8);
       doc.addImage(originalImg, 'JPEG', 20, currentY, imgWidth, imgHeight1);
-      currentY += imgHeight1 + 6; // 进一步减小图片间距
+      currentY += imgHeight1 + 6;
 
       // 添加标注图片
       addTitle("2. 标注结果", 3);
       checkNewPage(imgHeight2 + 8);
       doc.addImage(annotatedImg, 'JPEG', 20, currentY, imgWidth, imgHeight2);
-      currentY += imgHeight2 + 10; // 进一步减小图片间距
+      currentY += imgHeight2 + 10;
     }
 
-    // 4. 检测结果
-    addTitle("三、检测结果", 2);
+    // 5. 检测结果
+    addTitle("四、检测结果", 2);
     addContent(`共检测到 ${tableData.value.length} 处污渍，具体分析如下：`);
 
     // 添加每个污渍的检测结果
@@ -579,30 +599,27 @@ const exportPDF = async () => {
       const resultImg = await loadImage(item.result_image_url);
       const resultImgHeight = (resultImg.height * imgWidth) / resultImg.width;
 
-      // 计算当前项的总高度
-      const itemTotalHeight = stainImgHeight + resultImgHeight + 20; // 进一步减小总高度
-
       // 添加污渍区域图片
       addTitle("(1) 污渍区域", 3);
       checkNewPage(stainImgHeight + 8);
       doc.addImage(stainImg, 'JPEG', 20, currentY, imgWidth, stainImgHeight);
-      currentY += stainImgHeight + 6; // 进一步减小图片间距
+      currentY += stainImgHeight + 6;
 
       // 添加处理结果图片
       addTitle("(2) 处理结果", 3);
       checkNewPage(resultImgHeight + 8);
       doc.addImage(resultImg, 'JPEG', 20, currentY, imgWidth, resultImgHeight);
-      currentY += resultImgHeight + 6; // 进一步减小图片间距
+      currentY += resultImgHeight + 6;
 
       // 添加污渍百分比
       addTitle("(3) 污渍分析", 3);
       addContent(`污渍占比：${(item.stain_percentage * 100).toFixed(2)}%`);
       addContent("处理建议：建议及时清理，避免污渍扩散");
-      currentY += 3; // 进一步减小分析部分间距
+      currentY += 3;
     }
 
-    // 5. 总结
-    addTitle("四、总结", 2);
+    // 6. 总结
+    addTitle("五、总结", 2);
     const totalPercentage = tableData.value.reduce((sum, item) => sum + item.stain_percentage, 0);
     const averagePercentage = (totalPercentage / tableData.value.length) * 100;
     addContent(`本次检测共发现 ${tableData.value.length} 处污渍，平均污渍占比 ${averagePercentage.toFixed(2)}%。`);
