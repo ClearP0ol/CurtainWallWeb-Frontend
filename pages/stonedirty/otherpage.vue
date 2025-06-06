@@ -2,7 +2,13 @@
     <div class="main-container">
       <!-- 顶部导航栏 -->
       <div class="header-bar">
-        <h2 class="page-title">历史记录</h2>
+        <div class="header-left">
+          <h2 class="page-title">历史记录</h2>
+          <div class="sort-tip">
+            <el-icon><Sort /></el-icon>
+            <span>按检测时间倒序排列（最新检测在前）</span>
+          </div>
+        </div>
 
         <!-- 添加时间筛选 -->
         <div class="filter-section">
@@ -40,11 +46,6 @@
             </template>
             重置
           </el-button>
-
-          <!-- 添加显示总条数的文本 -->
-          <span class="total-count">
-            共 {{ filteredData.length }} 条记录
-          </span>
         </div>
 
         <el-button
@@ -62,138 +63,189 @@
       <!-- 历史记录展示区域 -->
       <div v-loading="loading" class="results-section">
         <div class="section">
-          <h3 class="section-title">历史检测记录</h3>
+          <div class="results-header">
+            <span class="total-count">
+              <el-icon><Document /></el-icon>
+              共 {{ filteredData.length }} 条记录
+            </span>
+          </div>
           <div class="results-wall">
             <div
               v-for="(item, index) in pagedData"
               :key="index"
               class="result-item"
             >
-              <!-- 图片分析部分 -->
-              <div class="section">
-                <h3 class="section-title">图片分析</h3>
-                <div class="image-comparison">
-                  <div class="image-box">
-                    <div class="image-label">原始图片</div>
+              <!-- 简洁信息展示 -->
+              <div class="basic-info">
+                <div class="info-header">
+                  <div class="info-title">
+                    <el-icon><Document /></el-icon>
+                    <span>记录ID: {{ item.history_id }}</span>
+                  </div>
+                  <div class="info-time">
+                    <el-icon><Clock /></el-icon>
+                    <span>{{ formatDate(item.created_at) }}</span>
+                  </div>
+                </div>
+                
+                <div class="info-content">
+                  <div class="image-preview">
                     <el-image
                       :src="validateImageUrl(item.input_url)"
                       :preview-src-list="item.input_url ? [validateImageUrl(item.input_url)] : []"
                       :initial-index="0"
-                      fit="contain"
+                      fit="cover"
                       preview-teleported
                       hide-on-click-modal
                       lazy>
                     </el-image>
                   </div>
-                  <div class="image-box" v-if="item.annotated_image_url">
-                    <div class="image-label">标注结果</div>
-                    <el-image
-                      :src="validateImageUrl(item.annotated_image_url)"
-                      :preview-src-list="item.annotated_image_url ? [validateImageUrl(item.annotated_image_url)] : []"
-                      :initial-index="0"
-                      fit="contain"
-                      preview-teleported
-                      hide-on-click-modal
-                      lazy>
-                    </el-image>
-                  </div>
-                </div>
-              </div>
-
-              <!-- 检测结果部分 -->
-              <div class="section">
-                <h3 class="section-title">检测结果</h3>
-                <div class="results-wall">
-                  <div
-                    v-for="(result, resultIndex) in item.detectionResults"
-                    :key="resultIndex"
-                    class="detection-result"
-                  >
-                    <div class="image-pair">
-                      <div class="stain-image" v-if="result.warped_image_url">
-                        <div class="image-label">污渍区域 {{ resultIndex + 1 }}</div>
-                        <el-image
-                          :src="validateImageUrl(result.warped_image_url)"
-                          :preview-src-list="[validateImageUrl(result.warped_image_url)]"
-                          :initial-index="0"
-                          preview-teleported
-                          hide-on-click-modal
-                          fit="cover"
-                          class="result-image"
-                          lazy>
-                        </el-image>
-                      </div>
-
-                      <div class="arrow-icon">→</div>
-
-                      <div class="processed-image" v-if="result.result_image_url">
-                        <div class="image-label">处理结果 {{ resultIndex + 1 }}</div>
-                        <el-image
-                          :src="validateImageUrl(result.result_image_url)"
-                          :preview-src-list="[validateImageUrl(result.result_image_url)]"
-                          :initial-index="0"
-                          preview-teleported
-                          hide-on-click-modal
-                          fit="cover"
-                          class="result-image"
-                          @error="handleImageError"
-                          @load="handleImageSuccess"
-                          lazy>
-                          <template #error>
-                            <div class="image-error">
-                              <el-icon><Warning /></el-icon>
-                              <span>图片加载失败</span>
-                            </div>
-                          </template>
-                          <template #placeholder>
-                            <div class="image-placeholder">
-                              <el-icon><Loading /></el-icon>
-                              <span>加载中...</span>
-                            </div>
-                          </template>
-                        </el-image>
-                      </div>
-
-                      <!-- 污渍百分比显示 -->
-                      <div class="percentage-badge" v-if="result.stain_percentage !== undefined">
-                        <el-icon class="percentage-icon"><Warning /></el-icon>
-                        <span class="percentage-text">污渍占比</span>
-                        <span class="percentage-value">
-                          {{ (Number(result.stain_percentage) * 100).toFixed(2) }}%
-                        </span>
-                      </div>
+                  
+                  <div class="info-summary">
+                    <div class="summary-item">
+                      <el-icon><Warning /></el-icon>
+                      <span>污渍状态：</span>
+                      <el-tag :type="item.detectionResults?.length ? 'danger' : 'success'">
+                        {{ item.detectionResults?.length ? '存在污渍' : '无污渍' }}
+                      </el-tag>
+                    </div>
+                    <div class="summary-item" v-if="item.detectionResults?.length">
+                      <el-icon><DataLine /></el-icon>
+                      <span>污渍程度：</span>
+                      <el-tag type="warning">
+                        {{ getStainLevel(item.detectionResults) }}
+                      </el-tag>
+                    </div>
+                    <div class="summary-item">
+                      <el-icon><Picture /></el-icon>
+                      <span>幕墙状态：</span>
+                      <el-tag type="info">已检测</el-tag>
                     </div>
                   </div>
                 </div>
-              </div>
 
-              <!-- 记录信息 -->
-              <div class="record-info">
-                <span class="info-item">
-                  <el-icon><Clock /></el-icon>
-                  检测时间: {{ formatDate(item.created_at) }}
-                </span>
-                <span class="info-item">
-                  <el-icon><Document /></el-icon>
-                  记录ID: {{ item.history_id }}
-                </span>
-                <!-- 添加导出单个记录按钮 -->
-                <el-button
-                  type="primary"
-                  size="small"
-                  class="export-single-button"
-                  @click="exportSingleRecord(item)"
-                >
-                  <template #icon>
-                    <el-icon><Document /></el-icon>
-                  </template>
-                  导出报告
-                </el-button>
+                <div class="info-actions">
+                  <el-button
+                    type="primary"
+                    size="small"
+                    @click="showDetail(item)"
+                  >
+                    <template #icon>
+                      <el-icon><View /></el-icon>
+                    </template>
+                    查看详情
+                  </el-button>
+                  <el-button
+                    type="success"
+                    size="small"
+                    @click="exportSingleRecord(item)"
+                  >
+                    <template #icon>
+                      <el-icon><Download /></el-icon>
+                    </template>
+                    导出报告
+                  </el-button>
+                </div>
               </div>
             </div>
           </div>
         </div>
       </div>
+
+      <!-- 详情对话框 -->
+      <el-dialog
+        v-model="detailVisible"
+        title="检测详情"
+        width="80%"
+        :before-close="handleClose"
+      >
+        <div v-if="currentDetail" class="detail-content">
+          <!-- 图片分析部分 -->
+          <div class="section">
+            <h3 class="section-title">图片分析</h3>
+            <div class="image-comparison">
+              <div class="image-box">
+                <div class="image-label">原始图片</div>
+                <el-image
+                  :src="validateImageUrl(currentDetail.input_url)"
+                  :preview-src-list="currentDetail.input_url ? [validateImageUrl(currentDetail.input_url)] : []"
+                  :initial-index="0"
+                  fit="contain"
+                  preview-teleported
+                  hide-on-click-modal
+                  lazy>
+                </el-image>
+              </div>
+              <div class="image-box" v-if="currentDetail.annotated_image_url">
+                <div class="image-label">标注结果</div>
+                <el-image
+                  :src="validateImageUrl(currentDetail.annotated_image_url)"
+                  :preview-src-list="currentDetail.annotated_image_url ? [validateImageUrl(currentDetail.annotated_image_url)] : []"
+                  :initial-index="0"
+                  fit="contain"
+                  preview-teleported
+                  hide-on-click-modal
+                  lazy>
+                </el-image>
+              </div>
+            </div>
+          </div>
+
+          <!-- 检测结果部分 -->
+          <div class="section" v-if="currentDetail.detectionResults?.length">
+            <h3 class="section-title">检测结果</h3>
+            <div class="results-wall">
+              <div
+                v-for="(result, resultIndex) in currentDetail.detectionResults"
+                :key="resultIndex"
+                class="detection-result"
+              >
+                <div class="image-pair">
+                  <div class="stain-image" v-if="result.warped_image_url">
+                    <div class="image-label">污渍区域 {{ resultIndex + 1 }}</div>
+                    <el-image
+                      :src="validateImageUrl(result.warped_image_url)"
+                      :preview-src-list="[validateImageUrl(result.warped_image_url)]"
+                      :initial-index="0"
+                      preview-teleported
+                      hide-on-click-modal
+                      fit="cover"
+                      class="result-image"
+                      lazy>
+                    </el-image>
+                  </div>
+
+                  <div class="arrow-icon">→</div>
+
+                  <div class="processed-image" v-if="result.result_image_url">
+                    <div class="image-label">处理结果 {{ resultIndex + 1 }}</div>
+                    <el-image
+                      :src="validateImageUrl(result.result_image_url)"
+                      :preview-src-list="[validateImageUrl(result.result_image_url)]"
+                      :initial-index="0"
+                      preview-teleported
+                      hide-on-click-modal
+                      fit="cover"
+                      class="result-image"
+                      lazy>
+                    </el-image>
+                  </div>
+
+                  <!-- 污渍百分比显示 -->
+                  <div class="percentage-badge" v-if="result.stain_percentage !== undefined">
+                    <el-icon class="percentage-icon"><Warning /></el-icon>
+                    <span class="percentage-text">污渍占比</span>
+                    <span class="percentage-value">
+                      {{ (Number(result.stain_percentage) * 100).toFixed(2) }}%
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </el-dialog>
+
       <!-- 分页控件 -->
       <el-pagination
         v-model:current-page="currentPage"
@@ -214,7 +266,7 @@ import { useRouter } from "vue-router";
 import { ElMessage } from 'element-plus';
 import { getHistory } from '../../api/stain';
 import { jsPDF } from 'jspdf';
-import { ArrowLeft, Search, Document, Refresh, Clock, Warning, Loading } from '@element-plus/icons-vue';
+import { ArrowLeft, Search, Document, Refresh, Clock, Warning, Loading, View, Download, DataLine, Picture, Sort } from '@element-plus/icons-vue';
 
 // 路由
 const router = useRouter();
@@ -276,7 +328,7 @@ const dateShortcuts = [
 ];
 
 const currentPage = ref(1);
-const pageSize = ref(5);
+const pageSize = ref(4);
 const pagedData = computed(() => {
   const start = (currentPage.value - 1) * pageSize.value;
   return filteredData.value.slice(start, start + pageSize.value);
@@ -525,14 +577,34 @@ const exportSingleRecord = async (record: TableItem) => {
     // 1. 报告标题
     addTitle("污渍检测报告", 1);
 
-    // 2. 基本信息
-    addTitle("一、基本信息", 2);
+    // 2. 用户信息
+    addTitle("一、用户信息", 2);
+    const token = localStorage.getItem('authToken');
+    if (token) {
+      try {
+        const { jwtDecode } = await import('jwt-decode');
+        const decode = jwtDecode(token);
+        addContent(`用户名：${decode.username || '未知'}`);
+        addContent(`生成时间：${new Date().toLocaleString('zh-CN')}`);
+      } catch (error) {
+        console.error('Token解析失败:', error);
+        addContent('用户信息获取失败');
+      }
+    } else {
+      addContent('未登录用户');
+    }
+
+    // 3. 图片信息
+    addTitle("二、图片信息", 2);
+    // 从URL中提取图片名
+    const imageName = record.input_url.split('/').pop()?.split('-').slice(1).join('-') || '未知图片';
+    addContent(`图片名称：${imageName}`);
     addContent(`检测时间：${formatDate(record.created_at)}`);
     addContent(`记录ID：${record.history_id}`);
 
-    // 3. 原始图片分析
+    // 4. 原始图片分析
     if (record.input_url && record.annotated_image_url) {
-      addTitle("二、原始图片分析", 2);
+      addTitle("三、原始图片分析", 2);
 
       const originalImg = await loadImage(record.input_url);
       const annotatedImg = await loadImage(record.annotated_image_url);
@@ -554,9 +626,9 @@ const exportSingleRecord = async (record: TableItem) => {
       currentY += imgHeight2 + 10;
     }
 
-    // 4. 检测结果
+    // 5. 检测结果
     if (record.detectionResults && record.detectionResults.length > 0) {
-      addTitle("三、检测结果", 2);
+      addTitle("四、检测结果", 2);
       addContent(`共检测到 ${record.detectionResults.length} 处污渍，具体分析如下：`);
 
       // 添加每个污渍的检测结果
@@ -592,8 +664,8 @@ const exportSingleRecord = async (record: TableItem) => {
       }
     }
 
-    // 5. 总结
-    addTitle("四、总结", 2);
+    // 6. 总结
+    addTitle("五、总结", 2);
     if (record.detectionResults && record.detectionResults.length > 0) {
       const totalPercentage = record.detectionResults.reduce((sum, item) => sum + item.stain_percentage, 0);
       const averagePercentage = totalPercentage / record.detectionResults.length;
@@ -608,6 +680,35 @@ const exportSingleRecord = async (record: TableItem) => {
     console.error('PDF导出错误:', error);
     ElMessage.error('PDF导出失败，请重试');
   }
+};
+
+// 添加详情对话框相关的响应式变量
+const detailVisible = ref(false);
+const currentDetail = ref<TableItem | null>(null);
+
+// 显示详情的方法
+const showDetail = (item: TableItem) => {
+  currentDetail.value = item;
+  detailVisible.value = true;
+};
+
+// 关闭详情对话框的方法
+const handleClose = () => {
+  detailVisible.value = false;
+  currentDetail.value = null;
+};
+
+// 获取污渍程度的方法
+const getStainLevel = (results: any[]) => {
+  if (!results || results.length === 0) return '无污渍';
+  
+  const maxPercentage = Math.max(...results.map(r => r.stain_percentage || 0));
+  const percentage = maxPercentage * 100;
+  
+  if (percentage < 5) return '轻微';
+  if (percentage < 15) return '中度';
+  if (percentage < 30) return '严重';
+  return '非常严重';
 };
 </script>
 
@@ -786,8 +887,26 @@ const exportSingleRecord = async (record: TableItem) => {
 .header-bar {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
   margin-bottom: 24px;
+}
+
+.header-left {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sort-tip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #909399;
+  font-size: 13px;
+}
+
+.sort-tip .el-icon {
+  font-size: 14px;
 }
 
 .page-title {
@@ -964,15 +1083,198 @@ const exportSingleRecord = async (record: TableItem) => {
   border-radius: 4px;
 }
 
-/* 添加总条数显示样式 */
+/* 添加结果头部样式 */
+.results-header {
+  margin-bottom: 20px;
+  padding: 12px 16px;
+  background-color: #f5f7fa;
+  border-radius: 8px;
+  border: 1px solid #e4e7ed;
+}
+
 .total-count {
-  margin-left: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #606266;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.total-count .el-icon {
+  font-size: 16px;
+  color: #409EFF;
+}
+
+/* 添加新的样式 */
+.basic-info {
+  padding: 20px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
+}
+
+.info-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.info-title, .info-time {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #606266;
+  font-size: 14px;
+}
+
+.info-content {
+  display: flex;
+  gap: 24px;
+  margin-bottom: 20px;
+}
+
+.image-preview {
+  width: 200px;
+  height: 150px;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.image-preview .el-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.info-summary {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.summary-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   font-size: 14px;
   color: #606266;
-  font-weight: 500;
-  padding: 8px 12px;
-  background-color: #f5f7fa;
-  border-radius: 4px;
-  border: 1px solid #dcdfe6;
+}
+
+.info-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid #ebeef5;
+}
+
+/* 详情对话框样式 */
+.detail-content {
+  max-height: 70vh;
+  overflow-y: auto;
+  padding: 20px;
+}
+
+.detail-content .section {
+  margin-bottom: 30px;
+}
+
+.detail-content .section:last-child {
+  margin-bottom: 0;
+}
+
+/* 响应式调整 */
+@media screen and (max-width: 768px) {
+  .info-content {
+    flex-direction: column;
+  }
+
+  .image-preview {
+    width: 100%;
+    height: 200px;
+  }
+}
+
+/* 修改顶部导航栏样式 */
+.header-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 24px;
+}
+
+.header-left {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sort-tip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #909399;
+  font-size: 13px;
+}
+
+.sort-tip .el-icon {
+  font-size: 14px;
+}
+
+/* 修改section标题样式 */
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.record-tags {
+  display: flex;
+  gap: 12px;
+}
+
+.record-tag {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  font-size: 13px;
+}
+
+.record-tag .el-icon {
+  font-size: 14px;
+}
+
+/* 响应式调整 */
+@media screen and (max-width: 768px) {
+  .header-bar {
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .header-left {
+    width: 100%;
+  }
+
+  .filter-section {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+
+  .section-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .record-tags {
+    width: 100%;
+    justify-content: flex-start;
+  }
 }
 </style>

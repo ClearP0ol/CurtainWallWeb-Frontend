@@ -112,7 +112,7 @@ import userService from "~/api/user.js";
 import {onMounted, ref} from "vue";
 import {useRouter} from "vue-router";
 import {ElMessage, ElLoading} from "element-plus";
-import jwtDecode from "jwt-decode";
+import * as jwtDecode from 'jwt-decode';
 // import store from '@/store/index.js'
 
 // const GoToLayout = () => {
