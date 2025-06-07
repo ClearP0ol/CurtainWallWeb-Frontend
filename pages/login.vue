@@ -45,7 +45,7 @@
         </el-form>
       </form>
     </div>
-    
+
     <!-- 注册表单 -->
     <div v-else-if="!showLoginForm && !showResetForm">
       <form @submit.prevent="register">
