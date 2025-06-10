@@ -5,32 +5,56 @@
       <div class="main-page">
         <UPageGrid class="custom-margin">
           <UPageCard v-for="(module, index) in modulesLine1" :key="index" v-bind="module"
-                     @click="checkPermissionAndRedirect(module)" class="hover-effect">
-            <template #description>
-              <span class="line-clamp-2">{{ module.description }}</span>
-            </template>
+                     @click="checkPermissionAndRedirect(module)" class="hover-effect bg-blue-100 dark:bg-slate-800"   >
+                     <template #icon>
+                      <UIcon :name="module.icon" class="text-[48px] text-primary" />
+                     </template>
+
+                     <template #title>
+                       <span class="text-[24px] font-bold">{{ module.title }}</span>
+                     </template>
+
+                     <template #description>
+                       <span class="line-clamp-2">{{ module.description }}</span>
+                     </template>
           </UPageCard>
 
           <UPageCard v-for="(module, index) in modulesLine2" :key="index" v-bind="module"
-                     @click="checkPermissionAndRedirect(module)" class="hover-effect">
-            <template #description>
-              <span class="line-clamp-2">{{ module.description }}</span>
-            </template>
+                     @click="checkPermissionAndRedirect(module)" class="hover-effect bg-blue-100 dark:bg-slate-800" >
+                     <template #icon>
+                      <UIcon :name="module.icon" class="text-[48px] text-primary" />
+                     </template>
+
+                     <template #title>
+                       <span class="text-[24px] font-bold">{{ module.title }}</span>
+                     </template>
+
+                     <template #description>
+                       <span class="line-clamp-2">{{ module.description }}</span>
+                     </template>
           </UPageCard>
           <UPageCard v-for="(module, index) in modulesLine3" :key="index" v-bind="module"
-                     @click="checkPermissionAndRedirect(module)" class="hover-effect">
-            <template #description>
-              <span class="line-clamp-2">{{ module.description }}</span>
-            </template>
+                     @click="checkPermissionAndRedirect(module)" class="hover-effect bg-blue-100 dark:bg-slate-800" >
+                     <template #icon>
+                      <UIcon :name="module.icon" class="text-[48px] text-primary" />
+                     </template>
+
+                     <template #title>
+                       <span class="text-[24px] font-bold">{{ module.title }}</span>
+                     </template>
+
+                     <template #description>
+                       <span class="line-clamp-2">{{ module.description }}</span>
+                     </template>
           </UPageCard>
           <UPageCard v-for="(module, index) in modulesLine4" :key="index" v-bind="module"
-                     @click="checkPermissionAndRedirect(module)" class="hover-effect">
+                     @click="checkPermissionAndRedirect(module)" class="hover-effect bg-blue-100 dark:bg-slate-800" >
             <template #description>
               <span class="line-clamp-2">{{ module.description }}</span>
             </template>
           </UPageCard>
           <UPageCard v-for="(module, index) in modulesLine5" :key="index" v-bind="module"
-                     @click="checkPermissionAndRedirect(module)" class="hover-effect">
+                     @click="checkPermissionAndRedirect(module)" class="hover-effect bg-blue-100 dark:bg-blue-800" >
             <template #description>
               <span class="line-clamp-2">{{ module.description }}</span>
             </template>
@@ -105,18 +129,21 @@ const modulesLine2 = reactive([
 const modulesLine3 = reactive([
   {
     title: "玻璃自爆检测",
-    description: "通过图片检测玻璃自爆风险",
+    description: "通过图片检测玻璃自爆风险(建设中)",
     target_address: "/spallingDetection",
     permissionKey: "access_system_d",
     icon: "i-material-symbols-sound-detection-glass-break-sharp",
+    disabled: true,  
   },
   {
     title: "玻璃平整度检测",
-    description: "给定一张建筑玻璃图片，检测其平整度",
-    target_address:"/smoothnessDetection",
+    description: "给定一张建筑玻璃图片，检测其平整度(建设中)",
+    target_address: "/smoothnessDetection",
     permissionKey: "access_system_g",
     icon: "i-simple-icons-edgeimpulse",
+    disabled: true, 
   },
+
   // {
   //   title: "幕墙韧性评估",
   //   description: "用于查看评估幕墙韧性",
@@ -144,15 +171,33 @@ const getUserAuth = async () => {
     console.log(userAuth.value)
 };
 const checkPermissionAndRedirect = (module) => {
-    if (userAuth.value.is_superuser || userAuth.value[module.permissionKey]) {
-      router.push({path: module.target_address}); // 使用router.push进行跳转
+  if (module.disabled) {
+    ElMessage.warning("该模块建设中，暂不可用");
+    return;
+  }
+  if (userAuth.value.is_superuser || userAuth.value[module.permissionKey]) {
+    router.push({ path: module.target_address });
   } else {
     ElMessage.error("您没有权限访问此模块");
   }
 };
+
 </script>
 
 <style scoped>
+
+/* 放大图标大小 */
+::v-deep(.u-page-card .text-3xl) {
+  font-size: 36px !important; /* 默认约为24px，这里放大到36px */
+}
+
+/* 放大标题字体 */
+::v-deep(.u-page-card .text-primary) {
+  font-size: 20px !important;
+  font-weight: 700 !important;
+}
+
+
 .main-page {
   overflow: auto
 }
