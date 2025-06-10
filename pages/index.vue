@@ -117,9 +117,9 @@ const modulesLine2 = reactive([
     icon: "i-simple-icons-affinitypublisher",
   },
   {
-    title: "震动数据检测",
+    title: "幕墙振动数据检测与展示",
     description: "用于检测和展示幕墙的振动数据",
-    target_address: "/subindex",
+    target_address: "/vibration/dashboard",
     permissionKey: "access_system_v",
     icon: "i-simple-icons-tailwindcss",
   },
@@ -133,7 +133,7 @@ const modulesLine3 = reactive([
     target_address: "/spallingDetection",
     permissionKey: "access_system_d",
     icon: "i-material-symbols-sound-detection-glass-break-sharp",
-    disabled: true,  
+    disabled: true,
   },
   {
     title: "玻璃平整度检测",
@@ -141,7 +141,7 @@ const modulesLine3 = reactive([
     target_address: "/smoothnessDetection",
     permissionKey: "access_system_g",
     icon: "i-simple-icons-edgeimpulse",
-    disabled: true, 
+    disabled: true,
   },
 
   // {

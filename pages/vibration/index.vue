@@ -12,7 +12,7 @@
         class="min-w-[150px]"
         @change="handleDeviceChange"
       >
-        <template #default="{ node, data }: { node: any; data: CascadeIrOption }">
+        <template #default="{ node, data }: { node: any; data: CascaderOption }">
           <span>
             <span
               :class="[
@@ -266,43 +266,44 @@ const loadData = async (type: 'daily' | 'minute' | 'hourly' | 'monthly' | 'yearl
 };
 
 // 分别处理邮件和短信告警
-// 分别处理邮件和短信告警
 const sendEmailAlert = async (value: number, type: string) => {
-  const adjustedValue = Math.abs(value);
-  if (adjustedValue > emailThreshold.value) {
-    try {
-      // 修改为后端服务器地址
-      await axios.post(`${API_BASE_URL}/data/alert`, {
-        alertMessage: `设备${selectedDevice.value.deviceId}检测到异常值：${adjustedValue}`
-      });
-      console.log("警报邮件已发送");
+          const adjustedValue = Math.abs(value);
+          console.log("adjustedValue",adjustedValue);
+          console.log("emailThreshold",emailThreshold.value);
+          if (adjustedValue > emailThreshold.value) {
+            try {
+              // 发送邮件警报
+              await axios.post("http://localhost:3001/api/alert", {
+                alertMessage: `设备${selectedDevice.value.deviceId}检测到异常值：${adjustedValue}`
+              });
+              console.log("警报邮件已发送");
 
-      // 保存邮件告警记录到数据库
-      const messageData = {
-        device: selectedDevice.value.deviceId,
-        content: `${type}轴检测到异常值：${adjustedValue.toFixed(6)} gal，超过邮件告警阈值${emailThreshold.value}`,
-        call_function: 'email',
-        severity: adjustedValue > emailThreshold.value * 1.5 ? 'critical' : 'high',
-        phone: null,
-        email: 'example@email.com'  // 替换为实际的邮箱地址
-      };
-      await axios.post(`${API_BASE_URL}/data/insert_message`, messageData);
-      console.log("邮件告警记录已保存到数据库");
-    } catch (error: any) {
-      console.error("发送邮件警报失败：", error);
-      if (error.response) {
-        console.error("错误响应:", error.response.data);
-      }
-    }
-  }
-};
+              // 保存邮件告警记录到数据库
+              const messageData = {
+                device: selectedDevice.value.deviceId,
+                content: `${type}轴检测到异常值：${adjustedValue.toFixed(6)} gal，超过邮件告警阈值${emailThreshold.value}`,
+                call_function: 'email',
+                severity: adjustedValue > emailThreshold.value * 1.5 ? 'critical' : 'high',
+                phone: null,
+                email: 'example@email.com'  // 替换为实际的邮箱地址
+              };
+              await axios.post(`${API_BASE_URL}/data/insert_message`, messageData);
+              console.log("邮件告警记录已保存到数据库");
+            } catch (error: any) {
+              console.error("发送邮件警报失败：", error);
+              if (error.response) {
+                console.error("错误响应:", error.response.data);
+              }
+            }
+          }
+        };
 
 const sendSMSAlert = async (value: number, type: string) => {
   const adjustedValue = Math.abs(value);
   if (adjustedValue > smsThreshold.value) {
     try {
-      // 修改为后端服务器地址
-      await axios.post(`${API_BASE_URL}/data/send_sms`, {
+      // 发送短信警报
+      await axios.post("http://localhost:3001/api/send_sms", {
         phoneNumber: '19915030933',
         signName: '幕墙震动检测',
         templateCode: 'SMS_475240186',
@@ -332,6 +333,7 @@ const sendSMSAlert = async (value: number, type: string) => {
   }
 };
 
+
 const fetchLatestData = async () => {
   try {
     const response = await axios.get(`${API_BASE_URL}/data/get_minute_data`, {
@@ -341,7 +343,7 @@ const fetchLatestData = async () => {
         num: 1
       }
     });
-
+    
     if (response.data.status === 'success' && response.data.data) {
       const { x, y, z } = response.data.data;
 
@@ -349,8 +351,8 @@ const fetchLatestData = async () => {
       if (!accumulatedData.value.x.times.includes(x[0][0]) &&
           !accumulatedData.value.y.times.includes(y[0][0]) &&
           !accumulatedData.value.z.times.includes(z[0][0])) {
-
-
+        
+        
         console.log("新数据");
         // 检查每个轴的数据并发送相应的警报
         for (const [axis, data] of [[x[0][1], 'X'], [y[0][1], 'Y'], [z[0][1], 'Z']]) {
@@ -390,7 +392,7 @@ const startFetchingLatestData = () => {
 
 const router = useRouter();
 const backToMain = () => {
-  router.push("/subindex");
+  router.push("/");
 };
 
 
@@ -571,7 +573,7 @@ const handleDeviceChange = (value: CascaderValue): void => {
     if (deviceId) {
       const device = deviceList.value.find(d => d.deviceId === deviceId);
       const online = devices.value?.find((d: { deviceId: string }) => d.deviceId === deviceId)?.online ?? false;
-
+      
       if (device) {
         selectedDevice.value = {
           deviceId: deviceId,
@@ -963,7 +965,7 @@ watch([selectedDevice, dataSource], async ([newDevice, newDataSource]) => {
       socket1.send(JSON.stringify(request2));
     };
   //接收到socket消息
-
+      
   }
   else if (newDataSource === 'api_minute') {
     if (socket1) {
@@ -997,7 +999,7 @@ watch([selectedDevice, dataSource], async ([newDevice, newDataSource]) => {
     // 使用 API 获取年级别数据
     await loadData('yearly', 5);
   }
-
+    
   socket1.onmessage = (event) => {
         const message = JSON.parse(event.data);
         if (message.code = 20001) {
