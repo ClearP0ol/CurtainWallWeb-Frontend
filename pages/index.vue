@@ -128,16 +128,16 @@ const modulesLine2 = reactive([
 
 const modulesLine3 = reactive([
   {
-    title: "玻璃自爆检测",
-    description: "通过图片检测玻璃自爆风险(建设中)",
+    title: "玻璃自爆检测(建设中)",
+    description: "通过图片检测玻璃自爆风险",
     target_address: "/spallingDetection",
     permissionKey: "access_system_d",
     icon: "i-material-symbols-sound-detection-glass-break-sharp",
     disabled: true,
   },
   {
-    title: "玻璃平整度检测",
-    description: "给定一张建筑玻璃图片，检测其平整度(建设中)",
+    title: "玻璃平整度检测(建设中)",
+    description: "给定一张建筑玻璃图片，检测其平整度",
     target_address: "/smoothnessDetection",
     permissionKey: "access_system_g",
     icon: "i-simple-icons-edgeimpulse",

@@ -73,30 +73,30 @@ const userPermissions = ref({
   access_system_z: false,
 });
 
-const checkPressmission = async () => {
-  const dataToSend = {
-    ["admin"]: {
-      // 使用动态键名设置邮箱地址
-      ["is_superuser"]: true, // 设置对应权限的新值
-    },
-  };
-  try {
-    const response = (await $fetch("/api/account/super/updatePermission", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem("authToken")}`,
-      },
-      body: dataToSend,
-    })) as any;
-    if (response.status == 403 || response.status == 401) {
-      ElMessage.error("您没有管理员权限");
-    } else {
-      router.push("/userManage");
-    }
-  } catch (error) {
-    ElMessage.error("权限获取错误");
-  }
-};
+// const checkPressmission = async () => {
+//   const dataToSend = {
+//     ["admin"]: {
+//       // 使用动态键名设置邮箱地址
+//       ["is_superuser"]: true, // 设置对应权限的新值
+//     },
+//   };
+//   try {
+//     const response = (await $fetch("/api/account/super/updatePermission", {
+//       method: "POST",
+//       headers: {
+//         Authorization: `Bearer ${localStorage.getItem("authToken")}`,
+//       },
+//       body: dataToSend,
+//     })) as any;
+//     if (response.status == 403 || response.status == 401) {
+//       ElMessage.error("您没有管理员权限");
+//     } else {
+//       router.push("/userManage");
+//     }
+//   } catch (error) {
+//     ElMessage.error("权限获取错误");
+//   }
+// };
 
 const goto3DModel = () => {
   // router.push("http://localhost:5173")
@@ -389,7 +389,7 @@ const links = reactive([
     tooltip: {
       text: "用户管理",
     },
-    click: checkPressmission,
+    //click: checkPressmission,
   },
 ]);
 
