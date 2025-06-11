@@ -7,74 +7,130 @@
     <!-- 主体内容 -->
     <div class="outlayer">
       <!-- 参数面板 -->
-      <div  class="parameter-panel">
+      <div class="parameter-panel">
         <UForm class="parameter-form">
         
           <div class="parameter-group">
-            <h2 class="green-underline-title">台阵设置</h2>
+            <h2 class="green-underline-title">台阵选择</h2>
             <hr class="divider" />
-            <div class="parameter-row">
-              <div class="parameter-icon">
-                <i class="fas fa-clock"></i>
+            
+            <!-- 建筑物选择网格 -->
+            <div class="building-grid">
+              <div class="building-group">
+                <h3>衷和楼</h3>
+                <div class="device-grid">
+                  <div 
+                    v-for="device in filteredDevices('衷和楼')" 
+                    :key="device.value"
+                    class="device-item"
+                    :class="{ 'active': selectedDevice.value === device.value,
+                      'strain-gauge': device.type === 'strainGauge'
+                    }"
+                    
+                    @click="selectDevice(device)"
+                  >
+                    {{ device.label }}
+                  </div>
+                </div>
               </div>
-              <h1>台阵选择：</h1>
-              <USelectMenu
-                v-model="selectedDevice"
-                placeholder="请台阵选择"
-                :options="deviceOptions"
-                id="timeScale"
-              />
+              
+              <div class="building-group">
+                <h3>安楼</h3>
+                <div class="device-grid">
+                  <div 
+                    v-for="device in filteredDevices('安楼')" 
+                    :key="device.value"
+                    class="device-item"
+                    :class="{ 
+                      'active': selectedDevice.value === device.value,
+                      'strain-gauge': device.type === 'strainGauge'
+                    }"
+                    @click="selectDevice(device)"
+                  >
+                    {{ device.label }}
+                  </div>
+                </div>
+              </div>
             </div>
 
-            <!-- mod-->
-            <!-- 台阵位置 -->
-            <div class="parameter-row">
+            <div class="parameter-row" style="margin-top: 10px;">
               <div class="parameter-icon">
-                <i class="fas fa-map-marker-alt"></i>
+                <i class="fas fa-info-circle"></i>
               </div>
-              <h1>台阵位置：</h1>
-              <UInput  v-model="devicePlace" />
+              <h1>当前选择：</h1>
+              <span class="selected-device-info">{{ selectedDevice.label }}</span>
+              <span class="device-type-badge" :class="selectedDevice.type === 'accelerometer' ? 'acc-badge' : 'strain-badge'">
+                {{ selectedDevice.type === 'accelerometer' ? '加速度计' : '应变计' }}
+              </span>
             </div>
-            <!-- 台阵设置应用按钮 -->
-            <div class="parameter-row">
-              <UButton type="primary" @click="applyArraySettings">应用</UButton>
-            </div>
-
           </div>
 
           <div class="parameter-group">
-            <h2 class="green-underline-title">数据校准</h2>
+            <h2 class="green-underline-title">偏移与阈值</h2>
             <hr class="divider" />
-            <div class="parameter-row">
-              <div class="parameter-icon">
-                <i class="fas fa-arrows-alt-h"></i>
+
+            <div v-if="selectedDevice.type === 'accelerometer'">
+              <div class="parameter-row">
+                <div class="parameter-icon">
+                  <i class="fas fa-arrows-alt-h"></i>
+                </div>
+                <h1>X偏移：</h1>
+                <UInput v-model="xOffset" @input="updateThresholds('x', xOffset)" />
+                <span>阈值:</span>
+                <UInput v-model="xThreshold" @input="updateThresholds('xThreshold', $event.target.value)" />
+                <i class="fas fa-exclamation-circle" title="X轴阈值"></i>
               </div>
-              <h1>X偏移：</h1>
-              <UInput v-model="xOffset" />
+
+              <div class="parameter-row">
+                <div class="parameter-icon">
+                  <i class="fas fa-arrows-alt-v"></i>
+                </div>
+                <h1>Y偏移：</h1>
+                <UInput v-model="yOffset" @input="updateThresholds('y', yOffset)" />
+                <span>阈值:</span>
+                <UInput v-model="yThreshold" @input="updateThresholds('yThreshold', $event.target.value)" />
+                <i class="fas fa-exclamation-circle" title="Y轴阈值"></i>
+              </div>
+
+              <div class="parameter-row">
+                <div class="parameter-icon">
+                  <i class="fas fa-cube"></i>
+                </div>
+                <h1>Z偏移：</h1>
+                <UInput v-model="zOffset" @input="updateThresholds('z', zOffset)" />
+                <span>阈值:</span>
+                <UInput v-model="zThreshold" @input="updateThresholds('zThreshold', $event.target.value)" />
+                <i class="fas fa-exclamation-circle" title="Z轴阈值"></i>
+              </div>
             </div>
 
-
-            <!-- Y偏移 -->
-            <div class="parameter-row">
-              <div class="parameter-icon">
-                <i class="fas fa-arrows-alt-v"></i>
+            <div v-else-if="selectedDevice.type === 'strainGauge'">
+              <div class="parameter-row">
+                <div class="parameter-icon">
+                  <i class="fas fa-cube"></i>
+                </div>
+                <h1>Ch1偏移：</h1>
+                <UInput v-model="ch1Offset" @input="updateThresholds('ch1', ch1Offset)" />
+                <span>阈值:</span>
+                <UInput v-model="ch1Threshold" @input="updateThresholds('ch1Threshold', ch1Threshold)" />
+                <i class="fas fa-exclamation-circle" title="Ch1轴阈值"></i>
               </div>
-              <h1>Y偏移：</h1>
-              <UInput v-model="yOffset" />
+
+              <div class="parameter-row">
+                <div class="parameter-icon">
+                  <i class="fas fa-cube"></i>
+                </div>
+                <h1>Ch2偏移：</h1>
+                <UInput v-model="ch2Offset" @input="updateThresholds('ch2', ch2Offset)" />
+                <span>阈值:</span>
+                <UInput v-model="ch2Threshold" @input="updateThresholds('ch2Threshold', ch2Threshold)" />
+                <i class="fas fa-exclamation-circle" title="Ch2轴阈值"></i>
+              </div>
             </div>
 
-            <!-- Z偏移 -->
-            <div class="parameter-row">
-              <div class="parameter-icon">
-                <i class="fas fa-cube"></i>
-              </div>
-              <h1>Z偏移：</h1>
-              <UInput v-model="zOffset" />
-            </div>
-           
             <!-- 数据校准应用按钮 -->
             <div class="parameter-row">
-              <UButton type="primary" @click="applyCalibration">应用</UButton>
+              <UButton type="primary" @click="applyCalibration" :loading="loadingCalibration">应用</UButton>
             </div>
           </div>
 
@@ -82,22 +138,6 @@
           <div class="parameter-group">
             <h2 class="green-underline-title">限值设置</h2>
             <hr class="divider" />
-            <div class="parameter-row">
-              <div class="parameter-icon">
-                <i class="fas fa-sliders-h"></i>
-              </div>
-              <h1>上限设置：</h1>
-              <UInput v-model="upperBound" />
-            </div>
-
-            <div class="parameter-row">
-              <div class="parameter-icon">
-                <i class="fas fa-sliders-h"></i>
-              </div>
-              <h1>下限设置：</h1>
-              <UInput v-model="lowerBound" />
-            </div>
-
             <div class="parameter-row">
               <div class="parameter-icon">
                 <i class="fas fa-envelope"></i>
@@ -116,18 +156,30 @@
 
             <!-- 限值设置应用按钮 -->
             <div class="parameter-row">
-              <UButton type="primary" @click="applyLimits">应用</UButton>
+              <UButton type="primary" @click="applyLimits" :loading="loadingLimits">应用</UButton>
             </div>
           </div>
         </UForm>
       </div>
     </div>
+    
+    <!-- 消息提示 -->
+    <el-message
+      v-if="message.show"
+      :type="message.type"
+      :message="message.content"
+      :duration="message.duration"
+      :onClose="message.onClose"
+    />
   </div>
 </template>
 
 
 <script>
 import {useRouter} from "vue-router";
+import { ElMessage } from 'element-plus';
+import axios from 'axios';
+
 const API_BASE_URL = 'http://110.42.214.164:8009';
 const backToMain = () => {
   router.push("/subindex");
@@ -147,89 +199,308 @@ export default {
   data() {
     return {
       deviceOptions: [
-        { value: 'F001', label: '风压'},
-        { value: '4787BE3A', label: '综合楼05' },
-        { value: '8850A7D7', label: '综合楼04' },
-        { value: '8361D7CD', label: '综合楼03' },
-        { value: '612B04ED', label: '综合楼02' },
-        { value: 'E884C99D', label: '综合楼01' },
-        { value: 'E43AC643', label: '安楼06' },
-        { value: '29FA1867', label: '安楼05' },
-        { value: '87C3D4E4', label: '安楼04'},
-        { value: '9A0D1958', label: '安楼03' },
-        { value: 'F853ED49', label: '安楼02' },
-        { value: 'A77C5238', label: '安楼01'},
+        { value: '安楼外幕墙1A', label: '安楼外幕墙1A', building: '安楼', type: 'accelerometer' },
+        { value: '安楼外幕墙1B', label: '安楼外幕墙1B', building: '安楼', type: 'accelerometer' },
+        { value: '安楼外幕墙1C', label: '安楼外幕墙1C', building: '安楼', type: 'accelerometer' },
+        { value: '安楼外幕墙2D', label: '安楼外幕墙2D', building: '安楼', type: 'accelerometer' },
+        { value: '安楼外幕墙2E', label: '安楼外幕墙2E', building: '安楼', type: 'accelerometer' },
+        { value: '安楼外幕墙2F', label: '安楼外幕墙2F', building: '安楼', type: 'accelerometer' },
+        { value: '安楼外幕墙2Y', label: '安楼外幕墙2Y', building: '安楼', type: 'strainGauge' },
+        { value: '衷和楼#1G', label: '衷和楼1G', building: '衷和楼', type: 'accelerometer' },
+        { value: '衷和楼#1H', label: '衷和楼1H', building: '衷和楼', type: 'accelerometer' },
+        { value: '衷和楼#2I', label: '衷和楼2I', building: '衷和楼', type: 'accelerometer' },
+        { value: '衷和楼#2J', label: '衷和楼2J', building: '衷和楼', type: 'accelerometer' },
+        { value: '衷和楼测点7', label: '衷和楼测点7', building: '衷和楼', type: 'accelerometer' },
+        { value: '衷和楼#2Y', label: '衷和楼2Y', building: '衷和楼', type: 'strainGauge' }
       ],
  
-      selectedDevice: { value: 'F001', label: '风压'},
+      selectedDevice: { value: '安楼外幕墙1A', label: '安楼外幕墙1A', type: 'accelerometer'},
       upperBound: 10,
       lowerBound: 10,
       emailLimitSetting:25,
       messageLimitSetting:35,
-      devicePlace: '综合楼05',
 
       xOffset: 0,  // X偏移
       yOffset: 0,  // Y偏移
       zOffset: 0,   // Z偏移
+      
+      // 加载状态
+      loadingCalibration: false,
+      loadingLimits: false,
+      
+      // 消息提示
+      message: {
+        show: false,
+        type: 'success', // success, warning, info, error
+        content: '',
+        duration: 3000,
+        onClose: null
+      },
+      xThreshold: 0,
+      yThreshold: 0,
+      zThreshold: 0,
+      ch1Threshold: 0,
+      ch2Threshold: 0,
+      ch1Offset: 0,
+      ch2Offset: 0,
+      ratio_y_x: 1,
+      ratio_z_y: 1,
+      ratio_ch2_ch1: 1,
     };
   },
   computed: {
 
   },
   methods: { 
+    // 显示消息提示
+    showMessage(type, content, duration = 3000) {
+      ElMessage({
+        type: type,
+        message: content,
+        duration: duration
+      });
+    },
+    
+    // 筛选指定建筑物的设备
+    filteredDevices(buildingName) {
+      return this.deviceOptions.filter(device => device.building === buildingName);
+    },
+    
+    // 选择设备
+    selectDevice(device) {
+      this.selectedDevice = device;
+      this.showMessage('info', `已选择: ${device.label}`, 2000);
+      
+      // 查询阈值
+      this.fetchThresholds();
+
+      // 获取比例数据
+      this.getRatioData().then(ratios => {
+        if (ratios) {
+          this.ratio_y_x = ratios.ratio_y_x;
+          this.ratio_z_y = ratios.ratio_z_y;
+          this.ratio_ch2_ch1 = ratios.ratio_ch2_ch1;
+        }
+      });
+    },
+    
       // 台阵设置应用
     async updateSingle(item) {
       try {
-        const url = `${API_BASE_URL}/data/update_threshold_or_offset?device=${item.device}&type=${item.type}&value=${item.value}`
-        const response = await fetch(url)
-        return await response.json()
+        // 使用 encodeURIComponent 确保特殊字符被正确编码
+        const encodedDeviceName = encodeURIComponent(item.device_name);
+        const encodedType = encodeURIComponent(item.type);
+        const encodedValue = encodeURIComponent(item.value);
+        
+        const url = `${API_BASE_URL}/data/update_threshold_or_offset?device_name=${encodedDeviceName}&type=${encodedType}&value=${encodedValue}`;
+        
+        console.log('请求URL:', url);
+        
+        // 添加请求超时和错误处理
+        const response = await fetch(url, {
+          method: 'GET',
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+          },
+          timeout: 10000 // 10秒超时
+        })
+        
+        // 检查响应状态
+        if (!response.ok) {
+          console.warn(`请求失败: ${response.status} ${response.statusText}`);
+          return { success: false, error: `状态码 ${response.status}` };
+        }
+        
+        // 安全地解析JSON响应
+        try {
+          const text = await response.text();
+          // 处理空响应
+          if (!text || text.trim() === '') {
+            return { success: true, data: {} };
+          }
+          
+          // 尝试解析JSON
+          const data = JSON.parse(text);
+          return { success: true, data };
+        } catch (parseError) {
+          console.error('JSON解析错误:', parseError);
+          // 如果无法解析，但请求是成功的，我们仍然认为更新成功
+          return { success: true, data: {}, parseWarning: true };
+        }
       } catch (error) {
-        console.error('更新失败:', error)
-        throw error
+        console.error('更新失败:', error);
+        return { success: false, error: error.message || '网络错误' };
       }
     },
 
-
-    async applyArraySettings() {
-      const updates = [
-        { device: this.selectedDevice.value, type: 'device_name', value: this.devicePlace },
-        { device: '29FA1867', type: 'down', value: 0.3 },
-        { device: '29FA1867', type: 'offset', value: 0.1 }
-      ]
-      
-      const results = await Promise.all(
-        updates.map(item => this.updateSingle(item))
-      )
-      
-      console.log('批量更新结果:', results)
-    },
-
     async applyCalibration() {
-      const updates = [
-        { device: this.selectedDevice.value, type: 'x_offset', value: this.xOffset },
-        { device: this.selectedDevice.value, type: 'y_offset', value: this.yOffset },
-        { device: this.selectedDevice.value, type: 'z_offset', value: this.zOffset },
-      ]
-      
-      const results = await Promise.all(
-        updates.map(item => this.updateSingle(item))
-      )
-      console.log('批量更新结果:', results)
+      this.loadingCalibration = true;
+      try {
+        const updates = [];
+
+        if (this.selectedDevice.type === 'accelerometer') {
+          updates.push(
+            { device_name: this.selectedDevice.value, type: 'x_offset', value: this.xOffset },
+            { device_name: this.selectedDevice.value, type: 'y_offset', value: this.yOffset },
+            { device_name: this.selectedDevice.value, type: 'z_offset', value: this.zOffset },
+            { device_name: this.selectedDevice.value, type: 'x_limit', value: this.xThreshold },
+            { device_name: this.selectedDevice.value, type: 'y_limit', value: this.yThreshold },
+            { device_name: this.selectedDevice.value, type: 'z_limit', value: this.zThreshold }
+          );
+        } else if (this.selectedDevice.type === 'strainGauge') {
+          updates.push(
+            { device_name: this.selectedDevice.value, type: 'ch1_offset', value: this.ch1Offset },
+            { device_name: this.selectedDevice.value, type: 'ch2_offset', value: this.ch2Offset },
+            { device_name: this.selectedDevice.value, type: 'ch1_limit', value: this.ch1Threshold },
+            { device_name: this.selectedDevice.value, type: 'ch2_limit', value: this.ch2Threshold }
+          );
+        }
+
+        const results = await Promise.all(
+          updates.map(item => this.updateSingle(item))
+        );
+
+        // 检查是否所有请求都成功
+        const allSuccessful = results.every(result => result && result.success);
+        const hasParseWarnings = results.some(result => result && result.parseWarning);
+
+        if (allSuccessful) {
+          if (hasParseWarnings) {
+            this.showMessage('success', `${this.selectedDevice.label} 数据校准参数已更新，但服务器响应格式异常。`);
+          } else {
+            this.showMessage('success', `${this.selectedDevice.label} 数据校准参数已成功更新！`);
+          }
+        } else {
+          this.showMessage('warning', `部分数据校准参数更新可能未成功，请检查网络连接。`);
+        }
+
+        console.log('批量更新结果:', results);
+      } catch (error) {
+        this.showMessage('error', `更新失败: ${error.message || '网络错误'}`);
+        console.error('更新出错:', error);
+      } finally {
+        this.loadingCalibration = false;
+      }
     },
     
-    async  applyLimits() {
-      const updates = [
-        { device: this.selectedDevice.value, type: 'up', value: this.upperBound },
-        { device: this.selectedDevice.value, type: 'down', value: this.lowerBound },
-        { device: this.selectedDevice.value, type: 'email_limit', value: this.emailLimitSetting },
-        { device: this.selectedDevice.value, type: 'message_limit', value: this.messageLimitSetting },
-      ]
-      const results = await Promise.all(
-        updates.map(item => this.updateSingle(item))
-      )
-      console.log('批量更新结果:', results)
+    async applyLimits() {
+      this.loadingLimits = true;
+      try {
+        const updates = [
+          { device_name: this.selectedDevice.value, type: 'email_limit', value: this.emailLimitSetting },
+          { device_name: this.selectedDevice.value, type: 'message_limit', value: this.messageLimitSetting },
+        ]
+        
+        const results = await Promise.all(
+          updates.map(item => this.updateSingle(item))
+        )
+        
+        // 检查是否所有请求都成功
+        const allSuccessful = results.every(result => result && result.success);
+        const hasParseWarnings = results.some(result => result && result.parseWarning);
+        
+        if (allSuccessful) {
+          if (hasParseWarnings) {
+            this.showMessage('success', `${this.selectedDevice.label} 限值参数已更新，但服务器响应格式异常。`);
+          } else {
+            this.showMessage('success', `${this.selectedDevice.label} 限值参数已成功更新！`);
+          }
+        } else {
+          this.showMessage('warning', `部分限值参数更新可能未成功，请检查网络连接。`);
+        }
+        
+        console.log('批量更新结果:', results);
+      } catch (error) {
+        this.showMessage('error', `更新失败: ${error.message || '网络错误'}`);
+        console.error('更新出错:', error);
+      } finally {
+        this.loadingLimits = false;
+      }
     },
 
+    async fetchThresholds() {
+      try {
+        const response = await axios.get(`${API_BASE_URL}/data/get_threshold_or_offset`, {
+          params: {
+            device_name: this.selectedDevice.value,
+            device_type: this.selectedDevice.type
+          }
+        });
+        
+        if (response.data.status === 'success') {
+          const data = response.data.data;
+          this.xOffset = data.x_offset || 0;
+          this.yOffset = data.y_offset || 0;
+          this.zOffset = data.z_offset || 0;
+
+          // 根据设备类型设置阈值
+          if (this.selectedDevice.type === 'accelerometer') {
+            this.xThreshold = data.x_limit || 0;
+            this.yThreshold = data.y_limit || 0;
+            this.zThreshold = data.z_limit || 0;
+          } else if (this.selectedDevice.type === 'strainGauge') {
+            this.ch1Threshold = data.ch1_limit || 0;
+            this.ch2Threshold = data.ch2_limit || 0;
+          }
+        } else {
+          this.showMessage('error', '获取阈值失败');
+        }
+      } catch (error) {
+        console.error('获取阈值失败:', error);
+        this.showMessage('error', '获取阈值失败');
+      }
+    },
+
+    updateThresholds(type, value) {
+      const numericValue = parseFloat(value); // 将输入值转换为数字
+      console.log(numericValue);
+      if (type === 'xThreshold') {
+        this.yThreshold = Math.abs((numericValue * (this.ratio_y_x)).toFixed(2));
+        this.zThreshold = Math.abs((this.yThreshold * (this.ratio_z_y)).toFixed(2));
+      } else if (type === 'yThreshold') {
+        this.xThreshold = Math.abs((numericValue /(this.ratio_y_x)).toFixed(2));
+        this.zThreshold = Math.abs((this.yThreshold * (this.ratio_z_y)).toFixed(2));
+      } else if (type === 'zThreshold') {
+        this.yThreshold = Math.abs((numericValue / (this.ratio_z_y)).toFixed(2));
+        this.xThreshold = Math.abs((this.yThreshold / (this.ratio_y_x)).toFixed(2));
+      } else if (type === 'ch1Threshold') {
+        this.ch2Threshold = Math.abs((numericValue * (this.ratio_ch2_ch1)).toFixed(2));
+      } else if (type === 'ch2Threshold') {
+        this.ch1Threshold = Math.abs((numericValue / (this.ratio_ch2_ch1)).toFixed(2));
+      }
+    },
+
+    async getRatioData() {
+      try {
+        const response = await axios.get(`${API_BASE_URL}/data/get_ratio_data`, {
+          params: {
+            device_name: this.selectedDevice.value,
+            device_type: this.selectedDevice.type
+          }
+        });
+        
+        if (response.data.status === 'success') {
+          return response.data.data;
+        } else {
+          this.showMessage('error', '获取比例数据失败');
+          return null;
+        }
+      } catch (error) {
+        console.error('获取比例数据失败:', error);
+        this.showMessage('error', '获取比例数据失败');
+        return null;
+      }
+    },
+
+  },
+  mounted() {
+    // 在组件挂载时获取比例数据
+    this.getRatioData().then(ratios => {
+      this.ratio_y_x = ratios.ratio_y_x;
+      this.ratio_z_y = ratios.ratio_z_y;
+      this.ratio_ch2_ch1 = ratios.ratio_ch2_ch1;
+    });
   },
 };
 </script>
@@ -238,11 +509,14 @@ export default {
 /* 页面布局 */
 @import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css');
 .app-container {
-  width:100%;
+  width: 100%;
   display: flex;
   flex-direction: column;
-  height: 100vh;
+  min-height: 100vh; /* 改为最小高度 */
+  height: auto; /* 允许内容扩展 */
   background-color: #f4f5f7;
+  overflow-x: hidden; /* 防止水平滚动 */
+  padding-bottom: 80px; /* 添加底部内边距，防止最后的元素被遮挡 */
 }
 
 .green-underline-title {
@@ -314,8 +588,10 @@ export default {
 .app-container {
   display: flex;
   flex-direction: column;
-  height: 100vh;
+  min-height: 100vh; /* 改为最小高度 */
+  height: auto; /* 允许内容扩展 */
   background-color: #ffffff;
+  overflow-x: hidden; /* 防止水平滚动 */
 }
 
 .parameter-panel {
@@ -323,9 +599,10 @@ export default {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start; /* 改为顶部对齐 */
   background-color: #ffffff;
-  padding: 2rem;
+  padding: 1rem; /* 减小内边距 */
+  overflow-y: auto; /* 添加垂直滚动 */
 }
 
 .parameter-form {
@@ -333,30 +610,40 @@ export default {
   max-width: 800px;
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 0.8rem; /* 减小间距 */
+  margin-bottom: 70px; /* 添加底部间距确保最后元素可见 */
 }
 
 .parameter-row {
   display: flex;
   align-items: center;
-  gap: 1rem;
-  padding: 0.5rem 1rem;
+  gap: 0.8rem; /* 减小间距 */
+  padding: 0.4rem 0.8rem; /* 减小内边距 */
+  flex-wrap: wrap; /* 在小屏幕上允许换行 */
+}
+
+.parameter-row h1 {
+  font-size: 1rem; /* 减小标题字体大小 */
+  margin: 0; /* 移除边距 */
+  white-space: nowrap; /* 防止文字换行 */
 }
 
 .parameter-group {
   display: flex;
-  flex-direction: column;  /* 添加这行来实现纵向排列 */
+  flex-direction: column;
   align-items: left;
-  gap: 1rem;
+  gap: 0.8rem; /* 减小间距 */
   background: #f9f9f9;
-  padding: 0.5rem 1rem;
+  padding: 0.5rem 0.8rem; /* 减小内边距 */
   border-radius: 8px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  margin-bottom: 0.8rem; /* 添加底部间距 */
 }
 
 .parameter-icon {
-  font-size: 1.5rem;
+  font-size: 1.2rem; /* 减小图标大小 */
   color: #4caf50;
+  min-width: 1.2rem; /* 设置最小宽度 */
 }
 
 .parameter-label {
@@ -368,6 +655,59 @@ export default {
   flex: 2;
 }
 
+/* 建筑物网格样式 */
+.building-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem; /* 减小间距 */
+  width: 100%;
+}
+
+.building-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem; /* 减小间距 */
+}
+
+.building-group h3 {
+  color: #333;
+  font-size: 1rem; /* 减小字体大小 */
+  margin-bottom: 3px;
+  padding-left: 5px;
+  border-left: 3px solid #4caf50;
+}
+
+.device-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); /* 减小卡片尺寸 */
+  gap: 8px; /* 减小间距 */
+}
+
+.device-item {
+  background-color: #e9ecef;
+  padding: 6px 8px; /* 减小内边距 */
+  border-radius: 4px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 0.85rem; /* 减小字体大小 */
+}
+
+.device-item:hover {
+  background-color: #d1e7dd;
+  transform: translateY(-2px);
+}
+
+.device-item.active {
+  background-color: #4caf50;
+  color: white;
+  font-weight: bold;
+}
+
+.selected-device-info {
+  font-weight: bold;
+  color: #4caf50;
+}
 
 /* 面板展开/收起动画效果 */
 .fade-enter-active,
@@ -385,7 +725,9 @@ export default {
   display: flex;
   flex-direction: column;
   flex: 1;
-  overflow-y: auto;
+  overflow-y: auto; /* 允许垂直滚动 */
+  height: calc(100vh - 60px); /* 减去头部高度 */
+  padding-bottom: 80px; /* 添加底部内边距 */
 }
 
 .device-section,
@@ -588,6 +930,110 @@ export default {
   margin: 2px;
   border: none;
   border-top: 1px solid #e0e0e0;
+}
+
+/* 响应式布局 */
+@media (max-width: 768px) {
+  .parameter-row {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .device-grid {
+    grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
+  }
+  
+  .parameter-icon {
+    margin-right: 5px;
+  }
+  
+  .parameter-row h1 {
+    margin-bottom: 5px;
+  }
+  
+  .parameter-group {
+    padding: 0.4rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .device-grid {
+    grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
+  }
+  
+  .device-item {
+    padding: 4px 6px;
+    font-size: 0.8rem;
+  }
+  
+  .building-group h3 {
+    font-size: 0.9rem;
+  }
+}
+
+/* 调整输入框样式 */
+:deep(input),
+:deep(.el-input__inner),
+:deep(.u-input) {
+  width: 100%;
+  max-width: 160px;
+}
+
+/* 针对按钮的样式调整 */
+:deep(.el-button),
+:deep(.u-button) {
+  padding: 8px 15px;
+  font-size: 0.9rem;
+}
+
+/* 确保滚动视图包含所有内容 */
+html, body {
+  height: 100%;
+  overflow-y: auto;
+  scroll-behavior: smooth;
+}
+
+/* 添加针对最后一个卡片的样式 */
+.parameter-group:last-child {
+  margin-bottom: 80px; /* 为最后一个卡片添加额外的底部间距 */
+}
+
+/* 针对限值设置组的特定样式 */
+.parameter-group:last-of-type {
+  padding-bottom: 20px;
+}
+
+/* 针对应用按钮的样式 */
+.parameter-row:last-child .u-button,
+.parameter-row:last-child button {
+  margin-bottom: 15px;
+}
+
+.device-type-badge {
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  margin-left: 8px;
+}
+
+.acc-badge {
+  background-color: #e3f2fd;
+  color: #1976d2;
+}
+
+.strain-badge {
+  background-color: #fff8e1;
+  color: #ff8f00;
+}
+
+.device-item.strain-gauge {
+  background-color: #fff8e1;
+  border-left: 3px solid #ff8f00;
+}
+
+.device-item.strain-gauge.active {
+  background-color: #ff8f00;
+  color: white;
 }
 </style>
 
