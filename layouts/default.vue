@@ -212,7 +212,7 @@ const links = reactive([
         id: "monitor",
         label: "监测中心",
         icon: "i-heroicons-chart-bar-square",
-        to: "/monitor",
+        to: "/vibration",
         defaultOpen: false,
         tooltip: {
           text: "监测中心",
@@ -220,8 +220,8 @@ const links = reactive([
         },
         children: [
           {
-            label: "参数设置",
-            to: "/vibration/parameter",
+            label: "仪表盘",
+            to: "/vibration/dashboard",
           },
           {
             label: "实时监测",
@@ -229,31 +229,15 @@ const links = reactive([
             exact: true,
           },
           {
+            label: "参数设置",
+            to: "/vibration/parameter",
+          },
+          {
             label: "异常数据",
             to: "/vibration/abnormal",
           },
-
+          
         ],
-      },
-      {
-        id: "alarm",
-        label: "报警中心",
-        icon: "i-heroicons-exclamation-triangle",
-        to: "/alarm",
-        tooltip: {
-          text: "报警中心",
-          shortcuts: ["G", "W"],
-        },
-      },
-      {
-        id: "bot",
-        label: "智能助手",
-        icon: "i-heroicons-cpu-chip",
-        to: "/bot",
-        tooltip: {
-          text: "BOT",
-          shortcuts: ["G", "W"],
-        },
       },
     ],
     tooltip: {
