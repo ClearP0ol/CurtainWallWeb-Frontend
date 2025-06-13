@@ -280,49 +280,49 @@ const links = reactive([
   //
   //   ],
   // },
-  {
-    id: "explosion",
-    label: "玻璃自爆检测",
-    to: "/spallingDetection",
-    icon: "i-material-symbols-sound-detection-glass-break-sharp",
-    defaultOpen: false,
-    tooltip: {
-      text: "玻璃自爆检测",
-    },
-    children: [
-      {
-        label: "玻璃自爆检测",
-        to: "/spallingDetection",
-        exact: true,
-      },
-      {
-        label: "查看历史记录",
-        to: "/spallingDetection/history",
-      },
-    ],
-  },
-  {
-    id: "glassFlatness",
-    label: "玻璃平整度检测",
-    to: "/smoothnessDetection",
-    icon: "i-simple-icons-edgeimpulse",
-    defaultOpen: false,
-    //click: gotoGlassFlatness,
-    tooltip: {
-      text: "玻璃平整度检测",
-    },
-    children: [
-      {
-        label: "玻璃平整度检测",
-        to: "/smoothnessDetection",
-        exact: true,
-      },
-      {
-        label: "查看历史记录",
-        to: "/smoothnessDetection/history",
-      },
-    ],
-  },
+  // {
+  //   id: "explosion",
+  //   label: "玻璃自爆检测",
+  //   to: "/spallingDetection",
+  //   icon: "i-material-symbols-sound-detection-glass-break-sharp",
+  //   defaultOpen: false,
+  //   tooltip: {
+  //     text: "玻璃自爆检测",
+  //   },
+  //   children: [
+  //     {
+  //       label: "玻璃自爆检测",
+  //       to: "/spallingDetection",
+  //       exact: true,
+  //     },
+  //     {
+  //       label: "查看历史记录",
+  //       to: "/spallingDetection/history",
+  //     },
+  //   ],
+  // },
+  // {
+  //   id: "glassFlatness",
+  //   label: "玻璃平整度检测",
+  //   to: "/smoothnessDetection",
+  //   icon: "i-simple-icons-edgeimpulse",
+  //   defaultOpen: false,
+  //   //click: gotoGlassFlatness,
+  //   tooltip: {
+  //     text: "玻璃平整度检测",
+  //   },
+  //   children: [
+  //     {
+  //       label: "玻璃平整度检测",
+  //       to: "/smoothnessDetection",
+  //       exact: true,
+  //     },
+  //     {
+  //       label: "查看历史记录",
+  //       to: "/smoothnessDetection/history",
+  //     },
+  //   ],
+  // },
   // {
   //   id: "glassToughnessJudge",
   //   label: "幕墙韧性评估",
@@ -373,12 +373,12 @@ const links = reactive([
   //   ],
   // },
   {
-    id: "notification",
-    label: "通知",
+    id: "accountManagement",
+    label: "账号管理",
     icon: "i-heroicons-bell-alert",
-    to: "/mainNotification",
+    to: "/accountManagement",
     tooltip: {
-      text: "通知",
+      text: "账号管理",
     },
   },
   {
