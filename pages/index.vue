@@ -128,19 +128,18 @@ const modulesLine2 = reactive([
 
 const modulesLine3 = reactive([
   {
-    title: "玻璃自爆检测(建设中)",
-    description: "通过图片检测玻璃自爆风险",
-    target_address: "/spallingDetection",
-    permissionKey: "access_system_d",
-    icon: "i-material-symbols-sound-detection-glass-break-sharp",
-    disabled: true,
+    title: "账号管理",
+    description: "管理账号用户名及密码",
+    target_address: "/accountManagement",
+    permissionKey: "",
+    icon: "i-heroicons-bell-alert",
   },
   {
-    title: "玻璃平整度检测(建设中)",
-    description: "给定一张建筑玻璃图片，检测其平整度",
-    target_address: "/smoothnessDetection",
-    permissionKey: "access_system_g",
-    icon: "i-simple-icons-edgeimpulse",
+    title: "用户管理",
+    description: "管理用户权限",
+    target_address: "/userManage",
+    permissionKey: "manage",
+    icon: "i-heroicons-book-open",
     disabled: true,
   },
 
@@ -171,8 +170,12 @@ const getUserAuth = async () => {
     console.log(userAuth.value)
 };
 const checkPermissionAndRedirect = (module) => {
-  if (module.disabled) {
-    ElMessage.warning("该模块建设中，暂不可用");
+  if (module.permissionKey=="") {
+    router.push({ path: module.target_address });
+    return;
+  }
+  if(module.permissionKey=="manage" && userAuth.value.is_superuser){
+    router.push({ path: module.target_address });
     return;
   }
   if (userAuth.value.is_superuser || userAuth.value[module.permissionKey]) {
