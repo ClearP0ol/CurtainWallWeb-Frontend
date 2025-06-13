@@ -43,7 +43,7 @@
           </el-button>
           <el-popconfirm
             title="确定要删除这个项目吗？"
-            @confirm="deleteProject(project.project_id)"
+           
             confirm-button-text="确定"
             cancel-button-text="取消"
           >

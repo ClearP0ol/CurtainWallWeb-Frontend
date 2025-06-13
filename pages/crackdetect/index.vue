@@ -1,192 +1,181 @@
 <template>
   <div class="container">
-    <el-card class="project-card">
-      <div class="project-header">
-        <el-icon class="logo" :size="60" color="#B29F82">
-          <Monitor />
-        </el-icon>
-        <h1>幕墙裂缝检测系统</h1>
-      </div>
-
-      <el-form 
-        :model="projectForm"
-        :rules="rules"
-        ref="projectFormRef"
-        label-position="top"
-        class="project-form"
-      >
-        <el-form-item 
-          label="项目名称" 
-          prop="projectName"
-          :rules="[
-            { required: true, message: '请输入项目名称', trigger: 'blur' },
-            { min: 2, max: 50, message: '长度在 2 到 50 个字符', trigger: 'blur' }
-          ]"
-        >
-          <el-input 
-            v-model="projectForm.projectName"
-            placeholder="请输入项目名称"
-          />
-        </el-form-item>
-
-        <el-form-item>
-          <el-button 
-            type="primary" 
-            @click="startProject"
-            :loading="loading"
-            class="start-button"
+    <p class="title">石材裂缝检测</p>
+    
+    <div v-if="store.currentStep">
+      <el-button  type="primary" class="button" :disabled="(store.pickedImage===null || !store.pickedImage.detected) && store.currentStep===2" @click="store.nextStep">
+          <p v-if="store.currentStep<3">下一步</p>
+          <p v-else>生成报告</p>
+      </el-button>
+    </div>
+    <div class="box">
+      <div class="side">
+      <div class="steps">
+        <el-steps direction="vertical" :active="store.currentStep">
+          <el-step
+            v-for="(step, index) in steps"
+            :key="index"
+            :title="step.title"
+            :description="step.description"
           >
-            开始检测
-          </el-button>
-        </el-form-item>
-      </el-form>
-    </el-card>
+          <template #icon>
+            <i :class="getStepIcon(index)"></i>
+          </template>
+        </el-step>
+        </el-steps>
+        </div>
+        <div style="width:100%;display: flex;justify-content: center;align-items: center;">
+        <el-button  type="primary" class="bottom_button" @click="store.preStep">
+          返回上一步
+        </el-button>
+        </div>
+      </div>
+      <div class="content">
+        <component
+         :is="currentComponent" 
+         />
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup>
 import { ref } from 'vue'
-import { useRouter } from 'vue-router'
-import { ElMessage } from 'element-plus'
-import axios from 'axios'
-import { jwtDecode } from 'jwt-decode'
-import { Monitor } from '@element-plus/icons-vue'
+import './asset/icon/iconfont.css'
+import pickProject from './steps/pickProject.vue'
+import uploadPicture from './steps/uploadPicture.vue'
+import Segmentation from './steps/Segmentation.vue'
+import CrackDetection from './steps/crackDetection.vue'
 
-const router = useRouter()
-const projectFormRef = ref(null)
-const loading = ref(false)
+import { useCrackDetectionStore } from './store/CrackDetection'
+const store = useCrackDetectionStore()
 
-const projectForm = ref({
-  projectName: ''
+const steps = ref([
+  { title: '选择项目',component: 'pickProject' },
+  { title: '上传图片',component: 'uploadPicture' },
+  { title: '幕墙块分割',component: 'Segmentation'},
+  { title: '裂缝检测',component: 'CrackDetection'}
+]);
+
+
+// 组件映射
+const components = {
+  pickProject,
+  uploadPicture,
+  Segmentation,
+  CrackDetection
+};
+
+// 当前显示的组件
+const currentComponent = computed(() => {
+  return components[steps.value[store.currentStep].component]
 })
 
-const project_id = ref(null)
-const startProject = async () => {
-  if (!projectFormRef.value) return
-
-  try {
-    await projectFormRef.value.validate()
-    loading.value = true
-
-    // 调用创建项目API
-    try {
-      // 从localStorage获取token
-      const authToken = localStorage.getItem('authToken')
-      if (!authToken) {
-        ElMessage.error('请先登录')
-        return
-      }
-      console.log("authToken:",authToken)
-      // 解析token获取用户信息
-      const decoded = jwtDecode(authToken)
-      console.log("user_name:",decoded.username)
-
-      const response = await axios.post('/crackdetection/createProject', 
-        {
-          project_name: projectForm.value.projectName,
-          user_name: decoded.username
-        },
-      )
-      
-      if (response.data.error) {
-        ElMessage.error(response.data.error)
-        return
-      }
-      project_id.value = response.data.project_id
-    } catch (error) {
-      if (error.response?.status === 401) {
-        ElMessage.error('登录已过期，请重新登录')
-        // 可以在这里添加重定向到登录页面的逻辑
-        return
-      }
-      ElMessage.error('创建项目失败：' + (error.response?.data?.error || error.message))
-      return
-    }
-
-    
-
-    // 跳转到上传页面
-    router.push({
-      path: '/crackdetect/UploadImage',
-      query: {
-        projectName: projectForm.value.projectName,
-        project_id: project_id.value
-      }
-    })
-
-  } catch (error) {
-    if (error.message) {
-      ElMessage.error(error.message)
-    }
-  } finally {
-    loading.value = false
+const getStepIcon = (index) => {
+  const baseClass = 'iconfont '; // iconfont 基础类名
+  
+  if (index < store.currentStep) {
+    return baseClass + 'icon-circle-check-filled'; // 已完成 - 对号圆
+  } else if (index === store.currentStep) {
+    return baseClass + 'icon-circle'; // 当前步骤 - 实心圆
+  } else {
+    return baseClass + 'icon-circle1'; // 未完成 - 空心圆
   }
-}
+};
 </script>
 
 <style scoped>
 .container {
+  position: relative;
   height: 100vh;
+  padding-top: 3vh;
+  padding-bottom: 5vh;
+  padding-left: 2vw;
+  padding-right: 2vw;
+  background-color: #F5F7FA;
+}
+
+.button{
+  position: absolute;
+  right: 2vw;
+  top: 5vh;
+  width: 7vw;
+  height: 4vh;
+}
+
+.bottom_button{
+  width: 5vw;
+  height: 4vh;
+}
+
+.title{
+  color: black;
+  font-size: 50px;
+  font-weight: bold;
+  margin-bottom: 2vh;
+}
+
+.box{
+  background-color: white;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  height: 85%;
+  border-color: black;
+  border-radius: 5px;
+  box-shadow: 0px 0px 10px rgb(81, 81, 81);
+}
+
+.side{
+  width: 14%;
+  height: 100%;
+}
+
+.steps{
+  height: 85%;
+  margin-top: 25%;
+  width: 100%;
   display: flex;
   justify-content: center;
-  align-items: center;
-  background-color: #F5F7FA;
 }
 
-.project-card {
-  width: 100%;
-  max-width: 500px;
-  padding: 40px;
-  background-color: #FFFDFA;
-  border-radius: 8px;
-  border: 1px solid #E4E7ED;
-  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+.content{
+  margin-left: 3%;
+  height: 90%;
+  width: 82%;
 }
 
-.project-header {
-  text-align: center;
-  margin-bottom: 40px;
+::v-deep .is-vertical .el-step__head {
+  order: 2;
+  margin-left: 5px;
 }
 
-.logo {
-  width: 120px;
-  height: 120px;
-  margin-bottom: 20px;
+::v-deep .is-vertical .el-step__main {
+  order: 1;
+  text-align: right;
+  margin-bottom: 10px;
 }
 
-.project-header h1 {
-  font-size: 24px;
-  color: #303133;
-  margin: 0;
+::v-deep .el-step.is-vertical .el-step__main {
+  margin-left: 0;
 }
 
-.project-form {
-  margin-top: 30px;
+::v-deep .el-step.is-vertical:not(:last-child) .el-step__line {
+  top: 40px; /* 调整线条开始位置 */
+  bottom: 30px; /* 调整线条结束位置 */
+  left: -45px; /* 调整线条水平位置 */
+  height: calc(100% - 60px); /* 减少线条长度 */
 }
 
-.start-button {
-  width: 100%;
-  height: 40px;
-  margin-top: 20px;
-  background-color: #1989FA;
-  border-color: #1989FA;
+:deep(.el-step__title) {
+  font-size: 18px;
 }
 
-.start-button:hover {
-  background-color: #409EFF;
-  border-color: #409EFF;
+:deep(.el-step__head.is-process) {
+  color: #409EFF; /* 修改icon颜色 */
 }
 
-:deep(.el-input__wrapper) {
-  background-color: #F5F7FA;
+:deep(.el-step__title.is-finish) {
+  color: black;
 }
-
-:deep(.el-input__inner) {
-  height: 40px;
-}
-
-:deep(.el-form-item__label) {
-  color: #303133;
-  font-weight: 500;
-}
-</style> 
+</style>

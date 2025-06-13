@@ -4,196 +4,488 @@
   </div>
   <UDashboardToolbar>
     <template #left>
-      <el-cascader
-        v-model="selectedDevicePath"
-        :options="cascaderDevices"
-        :props="cascaderProps"
-        placeholder="选择设备"
-        class="min-w-[150px]"
-        @change="handleDeviceChange"
-      >
-        <template #default="{ node, data }: { node: any; data: CascaderOption }">
-          <span>
-            <span
-              :class="[
-                data.online ? 'bg-green-400' : 'bg-gray-200',
-                'inline-block h-2 w-2 flex-shrink-0 rounded-full mr-2'
-              ]"
-              aria-hidden="true"
-            />
-            {{ data.label }}
-          </span>
-        </template>
-      </el-cascader>
-
-      <el-select v-model="dataSource" placeholder="请选择数据粒度" class="ml-4 min-w-[180px]">
-        <el-option label="秒级数据" value="websocket"></el-option>
-        <el-option label="分钟级数据" value="api_minute"></el-option>
-        <el-option label="小时级数据" value="api_hour"></el-option>
-        <el-option label="天级数据" value="api_day"></el-option>
-        <el-option label="月级数据" value="api_month"></el-option>
-        <el-option label="年级数据" value="api_year"></el-option>
+      <el-select v-model="selectedCategory" placeholder="选择设备地点" class="min-w-[150px]" @change="fetchDevices">
+        <el-option label="安楼外幕墙1" value="安楼外幕墙1"></el-option>
+        <el-option label="安楼外幕墙2" value="安楼外幕墙2"></el-option>
+        <el-option label="衷和楼" value="衷和楼"></el-option>
       </el-select>
+
+      <el-select v-model="selectedDeviceType" placeholder="选择设备类型" class="ml-4 min-w-[150px]">
+        <el-option label="加速度计" value="accelerometer"></el-option>
+        <el-option label="应变计" value="strainGauge"></el-option>
+      </el-select>
+
+      <el-select v-model="selectedDevice" placeholder="选择设备" class="ml-4 min-w-[150px]">
+        <el-option
+          v-for="device in filteredDevices"
+          :key="device.device_name"
+          :label="device.device_name"
+          :value="device.device_name"
+        />
+      </el-select>
+
+      <el-select v-model="selectedDataSource" placeholder="选择数据级别" class="ml-4 min-w-[180px]" @change="fetchDataBySelection">
+        <el-option label="秒级数据" value="second"></el-option>
+        <el-option label="分钟级数据" value="minute"></el-option>
+        <el-option label="小时级数据" value="hourly"></el-option>
+        <el-option label="天级数据" value="daily"></el-option>
+        <el-option label="周级数据" value="weekly"></el-option>
+        <el-option label="月级数据" value="monthly"></el-option>
+      </el-select>
+      
+      <el-button type="primary" @click="fetchDataBySelection" class="ml-4" :disabled="!selectedDevice">确定</el-button>
     </template>
   </UDashboardToolbar>
 
+  <!-- 多图表卡片容器 -->
   <UDashboardCard class="overflow-y-auto">
-    <div id="main" style="height: 400px;" class="rounded-lg border border-gray-300"></div>
-    <div id="main2" style="height: 400px;" class="rounded-lg border border-gray-300"></div>
+    <div class="chart-tabs">
+      <!-- 标签页导航 -->
+      <div class="tab-nav">
+        <!-- 加速度计标签页 -->
+        <template v-if="selectedDeviceType === 'accelerometer'">
+          <button 
+            v-for="tab in accelerometerTabs" 
+            :key="tab.key"
+            :class="['tab-button', { active: activeTab === tab.key }]"
+            @click="switchTab(tab.key)"
+          >
+            {{ tab.label }}
+          </button>
+        </template>
+        
+        <!-- 应变计标签页 -->
+        <template v-if="selectedDeviceType === 'strainGauge'">
+          <button 
+            v-for="tab in strainGaugeTabs" 
+            :key="tab.key"
+            :class="['tab-button', { active: activeTab === tab.key }]"
+            @click="switchTab(tab.key)"
+          >
+            {{ tab.label }}
+          </button>
+        </template>
+      </div>
+      
+      <!-- 图表容器 -->
+      <div class="tab-content">
+        <!-- 加速度计图表 -->
+        <template v-if="selectedDeviceType === 'accelerometer'">
+          <div v-show="activeTab === 'x'" id="chart-x" class="chart-container"></div>
+          <div v-show="activeTab === 'y'" id="chart-y" class="chart-container"></div>
+          <div v-show="activeTab === 'z'" id="chart-z" class="chart-container"></div>
+          <div v-show="activeTab === 'all'" id="chart-all" class="chart-container"></div>
+        </template>
+        
+        <!-- 应变计图表 -->
+        <template v-if="selectedDeviceType === 'strainGauge'">
+          <div v-show="activeTab === 'ch1'" id="chart-ch1" class="chart-container"></div>
+          <div v-show="activeTab === 'ch2'" id="chart-ch2" class="chart-container"></div>
+          <div v-show="activeTab === 'all'" id="chart-strain-all" class="chart-container"></div>
+        </template>
+      </div>
+    </div>
   </UDashboardCard>
-
 </template>
 
 <script setup lang="ts">
-import {onMounted, ref, watch, computed} from 'vue';
+import {onMounted, ref, watch, computed, onBeforeUnmount, nextTick} from 'vue';
 import * as echarts from 'echarts';
 import {useRouter} from "vue-router";
 import axios from 'axios';
 import type { CascaderValue } from 'element-plus';
+import { ElMessage } from 'element-plus';
 
 const API_BASE_URL = 'http://110.42.214.164:8009';
-const dataSource = ref<'websocket' | 'api_minute' | 'api_hour' | 'api_day' | 'api_month' | 'api_year'>('websocket'); // 默认使用 WebSocket
-// 定义响应式变量存储阈值
-const upperThreshold = ref(0.0);
-const lowerThreshold = ref(0.0);
-const x_offset = ref(0.0);
-const y_offset = ref(0.0);
-const z_offset = ref(0.0);
-const emailThreshold =ref(0.0);
-const smsThreshold = ref(0.0);
+const dataSource = ref<'api_second' | 'api_minute' | 'api_hour' | 'api_day'| 'api_week' | 'api_month' | 'api_year'>('api_minute');
+const selectedDataSource = ref('minute');
 
-// 获取阈值的函数
-const getThresholds = async (type: 'up' | 'down' | 'x_offset' | 'y_offset' | 'z_offset' | 'message_limit' | 'email_limit') => {
-  try {
-    // 获取上阈值或下阈值或偏移量
-    const Response = await axios.get(`${API_BASE_URL}/data/get_threshold_or_offset`, {
-      params: {
-        device: selectedDevice.value.deviceId,
-        type: type
-      }
-    });
-    if (Response.data.status === 'success') {
-      if(type === 'up'){
-        upperThreshold.value = Response.data.data.value;
-      }
-      else if(type === 'down'){
-        lowerThreshold.value = Response.data.data.value;
-      }
-      else if(type === 'x_offset'){
-        x_offset.value = Response.data.data.value;
-      }
-      else if(type === 'y_offset'){
-        y_offset.value = Response.data.data.value;
-      }
-      else if(type === 'z_offset'){
-        z_offset.value = Response.data.data.value;
-      }
-      else if(type === 'message_limit')
-      {
-        smsThreshold.value = Response.data.data.value;
-      }
-      else if(type === 'email_limit')
-      {
-        emailThreshold.value = Response.data.data.value;
+// 标签页相关
+const activeTab = ref('all');
+
+// 定义标签页配置
+const accelerometerTabs = [
+  { key: 'all', label: '全部(XYZ)' },
+  { key: 'x', label: 'X轴' },
+  { key: 'y', label: 'Y轴' },
+  { key: 'z', label: 'Z轴' }
+];
+
+const strainGaugeTabs = [
+  { key: 'all', label: '全部(Ch1+Ch2)' },
+  { key: 'ch1', label: 'Channel 1' },
+  { key: 'ch2', label: 'Channel 2' }
+];
+
+// 存储多个图表实例
+const charts = ref<{ [key: string]: echarts.ECharts | null }>({});
+
+// 存储预处理的图表配置
+const chartOptions = ref<{ [key: string]: any }>({});
+
+const devices = ref<{ device_name: string; category: string }[]>([]);
+const selectedCategory = ref('');
+const selectedDevice = ref('');
+const selectedDeviceType = ref('accelerometer');
+
+// 控制API请求轮询的变量
+let secondDataInterval: NodeJS.Timeout | null = null;
+let fetchInterval: NodeJS.Timeout | null = null;
+let thresholdCheckInterval: NodeJS.Timeout | null = null;
+const maxDataLength = 100;
+
+const accumulatedData = ref({
+  x: { times: [] as string[], values: [] as number[] },
+  y: { times: [] as string[], values: [] as number[] },
+  z: { times: [] as string[], values: [] as number[] },
+  ch1: { times: [] as string[], values: [] as number[] },
+  ch2: { times: [] as string[], values: [] as number[] }
+});
+
+// 初始化图表函数
+const initializeCharts = () => {
+  nextTick(() => {
+    try {
+      // 销毁现有图表
+      Object.values(charts.value).forEach(chart => {
+        if (chart) {
+          chart.dispose();
+        }
+      });
+      charts.value = {};
+
+      // 加速度计图表
+      const chartX = document.getElementById('chart-x');
+      const chartY = document.getElementById('chart-y');
+      const chartZ = document.getElementById('chart-z');
+      const chartAll = document.getElementById('chart-all');
+      
+      if (chartX) charts.value['x'] = echarts.init(chartX);
+      if (chartY) charts.value['y'] = echarts.init(chartY);
+      if (chartZ) charts.value['z'] = echarts.init(chartZ);
+      if (chartAll) charts.value['all'] = echarts.init(chartAll);
+      
+      // 应变计图表
+      const chartCh1 = document.getElementById('chart-ch1');
+      const chartCh2 = document.getElementById('chart-ch2');
+      const chartStrainAll = document.getElementById('chart-strain-all');
+      
+      if (chartCh1) charts.value['ch1'] = echarts.init(chartCh1);
+      if (chartCh2) charts.value['ch2'] = echarts.init(chartCh2);
+      if (chartStrainAll) charts.value['strain-all'] = echarts.init(chartStrainAll);
+
+      console.log('图表初始化完成:', Object.keys(charts.value));
+    } catch (error) {
+      console.error('初始化图表失败:', error);
+    }
+  });
+};
+
+// 优化的标签页切换函数
+const switchTab = (tabKey: string) => {
+  activeTab.value = tabKey;
+  
+  nextTick(() => {
+    const chartKey = tabKey === 'all' && selectedDeviceType.value === 'strainGauge' ? 'strain-all' : tabKey;
+    const chart = charts.value[chartKey];
+    
+    if (chart) {
+      // 确保图表实例存在且已初始化
+      try {
+        chart.resize();
+        
+        // 检查是否有预处理的配置且数据完整
+        const cachedOption = chartOptions.value[chartKey];
+        if (cachedOption && isValidChartOption(cachedOption)) {
+          console.log(`使用缓存配置: ${chartKey}`);
+          chart.setOption(cachedOption, true); // 使用 notMerge: true 确保完全替换
+        } else {
+          console.log(`重新生成配置: ${chartKey}`);
+          // 如果缓存无效或不存在，重新生成
+          generateAndSetOption(chartKey, tabKey);
+        }
+      } catch (error) {
+        console.error(`切换标签页失败 ${chartKey}:`, error);
+        // 出错时重新生成
+        generateAndSetOption(chartKey, tabKey);
       }
     }
-  } catch (error) {
-    console.error('获取阈值失败:', error);
+  });
+};
+
+// 检查图表配置是否有效
+const isValidChartOption = (option: any): boolean => {
+  if (!option || !option.series || !Array.isArray(option.series)) {
+    return false;
+  }
+  
+  // 检查系列数据是否有效
+  for (const series of option.series) {
+    if (!series.data || !Array.isArray(series.data) || series.data.length === 0) {
+      return false;
+    }
+  }
+  
+  // 检查x轴数据
+  if (!option.xAxis || !option.xAxis.data || !Array.isArray(option.xAxis.data) || option.xAxis.data.length === 0) {
+    return false;
+  }
+  
+  return true;
+};
+
+// 生成并设置图表配置
+const generateAndSetOption = (chartKey: string, tabKey: string) => {
+  if (!accumulatedData.value) return;
+  
+  let option;
+  if (selectedDeviceType.value === 'accelerometer') {
+    option = generateAccelerometerOption(accumulatedData.value, tabKey, accumulatedData.value.x?.times || []);
+  } else if (selectedDeviceType.value === 'strainGauge') {
+    option = generateStrainGaugeOption(accumulatedData.value, tabKey, accumulatedData.value.ch1?.times || []);
+  }
+  
+  if (option && charts.value[chartKey]) {
+    // 缓存生成的配置
+    chartOptions.value[chartKey] = option;
+    charts.value[chartKey]?.setOption(option, true);
   }
 };
-const drawTimeChart1 = (chartData: any) => {
-  const x_axis = chartData.x.times;
-  const yData = {
-    x: chartData.x.values.map((v: number) => v  + x_offset.value),
-    y: chartData.y.values.map((v: number) => v  + y_offset.value),
-    z: chartData.z.values.map((v: number) => v  + z_offset.value)
-  };
 
-  // 基础数据系列
-  let series = Object.keys(yData).map(name => ({
-    name,
-    type: 'line',
-    data: yData[name as keyof typeof yData],
-    smooth: false,
-    symbol: 'none',
-    markLine: {
-      symbol: ['none', 'none'],  // 设置两端都不显示箭头
-      data: [
-        // 添加上限阈值线
+// 预处理所有图表配置
+const preprocessChartOptions = (data: any) => {
+  if (!data) return;
+  
+  const deviceType = selectedDeviceType.value;
+  
+  // 验证数据完整性
+  if (deviceType === 'accelerometer') {
+    if (!data.x?.times || !data.x?.values || data.x.times.length === 0 || data.x.values.length === 0) {
+      console.warn('加速度计数据不完整，跳过预处理');
+      return;
+    }
+    
+    const xAxisData = data.x.times;
+    
+    // 预处理各个轴的配置
+    ['x', 'y', 'z', 'all'].forEach(chartType => {
+      try {
+        const option = generateAccelerometerOption(data, chartType, xAxisData);
+        if (isValidChartOption(option)) {
+          chartOptions.value[chartType] = option;
+          console.log(`预处理完成: ${chartType}`);
+        } else {
+          console.warn(`预处理失败: ${chartType} - 配置无效`);
+        }
+      } catch (error) {
+        console.error(`预处理失败: ${chartType}`, error);
+      }
+    });
+  } else if (deviceType === 'strainGauge') {
+    if (!data.ch1?.times || !data.ch1?.values || data.ch1.times.length === 0 || data.ch1.values.length === 0) {
+      console.warn('应变计数据不完整，跳过预处理');
+      return;
+    }
+    
+    const xAxisData = data.ch1.times;
+    
+    // 预处理各个通道的配置
+    ['ch1', 'ch2', 'all'].forEach(chartType => {
+      try {
+        const option = generateStrainGaugeOption(data, chartType, xAxisData);
+        const key = chartType === 'all' ? 'strain-all' : chartType;
+        if (isValidChartOption(option)) {
+          chartOptions.value[key] = option;
+          console.log(`预处理完成: ${key}`);
+        } else {
+          console.warn(`预处理失败: ${key} - 配置无效`);
+        }
+      } catch (error) {
+        console.error(`预处理失败: ${chartType}`, error);
+      }
+    });
+  }
+};
+
+// 生成加速度计图表配置
+const generateAccelerometerOption = (data: any, chartType: string, xAxisData: string[]) => {
+  let series: any[] = [];
+  let title = '';
+  
+  // 验证输入数据
+  if (!data || !xAxisData || xAxisData.length === 0) {
+    console.warn(`生成加速度计配置失败: 数据无效 ${chartType}`);
+    return null;
+  }
+  
+  switch (chartType) {
+    case 'x':
+      if (!data.x?.values || data.x.values.length === 0) {
+        console.warn('X轴数据为空');
+        return null;
+      }
+      title = 'X轴加速度曲线';
+      series = [{
+        name: 'X轴',
+        type: 'line',
+        data: data.x.values,
+        smooth: false,
+        symbol: 'none',
+        color: '#ff6b6b',
+        markLine: {
+          symbol: ['none', 'none'],
+          data: []
+        }
+      }];
+      break;
+      
+    case 'y':
+      if (!data.y?.values || data.y.values.length === 0) {
+        console.warn('Y轴数据为空');
+        return null;
+      }
+      title = 'Y轴加速度曲线';
+      series = [{
+        name: 'Y轴',
+        type: 'line',
+        data: data.y.values,
+        smooth: false,
+        symbol: 'none',
+        color: '#4ecdc4',
+        markLine: {
+          symbol: ['none', 'none'],
+          data: []
+        }
+      }];
+      break;
+      
+    case 'z':
+      if (!data.z?.values || data.z.values.length === 0) {
+        console.warn('Z轴数据为空');
+        return null;
+      }
+      title = 'Z轴加速度曲线';
+      series = [{
+        name: 'Z轴',
+        type: 'line',
+        data: data.z.values,
+        smooth: false,
+        symbol: 'none',
+        color: 'orange',
+        markLine: {
+          symbol: ['none', 'none'],
+          data: []
+        }
+      }];
+      break;
+      
+    case 'all':
+      // 验证所有轴的数据
+      if (!data.x?.values || !data.y?.values || !data.z?.values || 
+          data.x.values.length === 0 || data.y.values.length === 0 || data.z.values.length === 0) {
+        console.warn('XYZ轴数据不完整');
+        return null;
+      }
+      title = 'XYZ轴加速度曲线';
+      series = [
         {
-          name: '上限阈值',
-          yAxis: upperThreshold.value,  // 设置上限阈值
-          label: {
-            position: 'insideEndTop',
-            formatter: `上限: ${upperThreshold.value}`,
-            color: '#ff4d4d'
-          },
-          lineStyle: {
-            color: '#ff4d4d',
-            type: 'dashed'
+          name: 'x',
+          type: 'line',
+          data: data.x.values,
+          smooth: false,
+          symbol: 'none',
+          color: '#ff6b6b',
+          markLine: {
+            symbol: ['none', 'none'],
+            data: []
           }
         },
-        // 添加下限阈值线
         {
-          name: '下限阈值',
-          yAxis: lowerThreshold.value,  // 设置下限阈值
-          label: {
-            position: 'insideEndBottom',
-            formatter: `下限: ${lowerThreshold.value}`,
-            color: '#ff4d4d'
-          },
-
-          lineStyle: {
-            color: '#ff4d4d',
-            type: 'dashed'
+          name: 'y',
+          type: 'line',
+          data: data.y.values,
+          smooth: false,
+          symbol: 'none',
+          color: '#4ecdc4',
+          markLine: {
+            symbol: ['none', 'none'],
+            data: []
+          }
+        },
+        {
+          name: 'z',
+          type: 'line',
+          data: data.z.values,
+          smooth: false,
+          symbol: 'none',
+          color: 'orange',
+          markLine: {
+            symbol: ['none', 'none'],
+            data: []
           }
         }
-      ],
-      itemStyle: {
-        normal: {
-          lineStyle: {
-            color: '#ff0000',
-          }
-        }
-      }
-    }
-  }));
-
-  const option = {
+      ];
+      break;
+      
+    default:
+      console.warn(`未知的图表类型: ${chartType}`);
+      return null;
+  }
+  
+  return {
     title: {
-      text: `时程曲线：${selectedDevice.value.deviceName}`
+      text: `${title}(${selectedDataSource.value}): 监测机位(${selectedDevice.value})`,
+      left: 'center',
+      textStyle: {
+        fontSize: 16,
+        fontWeight: 'bold'
+      }
     },
     tooltip: {
-      trigger: 'axis'
+      trigger: 'axis',
+      axisPointer: {
+        type: 'cross'
+      }
     },
     legend: {
-      data: ['x', 'y', 'z']
+      data: series.map(s => s.name),
+      top: 40
     },
     grid: {
-      left: '2%',
-      right: '2%',
-      bottom: '3%',
+      left: '3%',
+      right: '4%',
+      bottom: '15%',
+      top: '15%',
       containLabel: true
     },
     toolbox: {
       show: true,
       feature: {
+        dataZoom: {
+          yAxisIndex: 'none'
+        },
+        restore: {},
         saveAsImage: {}
-      }
+      },
+      right: 20,
+      top: 40
     },
     xAxis: {
       type: 'category',
       boundaryGap: false,
-      data: x_axis
+      data: xAxisData,
+      axisLabel: {
+        rotate: 45
+      }
     },
     yAxis: {
       type: 'value',
       scale: true,
       axisLabel: {
         formatter: function(value: number) {
-          return (value).toFixed(6) + ' gal';  // 显示
+          return (value).toFixed(6) + ' gal';
         }
-      },
+      }
     },
     dataZoom: [
       {
@@ -215,32 +507,305 @@ const drawTimeChart1 = (chartData: any) => {
     ],
     series
   };
-
-  timeChart.setOption(option);
 };
 
+// 生成应变计图表配置
+const generateStrainGaugeOption = (data: any, chartType: string, xAxisData: string[]) => {
+  let series: any[] = [];
+  let title = '';
+  
+  // 验证输入数据
+  if (!data || !xAxisData || xAxisData.length === 0) {
+    console.warn(`生成应变计配置失败: 数据无效 ${chartType}`);
+    return null;
+  }
+  
+  switch (chartType) {
+    case 'ch1':
+      if (!data.ch1?.values || data.ch1.values.length === 0) {
+        console.warn('Ch1数据为空');
+        return null;
+      }
+      title = 'Channel 1 应变曲线';
+      series = [{
+        name: 'Ch1',
+        type: 'line',
+        data: data.ch1.values,
+        smooth: false,
+        symbol: 'none',
+        color: '#ff6b6b',
+        markLine: {
+          symbol: ['none', 'none'],
+          data: []
+        }
+      }];
+      break;
+      
+    case 'ch2':
+      if (!data.ch2?.values || data.ch2.values.length === 0) {
+        console.warn('Ch2数据为空');
+        return null;
+      }
+      title = 'Channel 2 应变曲线';
+      series = [{
+        name: 'Ch2',
+        type: 'line',
+        data: data.ch2.values,
+        smooth: false,
+        symbol: 'none',
+        color: '#4ecdc4',
+        markLine: {
+          symbol: ['none', 'none'],
+          data: []
+        }
+      }];
+      break;
+      
+    case 'all':
+      // 验证所有通道的数据
+      if (!data.ch1?.values || !data.ch2?.values || 
+          data.ch1.values.length === 0 || data.ch2.values.length === 0) {
+        console.warn('Ch1+Ch2数据不完整');
+        return null;
+      }
+      title = 'Channel 1+2 应变曲线';
+      series = [
+        {
+          name: 'Ch1',
+          type: 'line',
+          data: data.ch1.values,
+          smooth: false,
+          symbol: 'none',
+          color: '#ff6b6b',
+          markLine: {
+            symbol: ['none', 'none'],
+            data: []
+          }
+        },
+        {
+          name: 'Ch2',
+          type: 'line',
+          data: data.ch2.values,
+          smooth: false,
+          symbol: 'none',
+          color: '#4ecdc4',
+          markLine: {
+            symbol: ['none', 'none'],
+            data: []
+          }
+        }
+      ];
+      break;
+      
+    default:
+      console.warn(`未知的图表类型: ${chartType}`);
+      return null;
+  }
+  
+  return {
+    title: {
+      text: `${title}(${selectedDataSource.value}): 监测机位(${selectedDevice.value})`,
+      left: 'center',
+      textStyle: {
+        fontSize: 16,
+        fontWeight: 'bold'
+      }
+    },
+    tooltip: {
+      trigger: 'axis',
+      axisPointer: {
+        type: 'cross'
+      }
+    },
+    legend: {
+      data: series.map(s => s.name),
+      top: 40
+    },
+    grid: {
+      left: '3%',
+      right: '4%',
+      bottom: '15%',
+      top: '15%',
+      containLabel: true
+    },
+    toolbox: {
+      show: true,
+      feature: {
+        dataZoom: {
+          yAxisIndex: 'none'
+        },
+        restore: {},
+        saveAsImage: {}
+      },
+      right: 20,
+      top: 40
+    },
+    xAxis: {
+      type: 'category',
+      boundaryGap: false,
+      data: xAxisData,
+      axisLabel: {
+        rotate: 45
+      }
+    },
+    yAxis: {
+      type: 'value',
+      scale: true,
+      axisLabel: {
+        formatter: function(value: number) {
+          return (value).toFixed(6) + ' με';
+        }
+      }
+    },
+    dataZoom: [
+      {
+        type: 'inside',
+        xAxisIndex: 0
+      },
+      {
+        type: 'slider',
+        xAxisIndex: 0
+      },
+      {
+        type: 'inside',
+        yAxisIndex: 0
+      },
+      {
+        type: 'slider',
+        yAxisIndex: 0
+      }
+    ],
+    series
+  };
+};
 
-let fetchInterval: ReturnType<typeof setInterval> | null = null;
-const maxDataLength = 100;
+// 绘制特定图表
+const drawSpecificChart = (chartType: string) => {
+  if (!accumulatedData.value) return;
+  
+  if (selectedDeviceType.value === 'accelerometer') {
+    drawAccelerometerChart(chartType);
+  } else if (selectedDeviceType.value === 'strainGauge') {
+    drawStrainGaugeChart(chartType);
+  }
+};
 
-const accumulatedData = ref({
-  x: { times: [] as string[], values: [] as number[] },
-  y: { times: [] as string[], values: [] as number[] },
-  z: { times: [] as string[], values: [] as number[] }
-});
+// 绘制加速度计图表（保留原逻辑，但仅作为备用）
+const drawAccelerometerChart = (chartType: string) => {
+  const chart = charts.value[chartType];
+  if (!chart || !accumulatedData.value) return;
+  
+  const option = generateAccelerometerOption(accumulatedData.value, chartType, accumulatedData.value.x?.times || []);
+  chart.setOption(option);
+};
 
-const loadData = async (type: 'daily' | 'minute' | 'hourly' | 'monthly' | 'yearly', numPoints: number) => {
+// 绘制应变计图表（保留原逻辑，但仅作为备用）
+const drawStrainGaugeChart = (chartType: string) => {
+  const chartKey = chartType === 'all' ? 'strain-all' : chartType;
+  const chart = charts.value[chartKey];
+  if (!chart || !accumulatedData.value) return;
+  
+  const option = generateStrainGaugeOption(accumulatedData.value, chartType, accumulatedData.value.ch1?.times || []);
+  chart.setOption(option);
+};
+
+// 优化的绘制所有图表函数
+const drawAllCharts = () => {
+  // 先验证数据完整性
+  console.log('当前累积数据:', accumulatedData.value);
+  
+  if (!accumulatedData.value) {
+    console.warn('累积数据为空');
+    return;
+  }
+  
+  const deviceType = selectedDeviceType.value;
+  console.log('设备类型:', deviceType);
+  
+  if (deviceType === 'accelerometer') {
+    console.log('X轴数据:', accumulatedData.value.x);
+    console.log('Y轴数据:', accumulatedData.value.y);
+    console.log('Z轴数据:', accumulatedData.value.z);
+  } else if (deviceType === 'strainGauge') {
+    console.log('Ch1数据:', accumulatedData.value.ch1);
+    console.log('Ch2数据:', accumulatedData.value.ch2);
+  }
+  
+  // 预处理所有图表配置
+  preprocessChartOptions(accumulatedData.value);
+  
+  // 确保当前激活的标签页为 'all'
+  if (activeTab.value !== 'all') {
+    activeTab.value = 'all';
+  }
+  
+  // 等待DOM更新后再绘制图表
+  nextTick(() => {
+    const activeChartKey = activeTab.value === 'all' && selectedDeviceType.value === 'strainGauge' ? 'strain-all' : activeTab.value;
+    
+    console.log(`尝试绘制图表: ${activeChartKey}`);
+    console.log('图表实例存在:', !!charts.value[activeChartKey]);
+    console.log('配置存在:', !!chartOptions.value[activeChartKey]);
+    
+    if (charts.value[activeChartKey] && chartOptions.value[activeChartKey]) {
+      console.log(`绘制图表: ${activeChartKey}`);
+      charts.value[activeChartKey]?.setOption(chartOptions.value[activeChartKey], true);
+      // 确保图表正确调整大小
+      charts.value[activeChartKey]?.resize();
+    } else {
+      console.warn(`图表或配置不存在: ${activeChartKey}`);
+      // 如果预处理的配置不存在，直接生成并绘制
+      generateAndSetOption(activeChartKey, activeTab.value);
+    }
+  });
+};
+
+// 替换原来的drawTimeChart1函数
+const drawTimeChart1 = (chartData: any) => {
+  console.log('收到图表数据:', chartData);
+  
+  // 确保数据结构正确
+  if (!chartData) {
+    console.error('图表数据为空');
+    return;
+  }
+  
+  // 检查数据完整性
+  if (selectedDeviceType.value === 'accelerometer') {
+    console.log('验证加速度计数据:');
+    console.log('X:', chartData.x);
+    console.log('Y:', chartData.y); 
+    console.log('Z:', chartData.z);
+    
+    if (!chartData.x || !chartData.y || !chartData.z) {
+      console.error('加速度计数据不完整');
+      return;
+    }
+  } else if (selectedDeviceType.value === 'strainGauge') {
+    console.log('验证应变计数据:');
+    console.log('Ch1:', chartData.ch1);
+    console.log('Ch2:', chartData.ch2);
+    
+    if (!chartData.ch1 || !chartData.ch2) {
+      console.error('应变计数据不完整');
+      return;
+    }
+  }
+  
+  accumulatedData.value = chartData;
+  drawAllCharts();
+};
+
+// 保留所有原有的API调用函数
+const fetchSecondData = async () => {
   try {
-    const endpoint = type === 'daily' ? 'get_daily_data' : type === 'minute' ? 'get_minute_data' : type === 'hourly' ? 'get_hourly_data' : type === 'monthly' ? 'get_monthly_data' : 'get_yearly_data';
-    const response = await axios.get(`${API_BASE_URL}/data/${endpoint}`, {
+    const response = await axios.get(`${API_BASE_URL}/data/get_second_data`, {
       params: {
-        device: selectedDevice.value.deviceId,
+        device: selectedDevice.value,
         channel: '0',
-        num: numPoints
+        num: 60 * 60 * 24*24
       }
     });
-
-    console.log("API Response:", response.data);
 
     if (response.data.status === 'success' && response.data.data) {
       const { x, y, z } = response.data.data;
@@ -254,787 +819,420 @@ const loadData = async (type: 'daily' | 'minute' | 'hourly' | 'monthly' | 'yearl
       accumulatedData.value.z.times = z.map((item: [string, number]) => item[0]);
       accumulatedData.value.z.values = z.map((item: [string, number]) => item[1]);
 
-      console.log("Parsed Chart Data:", accumulatedData.value);
-
       drawTimeChart1(accumulatedData.value);
     } else {
-      console.warn("API returned empty or invalid data");
+      console.warn("API返回空数据或无效数据");
     }
   } catch (error) {
-    console.error("Error loading initial data:", error);
+    console.error("获取秒级数据失败:", error);
   }
 };
 
-// 分别处理邮件和短信告警
-const sendEmailAlert = async (value: number, type: string) => {
-          const adjustedValue = Math.abs(value);
-          console.log("adjustedValue",adjustedValue);
-          console.log("emailThreshold",emailThreshold.value);
-          if (adjustedValue > emailThreshold.value) {
-            try {
-              // 发送邮件警报
-              await axios.post("http://localhost:3001/api/alert", {
-                alertMessage: `设备${selectedDevice.value.deviceId}检测到异常值：${adjustedValue}`
-              });
-              console.log("警报邮件已发送");
-
-              // 保存邮件告警记录到数据库
-              const messageData = {
-                device: selectedDevice.value.deviceId,
-                content: `${type}轴检测到异常值：${adjustedValue.toFixed(6)} gal，超过邮件告警阈值${emailThreshold.value}`,
-                call_function: 'email',
-                severity: adjustedValue > emailThreshold.value * 1.5 ? 'critical' : 'high',
-                phone: null,
-                email: 'example@email.com'  // 替换为实际的邮箱地址
-              };
-              await axios.post(`${API_BASE_URL}/data/insert_message`, messageData);
-              console.log("邮件告警记录已保存到数据库");
-            } catch (error: any) {
-              console.error("发送邮件警报失败：", error);
-              if (error.response) {
-                console.error("错误响应:", error.response.data);
-              }
-            }
-          }
-        };
-
-const sendSMSAlert = async (value: number, type: string) => {
-  const adjustedValue = Math.abs(value);
-  if (adjustedValue > smsThreshold.value) {
-    try {
-      // 发送短信警报
-      await axios.post("http://localhost:3001/api/send_sms", {
-        phoneNumber: '19915030933',
-        signName: '幕墙震动检测',
-        templateCode: 'SMS_475240186',
-        templateParam: {
-          magnitude: adjustedValue.toFixed(5)
-        }
-      });
-      console.log("报警短信已发送");
-
-      // 保存短信告警记录到数据库
-      const messageData = {
-        device: selectedDevice.value.deviceId,
-        content: `${type}轴检测到异常值：${adjustedValue.toFixed(6)} gal，超过短信告警阈值${smsThreshold.value}`,
-        call_function: 'phone',
-        severity: adjustedValue > smsThreshold.value * 1.5 ? 'critical' : 'high',
-        phone: '19915030933',
-        email: null
-      };
-      await axios.post(`${API_BASE_URL}/data/insert_message`, messageData);
-      console.log("短信告警记录已保存到数据库");
-    } catch (error: any) {
-      console.error("发送短信警报失败：", error);
-      if (error.response) {
-        console.error("错误响应:", error.response.data);
-      }
-    }
+const stopSecondDataPolling = () => {
+  console.log("停止秒级数据轮询");
+  if (secondDataInterval) {
+    clearInterval(secondDataInterval);
+    secondDataInterval = null;
   }
 };
 
+const stopAllPolling = () => {
+  console.log("停止所有数据轮询");
+  stopSecondDataPolling();
+  
+  if (fetchInterval) {
+    clearInterval(fetchInterval);
+    fetchInterval = null;
+  }
+  
+  if (thresholdCheckInterval) {
+    clearInterval(thresholdCheckInterval);
+    thresholdCheckInterval = null;
+  }
+};
 
-const fetchLatestData = async () => {
+const loadData = async (type: 'second' | 'minute' | 'hourly' | 'daily' | 'monthly' | 'yearly', numPoints: number) => {
   try {
-    const response = await axios.get(`${API_BASE_URL}/data/get_minute_data`, {
+    let endpoint;
+    switch (type) {
+      case 'second':
+        endpoint = 'get_second_data';
+        break;
+      case 'minute':
+        endpoint = 'get_minute_data';
+        break;
+      case 'hourly':
+        endpoint = 'get_hourly_data';
+        break;
+      case 'daily':
+        endpoint = 'get_daily_data';
+        break;
+      case 'monthly':
+        endpoint = 'get_monthly_data';
+        break;
+      case 'yearly':
+        endpoint = 'get_yearly_data';
+        break;
+    }
+
+    const response = await axios.get(`${API_BASE_URL}/data/${endpoint}`, {
       params: {
-        device: selectedDevice.value.deviceId,
+        device: selectedDevice.value,
         channel: '0',
-        num: 1
+        num: numPoints
       }
     });
-    
+
     if (response.data.status === 'success' && response.data.data) {
       const { x, y, z } = response.data.data;
 
-      // 检查是否有新数据
-      if (!accumulatedData.value.x.times.includes(x[0][0]) &&
-          !accumulatedData.value.y.times.includes(y[0][0]) &&
-          !accumulatedData.value.z.times.includes(z[0][0])) {
-        
-        
-        console.log("新数据");
-        // 检查每个轴的数据并发送相应的警报
-        for (const [axis, data] of [[x[0][1], 'X'], [y[0][1], 'Y'], [z[0][1], 'Z']]) {
-          console.log("emailThreshold",emailThreshold.value);
-          await sendEmailAlert(axis as number, data as string);
-          await sendSMSAlert(axis as number, data as string);
-        }
-        // 更新图表数据
-        appendData(accumulatedData.value.x, x[0]);
-        appendData(accumulatedData.value.y, y[0]);
-        appendData(accumulatedData.value.z, z[0]);
-        drawTimeChart1(accumulatedData.value);
-      }
+      accumulatedData.value.x.times = x.map((item: [string, number]) => item[0]);
+      accumulatedData.value.x.values = x.map((item: [string, number]) => item[1]);
+
+      accumulatedData.value.y.times = y.map((item: [string, number]) => item[0]);
+      accumulatedData.value.y.values = y.map((item: [string, number]) => item[1]);
+
+      accumulatedData.value.z.times = z.map((item: [string, number]) => item[0]);
+      accumulatedData.value.z.values = z.map((item: [string, number]) => item[1]);
+
+      drawTimeChart1(accumulatedData.value);
+      return true;
+    } else {
+      console.warn("API返回空数据或无效数据");
+      return false;
     }
   } catch (error) {
-    console.error("获取最新数据失败：", error);
+    console.error(`获取${type}数据失败:`, error);
+    return false;
   }
 };
 
-const appendData = (axisData: any, newData: [string, number]) => {
-  axisData.times.push(newData[0]);
-  axisData.values.push(newData[1]);
-
-  if (axisData.times.length > maxDataLength) {
-    axisData.times.shift();
-    axisData.values.shift();
+const switchDataSourceMode = async (sourceType: 'api_minute' | 'api_hour' | 'api_day' | 'api_month' | 'api_year', showMessage = true) => {
+  stopAllPolling();
+  
+  secondDataInterval = null;
+  fetchInterval = null;
+  
+  switch (sourceType) {
+    case 'api_minute':
+      console.log("切换到分钟级数据");
+      await loadData('minute', 6000);
+      startFetchingLatestData();
+      break;
+    case 'api_hour':
+      console.log("切换到小时级数据");
+      await loadData('hourly', 1000);
+      break;
+    case 'api_day':
+      console.log("切换到天级数据");
+      await loadData('daily', 78);
+      break;
+    case 'api_month':
+      console.log("切换到月级数据");
+      await loadData('monthly', 12);
+      break;
+    case 'api_year':
+      console.log("切换到年级数据");
+      await loadData('yearly', 5);
+      break;
+  }
+  
+  if (showMessage) {
+    ElMessage({
+      message: `已切换到设备 ${selectedDevice.value} 的${dataSourceName()}数据`,
+      type: 'success',
+      duration: 2000
+    });
   }
 };
 
 const startFetchingLatestData = () => {
-  if (fetchInterval) clearInterval(fetchInterval);
-  fetchInterval = setInterval(fetchLatestData, 60000);
+  fetchInterval = setInterval(() => {
+    loadData('minute', 6000);
+  }, 60000);
 };
-
-
-
 
 const router = useRouter();
 const backToMain = () => {
   router.push("/");
 };
 
-
-const devices = ref();
-const selectedDevice = ref({
-  deviceId: '9A0D1958',
-  deviceName: '安楼03',
-  disabled: false,
-  online: true,
-});
-
-//获取设备信息
-interface Device {
-  deviceName: string;
-  deviceId: string;
-  offset: number | string; // 这里我假设 offset 是一个数字，如果是字符串请保留您原来的类型
-  lowerOuliter: number | string;
-  higherOuliter: number | string;
-}
-
-// 直接初始化 deviceList 的数据
-const deviceList = ref<Device[]>([
-  {
-    deviceId: '9A0D1958',
-    deviceName: '安楼03',
-    offset: 0,
-    lowerOuliter: 100,
-    higherOuliter: 200
-  },
-  {
-    deviceId: '4787BE3A',
-    deviceName: '综合楼05',
-    offset: 0,
-    lowerOuliter: 100,
-    higherOuliter: 200
-  },
-  {
-    deviceId: '8850A7D7',
-    deviceName: '综合楼04',
-    offset: 0,
-    lowerOuliter: 100,
-    higherOuliter: 200
-  },
-  {
-    deviceId: '8361D7CD',
-    deviceName: '综合楼03',
-    offset: 0,
-    lowerOuliter: 100,
-    higherOuliter: 200
-  },
-  {
-    deviceId: '612B04ED',
-    deviceName: '综合楼02',
-    offset: 0,
-    lowerOuliter: 100,
-    higherOuliter: 200
-  },
-  {
-    deviceId: 'E884C99D',
-    deviceName: '综合楼01',
-    offset: 0,
-    lowerOuliter: 100,
-    higherOuliter: 200
-  },
-  {
-    deviceId: 'F001',
-    deviceName: '风压',
-    offset: 0,
-    lowerOuliter: 100,
-    higherOuliter: 200
-  },
-  {
-    deviceId: 'A77C5238',
-    deviceName: '安楼01',
-    offset: 0,
-    lowerOuliter: 100,
-    higherOuliter: 200
-  },
-  {
-    deviceId: 'F853ED49',
-    deviceName: '安楼02',
-    offset: 0,
-    lowerOuliter: 100,
-    higherOuliter: 200
-  },
-  {
-    deviceId: '87C3D4E4',
-    deviceName: '安楼04',
-    offset: 0,
-    lowerOuliter: 100,
-    higherOuliter: 200
-  },
-  {
-    deviceId: '29FA1867',
-    deviceName: '安楼05',
-    offset: 0,
-    lowerOuliter: 100,
-    higherOuliter: 200
-  },
-  {
-    deviceId: 'E43AC643',
-    deviceName: '安楼06',
-    offset: 0,
-    lowerOuliter: 100,
-    higherOuliter: 200
+const fetchDevices = async () => {
+  try {
+    const response = await axios.get(`${API_BASE_URL}/data/get_new_device`);
+    if (response.data.status === 'success') {
+      devices.value = response.data.data.map((device: { device_name: string }) => ({
+        device_name: device.device_name,
+        category: selectedCategory.value
+      }));
+    } else {
+      ElMessage.error('获取设备列表失败');
+    }
+  } catch (error) {
+    console.error('获取设备列表时出错:', error);
+    ElMessage.error('获取设备列表失败');
   }
-]);
-
-// 定义级联选择器的选项类型
-interface CascaderOption {
-  label: string;
-  deviceId: string;
-  online?: boolean;
-  children?: CascaderOption[];
-  [key: string]: any; // 添加索引签名
-}
-
-// 定义级联选择器的属性
-const cascaderProps = {
-  expandTrigger: 'hover' as const,
-  value: 'deviceId',
-  label: 'label',
-  children: 'children',
-  multiple: false,
-  checkStrictly: false
 };
 
-// 修改 selectedDevicePath 的类型
-const selectedDevicePath = ref<CascaderValue>([]);
+const filteredDevices = computed(() => {
+  return devices.value.filter(device => 
+    device.category === selectedCategory.value && 
+    device.device_name.includes(selectedCategory.value) && 
+    (selectedDeviceType.value === 'strainGauge' ? device.device_name.includes('Y') : !device.device_name.includes('Y'))
+  );
+});
 
-// 修改 cascaderDevices 的类型定义
-const cascaderDevices = computed<CascaderOption[]>(() => {
-  const buildings: Record<string, CascaderOption[]> = {
-    '安楼': [],
-    '综合楼': [],
-    '其他': []
-  };
+const fetchDataBySelection = async () => {
+  if (!selectedDevice.value) {
+    ElMessage.error('请先选择设备');
+    return;
+  }
 
-  deviceList.value.forEach(device => {
-    const deviceInfo: CascaderOption = {
-      label: device.deviceName,
-      deviceId: device.deviceId,
-      online: devices.value?.find((d: { deviceId: string }) => d.deviceId === device.deviceId)?.online ?? false
-    };
+  const deviceName = selectedDevice.value;
+  let endpoint = '';
+  let numPoints = 1000;
 
-    if (device.deviceName.includes('安楼')) {
-      buildings['安楼'].push(deviceInfo);
-    } else if (device.deviceName.includes('综合楼')) {
-      buildings['综合楼'].push(deviceInfo);
+  switch (selectedDataSource.value) {
+    case 'second':
+      endpoint = 'get_second_data';
+      numPoints = 20000;
+      break;
+    case 'minute':
+      endpoint = 'get_minute_data';
+      numPoints = 10000;
+      break;
+    case 'hourly':
+      endpoint = 'get_hourly_data';
+      numPoints = 1000;
+      break;
+    case 'daily':
+      endpoint = 'get_daily_data';
+      numPoints = 100;
+      break;
+    case 'weekly':
+      endpoint = 'get_weekly_data';
+      numPoints = 60;
+      break;
+    case 'monthly':
+      endpoint = 'get_monthly_data';
+      numPoints = 30;
+      break;
+  }
+
+  try {
+    const response = await axios.get(`${API_BASE_URL}/data/${endpoint}`, {
+      params: {
+        device_name: deviceName,
+        num: numPoints
+      }
+    });
+
+    if (response.data.status === 'success') {
+      const data = response.data.data;
+  
+      let chartData = {
+          x: { times: [], values: [] },
+          y: { times: [], values: [] },
+          z: { times: [], values: [] },
+          ch1: { times: [], values: [] },
+          ch2: { times: [], values: [] }
+      };
+
+      if (selectedDeviceType.value === 'accelerometer') {
+        if (data.x) {
+            chartData.x.times = data.x.map((item: [string, number]) => item[0]);
+            chartData.x.values = data.x.map((item: [string, number]) => item[1]);
+        }
+        // 添加y轴数据处理
+        if (data.y) {
+            chartData.y.times = data.y.map((item: [string, number]) => item[0]);
+            chartData.y.values = data.y.map((item: [string, number]) => item[1]);
+        }
+        if (data.z) {
+            chartData.z.times = data.z.map((item: [string, number]) => item[0]);
+            chartData.z.values = data.z.map((item: [string, number]) => item[1]);
+        }
+      } else if (selectedDeviceType.value === 'strainGauge') {
+        if (data.ch1) {
+            chartData.ch1.times = data.ch1.map((item: [string, number]) => item[0]);
+            chartData.ch1.values = data.ch1.map((item: [string, number]) => item[1]);
+        }
+        if (data.ch2) {
+            chartData.ch2.times = data.ch2.map((item: [string, number]) => item[0]);
+            chartData.ch2.values = data.ch2.map((item: [string, number]) => item[1]);
+        }
+      }
+      
+      console.log("合并后的图表数据:", chartData);
+      
+      // 确保在绘制前切换到all标签页
+      activeTab.value = 'all';
+      
+      // 等待DOM更新后再绘制
+      await nextTick();
+      drawTimeChart1(chartData);
+      
     } else {
-      buildings['其他'].push(deviceInfo);
+      ElMessage.error('数据请求失败');
+    }
+  } catch (error) {
+    console.error("获取数据失败:", error);
+  }
+};
+
+const dataSourceName = (): string => {
+  switch(dataSource.value) {
+    case 'api_minute': return '分钟级';
+    case 'api_hour': return '小时级';
+    case 'api_day': return '天级';
+    case 'api_month': return '月级';
+    case 'api_year': return '年级';
+    case 'api_second': return '秒级';
+    case 'api_week': return '周级';
+    default: return '';
+  }
+};
+
+const getTimeRangeForThresholdCheck = () => {
+  const now = new Date();
+  const twentySecondsAgo = new Date(now.getTime() - 20 * 1000);
+  
+  const formatDate = (date: Date) => {
+    const pad = (num: number) => String(num).padStart(2, '0');
+    
+    const year = date.getFullYear();
+    const month = pad(date.getMonth() + 1);
+    const day = pad(date.getDate());
+    const hours = pad(date.getHours());
+    const minutes = pad(date.getMinutes());
+    const seconds = pad(date.getSeconds());
+    
+    return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+  };
+  
+  return {
+    startTime: formatDate(twentySecondsAgo),
+    endTime: formatDate(now)
+  };
+};
+
+const handleResize = () => {
+  Object.values(charts.value).forEach(chart => {
+    if (chart) {
+      chart.resize();
     }
   });
+};
 
-  return [
-    {
-      label: '安楼',
-      deviceId: 'building_an',
-      children: buildings['安楼'].sort((a, b) => a.label.localeCompare(b.label))
-    },
-    {
-      label: '综合楼',
-      deviceId: 'building_zh',
-      children: buildings['综合楼'].sort((a, b) => a.label.localeCompare(b.label))
-    },
-    {
-      label: '其他',
-      deviceId: 'building_other',
-      children: buildings['其他']
+// 监听设备类型变化，重置标签页
+watch(selectedDeviceType, (newType) => {
+  activeTab.value = 'all';
+  chartOptions.value = {}; // 清空预处理配置
+  
+  nextTick(() => {
+    initializeCharts();
+    if (accumulatedData.value) {
+      drawAllCharts();
     }
-  ].filter((building: CascaderOption) => building.children && building.children.length > 0);
+  });
 });
 
-// 修改设备选择处理函数的类型
-const handleDeviceChange = (value: CascaderValue): void => {
-  if (value) {
-    const deviceId = Array.isArray(value) ? value[value.length - 1]?.toString() : value.toString();
-    if (deviceId) {
-      const device = deviceList.value.find(d => d.deviceId === deviceId);
-      const online = devices.value?.find((d: { deviceId: string }) => d.deviceId === deviceId)?.online ?? false;
-      
-      if (device) {
-        selectedDevice.value = {
-          deviceId: deviceId,
-          deviceName: device.deviceName,
-          disabled: false,
-          online: online
-        };
-      }
-    }
-  }
-};
-
-onMounted(async() => {
-  timeChart = echarts.init(document.getElementById('main'));
-  amplitudeChart = echarts.init(document.getElementById('main2'));
-  await getThresholds('up'); // 添加上阈值
-  await getThresholds('down'); // 添加下阈值
-  await getThresholds('x_offset'); // 添加偏移量
-  await getThresholds('y_offset'); // 添加偏移量
-  await getThresholds('z_offset'); // 添加偏移量
-  await getThresholds('message_limit'); // 添加偏移量
-  await getThresholds('email_limit'); // 添加偏移量
-  console.log("devices",devices);
-  console.log("selectedDevice",selectedDevice);
-})
-
-let timeChart: any;
-let amplitudeChart: any;
-
-let timeCurveData: any;
-let AmplitudeCurveData: any;
-
-type EChartsOption = echarts.EChartsOption;
-
-
-//随窗响应式变化
-window.addEventListener('resize', function () {
-  timeChart.resize();
-  amplitudeChart.resize();
+onMounted(() => {
+  initializeCharts();
+  dataSource.value = selectedDataSource.value as 'api_second' | 'api_minute' | 'api_hour' | 'api_day' | 'api_week' | 'api_month' | 'api_year';
+  window.addEventListener('resize', handleResize);
+  fetchDevices();
 });
 
-//绘制时程曲线
-const drawTimeChart = (chartData: any) => {
-  console.log("chartData",chartData);
-  const deviceInfo = deviceList.value.find((d) => d.deviceId === chartData.device);
-  if (deviceInfo) {
-    chartData.deviceName = deviceInfo.deviceName;
-  }
-  var option: EChartsOption;
-
-  //计算x轴
-  const x_axis = caculateTimeList(chartData.s_date, 16);
-  console.log("x_axis",x_axis);
-  interface YData {
-    [key: string]: number[]; // 添加索引签名，允许任意字符串类型的属性访问
-  }
-
-  const yData: YData = {
-    x: chartData.x,
-    y: chartData.y,
-    z: chartData.z
-  };
-
-  let series: any[] = [];
-  for (let name in yData) {
-    var yline: any;
-    var line_label: any;
-    var label_position: any;
-
-    if (name == 'x') {
-      yline = chartData.rmsx;
-      line_label = `X均值：${chartData.rmsx}`;
-      label_position = 'insideStartTop';
-    } else if (name == 'y') {
-      yline = chartData.rmsy;
-      line_label = `Y均值：${chartData.rmsy}`;
-      label_position = 'insideMiddleTop';
-
-    } else if (name == 'z') {
-      yline = chartData.rmsz;
-      line_label = `Z均值：${chartData.rmsz}`;
-      label_position = 'insideEndTop';
-
+onBeforeUnmount(() => {
+  stopAllPolling();
+  window.removeEventListener('resize', handleResize);
+  
+  Object.values(charts.value).forEach(chart => {
+    if (chart) {
+      chart.dispose();
     }
-    series.push({
-      name: name,
-      type: 'line',
-      data: yData[name],
-      smooth: false,
-      symbol: 'none', // 设置数据点的样式为 'none'
-      markLine: {
-        symbol: ['none', 'none'],  // 设置两端都不显示箭头
-        data: [
-          {name: 'Average', yAxis: yline},
-          // 添加上限阈值线
-          {
-            name: '上限阈值',
-            yAxis: upperThreshold.value,  // 设置上限阈值
-            label: {
-              position: 'insideEndTop',
-              formatter: `上限: ${upperThreshold.value}`,
-              color: '#ff4d4d'
-            },
-            lineStyle: {
-              color: '#ff4d4d',
-              type: 'dashed'
-            }
-          },
-          // 添加下限阈值线
-          {
-            name: '下限阈值',
-            yAxis: lowerThreshold.value,  // 设置下限阈值
-            label: {
-              position: 'insideEndBottom',
-              formatter: `下限: ${lowerThreshold.value}`,
-              color: '#ff4d4d'
-            },
-            lineStyle: {
-              color: '#ff4d4d',
-              type: 'dashed'
-            }
-          }
-        ],
-        itemStyle: {
-          normal: {
-            lineStyle: {
-              color: '#ff0000',
-            }
-          }
-        },
-        label: {
-          position: label_position,
-          formatter: line_label,
-          color: '#ff0000',
-        }
-      }
-    })
-  }
-  option = {
-    title: {
-      text: `时程曲线：${chartData.deviceName}（设备${chartData.device}）`,
-    },
-    tooltip: {
-      trigger: 'axis'
-    },
-    legend: {   //选择
-      data: ['x', 'y', 'z']
-    },
-    grid: {
-      left: '2%',
-      right: '2%',
-      bottom: '3%',
-      containLabel: true
-    },
-    toolbox: {
-      show: true, // 是否显示工具栏
-      feature: {
-        saveAsImage: {}  //保存图片
-      }
-    },
-    xAxis: {
-      type: 'category',
-      boundaryGap: false,
-      data: x_axis
-    },
-    yAxis: {
-      type: 'value',
-      scale: true ,// 自动调整显示范围
-      axisLabel: {
-        formatter: '{value} gal'
-      }
-    },
-    dataZoom: [
-    {
-      type: 'inside', // 内部缩放
-      xAxisIndex: 0 // 针对 x 轴
-    },
-    {
-      type: 'slider', // 滑块缩放
-      xAxisIndex: 0 // 针对 x 轴
-    },
-    {
-      type: 'inside', // 内部缩放
-      yAxisIndex: 0 // 针对 y 轴
-    },
-    {
-      type: 'slider', // 滑块缩放
-      yAxisIndex: 0 // 针对 y 轴
-    }
-    ],
-    series: series
-  };
+  });
+});
 
-  option && timeChart.setOption(option);
-}
+watch([selectedDevice, dataSource], async ([newDevice, newDataSource], [oldDevice, oldDataSource]) => {
+  console.log(`watch检测到变化: 
+    数据源: ${oldDataSource} -> ${newDataSource}
+    设备: ${oldDevice} -> ${newDevice}`
+  );
 
-
-//绘制幅频曲线
-const drawAmplitudeChart = (data: any) => {
-  const deviceInfo = deviceList.value.find((d) => d.deviceId === data.device);
-  if (deviceInfo) {
-    data.deviceName = deviceInfo.deviceName;
-  }
-  var option2: EChartsOption;
-
-  //计算x轴
-  interface YData {
-    [key: string]: number[]; // 添加索引签名，允许任意字符串类型的属性访问
-  }
-
-  const yData: YData = {
-    x: data.x,
-    y: data.y,
-    z: data.z
-  };
-
-
-  let series: any[] = [];
-  for (let name in yData) {
-    if (Object.prototype.hasOwnProperty.call(yData, name)) {
-      series.push({
-        name: name,
-        type: 'line',
-        data: yData[name],
-        smooth: false,
-        symbol: 'none', // 设置数据点的样式为 'none'
-      });
-    }
-  }
-
-  option2 = {
-    title: {
-      text: `频幅曲线：${data.deviceName}（设备${data.device}）`,
-    },
-    tooltip: {
-      trigger: 'axis'
-    },
-    legend: {   //选择
-      data: ['x', 'y', 'z']
-    },
-    grid: {
-      left: '2%',
-      right: '2%',
-      bottom: '3%',
-      containLabel: true
-    },
-    toolbox: {
-      show: true, // 是否显示工具栏
-      feature: {
-        saveAsImage: {}  //保存图片
-      }
-    },
-    xAxis: {
-      type: 'category',
-      boundaryGap: false,
-      data: data.interval
-    },
-    yAxis: {
-      type: 'value',
-      scale: true // 自动调整显示范围
-    },
-    dataZoom: [
-    {
-      type: 'inside', // 内部缩放
-      xAxisIndex: 0 // 针对 x 轴
-    },
-    {
-      type: 'slider', // 滑块缩放
-      xAxisIndex: 0 // 针对 x 轴
-    },
-    {
-      type: 'inside', // 内部缩放
-      yAxisIndex: 0 // 针对 y 轴
-    },
-    {
-      type: 'slider', // 滑块缩放
-      yAxisIndex: 0 // 针对 y 轴
-    }
-  ],
-    series: series
-  };
-  option2 && amplitudeChart.setOption(option2);
-}
-
-
-//WebSocket
-const websocketUrl = 'wss://digetech.cn:8771/websocket/user_58';
-let socket1 = new WebSocket(websocketUrl);
-
-//socket请求参数1：获取设备实时状态
-const request1 = {
-  code: 2,
-  data: [
-    'F001',
-    '4787BE3A',
-    '8850A7D7',
-    '8361D7CD',
-    '612B04ED',
-    'E884C99D',
-    'E43AC643',
-    'A77C5238',
-    'F853ED49',
-    '87C3D4E4',
-    '29FA1867',
-    '9A0D1958'
-  ],
-  key: 'qiushangzhou852'
-};
-//socket请求参数2：获取设备详细数据
-let request2 = {
-  code: 1,
-  data: selectedDevice.value.deviceId,
-  channel: '0',
-  pam: 1,
-  key: 'qiushangzhou852'
-};
-
-
-//socket连接成功
-socket1.onopen = () => {
-  console.log('WebSocket connection1 opened');
-  // WebSocket连接成功后发送请求1——获取设备实时状态
-  socket1.send(JSON.stringify(request1));
-  socket1.send(JSON.stringify(request2));
-};
-
-//接收到socket消息
-socket1.onmessage = (event) => {
-  const message = JSON.parse(event.data);
-  if (message.code = 20001) {
-    if (message.message == '基础数据') {
-      // console.log(message.data);
-      timeCurveData = message.data[0];
-      AmplitudeCurveData = message.data[1];
-      if (dataSource.value === 'websocket') {
-        drawTimeChart(timeCurveData);
-        drawAmplitudeChart(AmplitudeCurveData);
-      }
-    } else if (message.message == '设备状态') {
-      // console.log(message.data);
-      devices.value = Object.entries(message.data).map(([key, value]) => ({
-        deviceId: key,
-        disabled: value === 1 ? false : true,
-        online: value === 1 ? true : false
-      }))
-      devices.value.forEach((device: { deviceId: string; deviceName: string; }) => {
-        // 假设 deviceList 已经填充了设备名
-        const deviceInfo = deviceList.value.find((d) => d.deviceId === device.deviceId);
-        if (deviceInfo) {
-          device.deviceName = deviceInfo.deviceName;
-        }
-      });
-
-    }
-
-  }
-};
-
-//socket错误
-socket1.onerror = (error) => {
-  console.error('WebSocket error:', error);
-};
-
-//socket关闭
-socket1.onclose = () => {
-  console.log('WebSocket connection closed');
-};
-
-
-watch([selectedDevice, dataSource], async ([newDevice, newDataSource]) => {
   if (newDevice) {
-    await getThresholds('up');
-    await getThresholds('down');
-    await getThresholds('x_offset');
-    await getThresholds('y_offset');
-    await getThresholds('z_offset');
-    await getThresholds('message_limit');
-    await getThresholds('email_limit');
+    chartOptions.value = {}; // 清空预处理配置
+    // 确保激活all标签页
+    activeTab.value = 'all';
   }
-  if (newDataSource === 'websocket') {
-    // 使用 WebSocket 获取数据
-    request2.data = newDevice.deviceId;
-    socket1.close();
-    socket1 = new WebSocket(websocketUrl);
-    socket1.onopen = () => {
-      console.log('WebSocket connection1 reopened');
-      // WebSocket连接成功后发送请求1——获取设备实时状态
-      socket1.send(JSON.stringify(request1));
-      socket1.send(JSON.stringify(request2));
-    };
-  //接收到socket消息
-      
-  }
-  else if (newDataSource === 'api_minute') {
-    if (socket1) {
-      socket1.close(); // 关闭 WebSocket 连接
-    }
-    // 使用 API 获取数据
-    await loadData('minute', 6000);
-    await startFetchingLatestData();
-  } else if (newDataSource === 'api_day') {
-    if (socket1) {
-      socket1.close(); // 关闭 WebSocket 连接
-    }
-    // 使用 API 获取天级别数据
-    await loadData('daily', 78);
-  } else if (newDataSource === 'api_hour') {
-    if (socket1) {
-      socket1.close(); // 关闭 WebSocket 连接
-    }
-    // 使用 API 获取小时级别数据
-    await loadData('hourly', 1000);
-  } else if (newDataSource === 'api_month') {
-    if (socket1) {
-      socket1.close(); // 关闭 WebSocket 连接
-    }
-    // 使用 API 获取月级别数据
-    await loadData('monthly', 12);
-  } else if (newDataSource === 'api_year') {
-    if (socket1) {
-      socket1.close(); // 关闭 WebSocket 连接
-    }
-    // 使用 API 获取年级别数据
-    await loadData('yearly', 5);
-  }
-    
-  socket1.onmessage = (event) => {
-        const message = JSON.parse(event.data);
-        if (message.code = 20001) {
-          if (message.message == '基础数据') {
-            console.log(message.data);
-            timeCurveData = message.data[0];
-            AmplitudeCurveData = message.data[1];
-            drawTimeChart(message.data[0]);
-            drawAmplitudeChart(message.data[1]);
-          } else if (message.message == '设备状态') {
-            console.log("message.data",message.data);
-            devices.value = Object.entries(message.data).map(([key, value]) => ({
-              deviceId: key,
-              disabled: value === 1 ? false : true,
-              online: value === 1 ? true : false
-            }))
-            devices.value.forEach((device: { deviceId: string; deviceName: string; }) => {
-              // 假设 deviceList 已经填充了设备名
-              const deviceInfo = deviceList.value.find((d) => d.deviceId === device.deviceId);
-              if (deviceInfo) {
-                device.deviceName = deviceInfo.deviceName;
-          }
-        });
-      }
-
-    }
-  };
-
+  
+  await switchDataSourceMode(newDataSource as 'api_minute' | 'api_hour' | 'api_day' | 'api_month' | 'api_year', false);
 });
 
+watch(selectedDevice, (newDevice) => {
+  if (newDevice) {
+    selectedDeviceType.value = newDevice.includes('Y') ? 'strainGauge' : 'accelerometer';
+    // 设备变化时确保显示all标签页
+    activeTab.value = 'all';
+  }
+});
 </script>
 
 <style scoped>
-#main,
-#main2 {
+.chart-tabs {
+  width: 100%;
+  height: 100%;
+}
+
+.tab-nav {
+  display: flex;
+  border-bottom: 2px solid #e2e8f0;
+  margin-bottom: 20px;
+  background-color: #f8fafc;
+  border-radius: 8px 8px 0 0;
+  padding: 4px;
+}
+
+.tab-button {
+  padding: 10px 20px;
+  border: none;
+  background-color: transparent;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-weight: 500;
+  border-radius: 6px;
+  margin-right: 4px;
+  position: relative;
+}
+
+.tab-button:hover {
+  background-color: #e2e8f0;
+  color: #374151;
+}
+
+.tab-button.active {
+  background-color: #3b82f6;
+  color: white;
+  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3);
+}
+
+.tab-content {
+  position: relative;
+  height: 600px;
+}
+
+.chart-container {
+  width: 100%;
+  height: 100%;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  padding: 20px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+#main {
   margin: 20px;
   width: 90%;
   padding: 30px;
@@ -1043,10 +1241,8 @@ watch([selectedDevice, dataSource], async ([newDevice, newDataSource]) => {
 .back-to-main-btn {
   margin: 0px;
   align-self: flex-start;
-  /* 对齐到容器的左侧 */
 }
 
-/* 添加级联选择器的样式 */
 :deep(.el-cascader) {
   width: 100%;
 }
