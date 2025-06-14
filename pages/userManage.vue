@@ -52,14 +52,14 @@
             ></el-switch>
           </template>
         </el-table-column>
-        <el-table-column label="玻璃自爆检测权限" prop="access_system_d">
+        <!-- <el-table-column label="玻璃自爆检测权限" prop="access_system_d">
           <template #default="{ row }">
             <el-switch
               v-model="row.access_system_d"
               @change="() => handleSwitchChange(row, 'access_system_d','table')"
             ></el-switch>
           </template>
-        </el-table-column>
+        </el-table-column> -->
         <el-table-column label="震动数据检测权限" prop="access_system_v">
           <template #default="{ row }">
             <el-switch
@@ -76,14 +76,14 @@
 <!--            ></el-switch>-->
 <!--          </template>-->
 <!--        </el-table-column>-->
-        <el-table-column label="玻璃平整度权限" prop="access_system_g">
+        <!-- <el-table-column label="玻璃平整度权限" prop="access_system_g">
           <template #default="{ row }">
             <el-switch
               v-model="row.access_system_g"
               @change="() => handleSwitchChange(row, 'access_system_g','table')"
             ></el-switch>
           </template>
-        </el-table-column>
+        </el-table-column> -->
         <!-- <el-table-column label="幕墙韧性评估权限" prop="access_system_h">
           <template #default="{ row }">
             <el-switch

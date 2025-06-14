@@ -4,7 +4,7 @@
     <el-card header="更改用户名">
       <el-form :model="usernameForm" ref="usernameFormRef" label-width="100px">
         <el-form-item label="当前用户名">
-          <el-input v-model="usernameForm.old_username" disabled />
+          <el-input :model-value="currentUsername" disabled />
         </el-form-item>
         <el-form-item label="新用户名" prop="new_username" :rules="[{ required: true, message: '请输入新用户名', trigger: 'blur' }]">
           <el-input v-model="usernameForm.new_username" placeholder="请输入新用户名" />
@@ -18,9 +18,6 @@
     <!-- 修改密码 -->
     <el-card header="更改密码">
       <el-form :model="passwordForm" ref="passwordFormRef" label-width="100px" :rules="passwordRules">
-        <el-form-item label="当前用户名">
-          <el-input v-model="passwordForm.username" disabled />
-        </el-form-item>
         <el-form-item label="旧密码" prop="old_password">
           <el-input v-model="passwordForm.old_password" placeholder="请输入旧密码" show-password />
         </el-form-item>
@@ -43,28 +40,38 @@ import { ref, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { jwtDecode } from 'jwt-decode'
 
-// 获取token并解码用户名
-const authToken = localStorage.getItem('authToken') || ''
-const decoded = authToken ? jwtDecode<{ username: string }>(authToken) : { username: '' }
-const currentUsername = decoded.username || ''
+// 响应式当前用户名
+const currentUsername = ref('')
+
+// 抽取更新当前用户名的函数
+const updateCurrentUsername = () => {
+  const token = localStorage.getItem('authToken') || ''
+  console.log('Current token:', token) // 调试
+  const decoded = token ? jwtDecode<{ username: string }>(token) : { username: '' }
+  console.log('Decoded username:', decoded.username) // 调试
+  currentUsername.value = decoded.username || ''
+}
+
+// 组件挂载时初始化用户名
+onMounted(() => {
+  updateCurrentUsername()
+})
 
 // 用户名表单
 const usernameForm = ref({
-  old_username: '',
   new_username: '',
 })
 const usernameFormRef = ref()
 
 // 密码表单
 const passwordForm = ref({
-  username: '',
   old_password: '',
   new_password: '',
   confirm_password: '',
 })
 const passwordFormRef = ref()
 
-// 表单校验规则
+// 密码验证规则
 const passwordRules = {
   old_password: [{ required: true, message: '请输入旧密码', trigger: 'blur' }],
   new_password: [{ required: true, message: '请输入新密码', trigger: 'blur' }],
@@ -83,48 +90,80 @@ const passwordRules = {
   ]
 }
 
-onMounted(() => {
-  usernameForm.value.old_username = currentUsername
-  passwordForm.value.username = currentUsername
-})
+// 类型定义
+interface UpdateUsernameResponse {
+  code: number
+  message: string
+  data: {
+    token: string
+  }
+}
 
+// 提交新用户名
 const submitUsername = () => {
   usernameFormRef.value.validate(async (valid: boolean) => {
     if (!valid) return
-    console.log('发送请求体:', usernameForm.value)
     try {
-      await $fetch('/api/account/custom/updateUsername', {
+      const res = await $fetch<UpdateUsernameResponse>('/api/account/custom/updateUsername', {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${localStorage.getItem("authToken")}`,
         },
-        body: usernameForm.value,
+        body: {
+          new_username: usernameForm.value.new_username
+        },
       })
-      ElMessage.success('用户名修改成功')
-    } catch (err) {
-      ElMessage.error('修改失败，请检查输入')
+      console.log(res.data?.token)
+      // 替换本地 token 并更新用户名
+      if (res.data?.token) {
+        localStorage.setItem('authToken', res.data.token)
+        await new Promise(resolve => setTimeout(resolve, 50))
+        updateCurrentUsername()  // **更新用户名显示**
+        usernameForm.value.new_username = '' // 清空输入框
+      }
+
+      ElMessage.success(res.message || '用户名修改成功')
+    } catch (err: any) {
+      const msg = err?.data?.message || err?.message || '修改失败，请检查输入'
+      ElMessage.error(msg)
       console.error(err)
     }
   })
 }
 
+// 提交新密码
 const submitPassword = () => {
   passwordFormRef.value.validate(async (valid: boolean) => {
     if (!valid) return
     try {
-      console.log('发送请求体:', passwordForm.value)
-      // 注意去除 confirm_password 字段，后端一般不需要确认字段
-      const { username, old_password, new_password } = passwordForm.value
-      await $fetch('/api/account/custom/updatePassword', {
+      // 弹出确认框
+      await ElMessageBox.confirm(
+        '确定要修改密码吗？',
+        '确认修改',
+        {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          type: 'warning',
+        }
+      )
+      const { old_password, new_password } = passwordForm.value
+      const token = localStorage.getItem("authToken");
+      console.log("当前token:", token);
+      const res = await $fetch<{ code: number; message: string }>('/api/account/custom/updatePassword', {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${localStorage.getItem("authToken")}`,
         },
-        body: { username, old_password, new_password },
+        body: {
+          old_password,
+          new_password
+        },
       })
-      ElMessage.success('密码修改成功')
-    } catch (err) {
-      ElMessage.error('修改失败，请检查输入')
+
+      ElMessage.success(res.message || '密码修改成功')
+    } catch (err: any) {
+      const msg = err?.data?.message || err?.message || '修改失败，请检查输入'
+      ElMessage.error(msg)
       console.error(err)
     }
   })
@@ -135,16 +174,15 @@ const submitPassword = () => {
 .p-4 {
   padding: 1rem;
   display: flex;
-  flex-direction: column; /* 竖直排列 */
-  align-items: center; /* 容器内内容水平居中 */
-  gap: 2rem; /* 模块间距 */
-  width: 100vw; /* 占满横屏宽度 */
+  flex-direction: column;
+  align-items: center;
+  gap: 2rem;
+  width: 100vw;
   box-sizing: border-box;
 }
 
 .el-card {
-  width: 100%; /* 卡片宽度撑满父容器 */
-  max-width: 600px; /* 最大宽度限制 */
+  width: 100%;
+  max-width: 600px;
 }
 </style>
-
