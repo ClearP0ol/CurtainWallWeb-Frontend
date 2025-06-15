@@ -78,9 +78,6 @@ const userAuth = ref({});
 //  middleware: "auth",
 //});
 
-onMounted(() => {
-  getUserAuth();
-});
 
 const modulesLine1 = reactive([
   {
@@ -159,22 +156,42 @@ const modulesLine3 = reactive([
   //   icon: "i-simple-icons-amazons3",
   // },
 ]);
+const loadingAuth = ref(true); // 新增loading状态
+
+onMounted(async () => {
+  await getUserAuth();
+  loadingAuth.value = false; // 权限加载完成
+});
+
 const getUserAuth = async () => {
+  try {
     const authToken = localStorage.getItem("authToken");
+    if (!authToken) {
+      console.warn("authToken不存在");
+      userAuth.value = {};
+      return;
+    }
     const response = await axios.get("/api/account/custom/getPermissions", {
-      headers: {
-        Authorization: `Bearer ${authToken}`,
-      },
+      headers: { Authorization: `Bearer ${authToken}` },
     });
-    userAuth.value = response.data.data;
-    console.log(userAuth.value)
+    userAuth.value = response.data.data || {};
+    console.log("userAuth:", userAuth.value);
+  } catch (error) {
+    console.error("获取权限失败:", error);
+    userAuth.value = {};
+  }
 };
+
 const checkPermissionAndRedirect = (module) => {
-  if (module.permissionKey=="") {
+  if (loadingAuth.value) {
+    ElMessage.warning("权限信息加载中，请稍后...");
+    return; // 权限没加载完，阻止操作
+  }
+  if (module.permissionKey == "") {
     router.push({ path: module.target_address });
     return;
   }
-  if(module.permissionKey=="manage" && userAuth.value.is_superuser){
+  if (module.permissionKey == "manage" && userAuth.value.is_superuser) {
     router.push({ path: module.target_address });
     return;
   }
@@ -184,7 +201,6 @@ const checkPermissionAndRedirect = (module) => {
     ElMessage.error("您没有权限访问此模块");
   }
 };
-
 </script>
 
 <style scoped>
