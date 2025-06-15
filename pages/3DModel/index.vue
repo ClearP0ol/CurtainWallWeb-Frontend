@@ -216,7 +216,7 @@ import { ElMessage } from 'element-plus'
 import axios from 'axios'
 
 // 配置基础请求地址
-axios.defaults.baseURL = 'http://110.42.214.164:8004'
+// axios.defaults.baseURL = 'http://110.42.214.164:8004'
 
 // 定义颜色序列
 const colorSequence = [
