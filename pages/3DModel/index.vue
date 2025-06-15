@@ -216,7 +216,9 @@ import { ElMessage } from 'element-plus'
 import axios from 'axios'
 
 // 配置基础请求地址
-axios.defaults.baseURL = 'http://110.42.214.164:8004'
+const apiClient = axios.create({
+  baseURL: 'http://110.42.214.164:8004'
+})
 
 // 定义颜色序列
 const colorSequence = [
@@ -417,7 +419,7 @@ const selectAllTypes = () => {
  */
 const loadAbnormalData = async () => {
   try {
-    const res = await axios.get('/imageData/all-abnormal-images')
+    const res = await apiClient.get('/imageData/all-abnormal-images')
     imageCoordinates.value = res.data.data.map(d => ({
       imageId: d.imageId,
       centerX: d.centerX,
@@ -630,7 +632,7 @@ const onPointerClick = async (event) => {
         const imageData = dot.userData.imageData
         
         try {
-          const urlResp = await axios.get(`/imageData/${imageData.imageId}/url`)
+          const urlResp = await apiClient.get(`/imageData/${imageData.imageId}/url`)
           const imageUrl = urlResp.data.data
           
           if (!imageUrl) throw new Error('无图片URL')
@@ -699,7 +701,7 @@ const onPointerClick = async (event) => {
         imageLoading.value = true
         dialogLoadingProgress.value = 0
         
-        const resp = await axios.get('/imageData/closest', {
+        const resp = await apiClient.get('/imageData/closest', {
           params: {
             clickX: (-p.x).toFixed(2),
             clickY: p.y.toFixed(2),
@@ -709,7 +711,7 @@ const onPointerClick = async (event) => {
         
         if (resp.data.code === 200 && resp.data.data) {
           const d = resp.data.data
-          const urlResp = await axios.get(`/imageData/${d.imageId}/url`)
+          const urlResp = await apiClient.get(`/imageData/${d.imageId}/url`)
           const imageUrl = urlResp.data.data
           
           if (!imageUrl) throw new Error('无图片URL')
@@ -755,7 +757,7 @@ const removeImage = async (idx) => {
   }
   
   try {
-    await axios.delete(`/imageData/${img.imageId}`)
+    await apiClient.delete(`/imageData/${img.imageId}`)
   } catch {}
   
   if (showRedPoints.value) {
