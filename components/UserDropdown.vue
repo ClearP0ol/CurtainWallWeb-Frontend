@@ -40,18 +40,12 @@ const {isDashboardSearchModalOpen} = useUIState();
 const {metaSymbol} = useShortcuts();
 import {useRouter} from "vue-router";
 import {onMounted} from 'vue';
+import { userState } from '@/composables/useUserState'
 
+const state = userState
 const loginUser = ref(localStorage.getItem("email"));
 const router = useRouter();
-const state = reactive({
-  name: localStorage.getItem("email"),
-  email: "admin@tongji.edu.cn",
-  username: "Admin",
-  avatar: "",
-  bio: "",
-  password_current: "",
-  password_new: "",
-});
+
 
 onMounted(() => {
   loginUser.value = localStorage.getItem("email");

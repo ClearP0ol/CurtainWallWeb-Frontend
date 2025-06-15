@@ -39,6 +39,7 @@
 import { ref, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { jwtDecode } from 'jwt-decode'
+import { userState } from '@/composables/useUserState'
 
 // 响应式当前用户名
 const currentUsername = ref('')
@@ -50,6 +51,7 @@ const updateCurrentUsername = () => {
   const decoded = token ? jwtDecode<{ username: string }>(token) : { username: '' }
   console.log('Decoded username:', decoded.username) // 调试
   currentUsername.value = decoded.username || ''
+  userState.name = decoded.username
 }
 
 // 组件挂载时初始化用户名
