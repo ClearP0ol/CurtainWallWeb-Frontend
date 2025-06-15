@@ -1,6 +1,7 @@
 <template>
+  <!-- 主仪表盘页面布局 -->
   <UDashboardPage>
-    <!-- 顶部右上角跳转按钮 -->
+    <!-- 右上角退出按钮区域 -->
     <div class="top-right-button">
       <el-button 
         type="danger" 
@@ -14,8 +15,10 @@
       </el-button>
       <div class="button-hint">退出本页面请点击此按钮</div>
     </div>
+    
+    <!-- 主仪表盘面板 -->
     <UDashboardPanel grow>
-      <!-- 提示卡片 -->
+      <!-- 操作提示信息卡片 -->
       <div class="info-card">
         <el-card shadow="hover" class="box-card">
           <template #header>
@@ -32,7 +35,7 @@
         </el-card>
       </div>
 
-      <!-- "其他功能"卡片 -->
+      <!-- 其他功能卡片 -->
       <div class="additional-card">
         <el-card shadow="hover" class="box-card">
           <template #header>
@@ -41,12 +44,14 @@
               @click="toggleRedPoints"
               size="small"
               style="width: 100%;"
+              :loading="abnormalDataLoading"
+              :disabled="abnormalDataLoading"
             >
-              {{ showRedPoints ? '隐藏异常图片' : '显示异常图片' }}
+              {{ abnormalDataLoading ? '加载异常数据中...' : (showRedPoints ? '隐藏异常图片' : '显示异常图片') }}
             </el-button>
           </template>
           
-          <!-- 异常类型选择 -->
+          <!-- 异常类型筛选区域 -->
           <div v-if="showRedPoints" class="filter-container">
             <div class="filter-header">
               <span class="filter-title">异常类型筛选</span>
@@ -73,8 +78,8 @@
         </el-card>
       </div>
 
-      <!-- 3D 模型容器 -->
-       <div class="model-container">
+      <!-- 3D模型展示容器 -->
+      <div class="model-container">
         <el-divider content-position="center">3D 模型展示</el-divider>
         <div id="threejs-container" class="threejs-container">
           <!-- 模型加载进度提示层 -->
@@ -87,10 +92,12 @@
               status="success"
             />
             <div class="progress-text">{{ modelLoadingProgress }}%</div>
+            <div class="loading-status">
+              {{ modelLoadingProgress < 95 ? '加载模型中...' : '准备渲染...' }}
+            </div>
           </div>
         </div>
       </div>
-
     </UDashboardPanel>
 
     <!-- 图片展示区域 -->
@@ -121,17 +128,26 @@
                 ></el-progress>
                 <div class="progress-text">{{image.loadingProgress}}%</div>
               </div>
-                <el-button
+              <el-button
+                type="danger"
+                size="small"
+                class="close-btn"
+                @click="removeImage(index)"
+                style="position: absolute; top: 10px; right: 10px;"
+              >
+                ❌
+              </el-button>
+              <!-- 异常类型标签显示 -->
+              <div class="abnormal-type-tags" v-if="image.abnormalTypes?.length">
+                <el-tag 
+                  v-for="(type, idx) in image.abnormalTypes" 
+                  :key="idx" 
+                  size="small" 
                   type="danger"
-                  size="small"
-                  class="close-btn"
-                  @click="removeImage(index)"
-                  style="position: absolute; top: 10px; right: 10px;"
+                  class="abnormal-type-tag"
                 >
-                  ❌
-                </el-button>
-              <div class="abnormal-type-tag" v-if="image.abnormalType">
-                <el-tag size="small" type="danger">{{ image.abnormalType }}</el-tag>
+                  {{ type }}
+                </el-tag>
               </div>
               <div 
                 class="photo-sequence-label" 
@@ -147,91 +163,104 @@
         </el-col>
       </el-row>
     </div>
-
-<!-- 图片弹窗 -->
-<el-dialog 
-  v-model="dialogVisible" 
-  title="图片详情" 
-  width="80%"
-  :show-close="false"
-  @click="dialogVisible = false"
-  custom-class="image-preview-dialog"
->
-  <div class="dialog-container">
-    <div v-if="imageLoading" class="dialog-loading-container">
-      <el-progress 
-        type="circle" 
-        :percentage="dialogLoadingProgress" 
-        :width="100"
-        :stroke-width="6"
-        status="success"
-      ></el-progress>
-      <div class="progress-text">{{dialogLoadingProgress}}%</div>
-    </div>
-    <img 
-      v-show="!imageLoading"
-      :src="currentImage" 
-      class="dialog-image"
-      @load="imageLoading = false"
-    />
-    <div v-if="currentAbnormalDetails?.length" class="abnormal-details">
-      <el-divider content-position="center">异常信息</el-divider>
-      <div v-for="(detail, index) in currentAbnormalDetails" :key="index" class="abnormal-detail-item">
-        <el-tag size="small" type="danger">{{ detail.typeName }}</el-tag>
-        <span v-if="detail.description" class="detail-description">{{ detail.description }}</span>
+    
+    <!-- 图片详情弹窗 -->
+    <el-dialog 
+      v-model="dialogVisible" 
+      title="图片详情" 
+      width="80%"
+      :show-close="false"
+      @click="dialogVisible = false"
+      custom-class="image-preview-dialog"
+    >
+      <div class="dialog-container">
+        <div v-if="imageLoading" class="dialog-loading-container">
+          <el-progress 
+            type="circle" 
+            :percentage="dialogLoadingProgress" 
+            :width="100"
+            :stroke-width="6"
+            status="success"
+          ></el-progress>
+          <div class="progress-text">{{dialogLoadingProgress}}%</div>
+        </div>
+        <img 
+          v-show="!imageLoading"
+          :src="currentImage" 
+          class="dialog-image"
+          @load="imageLoading = false"
+        />
+        <div v-if="currentAbnormalDetails?.length" class="abnormal-details">
+          <el-divider content-position="center">异常信息</el-divider>
+          <div v-for="(detail, index) in currentAbnormalDetails" :key="index" class="abnormal-detail-item">
+            <el-tag size="small" type="danger">{{ detail.typeName }}</el-tag>
+            <span v-if="detail.description" class="detail-description">{{ detail.description }}</span>
+          </div>
+        </div>
       </div>
-    </div>
-  </div>
-</el-dialog>
+    </el-dialog>
   </UDashboardPage>
 </template>
 
 <script setup>
+// 导入Vue相关功能
 import { ref, onMounted, onUnmounted, computed } from 'vue'
+// 导入路由相关功能
+import { onBeforeRouteLeave, useRouter } from 'vue-router'
+// 导入Three.js相关库
 import * as THREE from 'three'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
+// 导入Element Plus组件
 import { ElMessage } from 'element-plus'
 import axios from 'axios'
-import { useRouter } from 'vue-router'
 
 // 配置基础请求地址
 axios.defaults.baseURL = 'http://110.42.214.164:8004'
 
-// 颜色序列
+// 定义颜色序列
 const colorSequence = [
-  '#006D5B', // Dark Teal
-  '#008080', // Teal
-  '#4CABA6', // Medium Teal
-  '#7AC5CD', // Light Teal
-  '#B2DFDB', // Pale Teal
-  '#E0F2F1'  // Very Pale Teal
+  '#006D5B', // 深青色
+  '#008080', // 青色
+  '#4CABA6', // 中青色
+  '#7AC5CD', // 浅青色
+  '#B2DFDB', // 淡青色
+  '#E0F2F1'  // 极淡青色
 ]
 
-// 状态变量
-const imageLoading = ref(false)
-const dialogLoadingProgress = ref(0)
-const modelLoading = ref(true)
-const modelLoadingProgress = ref(0)
-const showRedPoints = ref(false)
-const imageCards = ref([])
-const redPoints = ref([])
-const orangeMarkers = ref([])
-const imageCoordinates = ref([])
-const dialogVisible = ref(false)
-const currentImage = ref('')
-const isRendering = ref(true)
-const currentAbnormalDetails = ref([])
-const usedColors = ref([])
-const abnormalTypes = ref([])
-const selectedAbnormalTypes = ref([])
+// 定义响应式状态变量
+const imageLoading = ref(false) // 图片加载状态
+const dialogLoadingProgress = ref(0) // 弹窗图片加载进度
+const modelLoading = ref(true) // 模型加载状态
+const modelLoadingProgress = ref(0) // 模型加载进度
+const showRedPoints = ref(false) // 是否显示红点
+const imageCards = ref([]) // 图片卡片数据
+const redPoints = ref([]) // 红点数据
+const orangeMarkers = ref([]) // 橙色标记数据
+const imageCoordinates = ref([]) // 图片坐标数据
+const dialogVisible = ref(false) // 弹窗可见性
+const currentImage = ref('') // 当前显示的图片
+const isRendering = ref(true) // 是否正在渲染
+const currentAbnormalDetails = ref([]) // 当前异常详情
+const usedColors = ref([]) // 已使用的颜色
+const abnormalTypes = ref([]) // 异常类型列表
+const selectedAbnormalTypes = ref([]) // 选中的异常类型
+const abnormalDataLoading = ref(false) // 异常数据加载状态
+const abnormalDataReady = ref(false) // 异常数据是否就绪
 
+// 获取路由实例
 const router = useRouter()
+
+// 初始化Three.js相关变量
 let model, controls, camera, scene, renderer
 const raycaster = new THREE.Raycaster()
 const pointer = new THREE.Vector2()
 
-// 计算对比色
+/**
+ * 获取对比色（根据背景色决定文字颜色）
+ * @param {string} hexColor 十六进制颜色值
+ * @returns {string} 黑色或白色
+ */
 const getContrastColor = (hexColor) => {
   if (!hexColor) return '#ffffff'
   const r = parseInt(hexColor.substr(1, 2), 16)
@@ -241,7 +270,10 @@ const getContrastColor = (hexColor) => {
   return brightness > 128 ? '#000000' : '#ffffff'
 }
 
-// 获取下一个可用颜色
+/**
+ * 获取下一个可用颜色
+ * @returns {string} 下一个可用颜色
+ */
 const getNextAvailableColor = () => {
   for (const color of colorSequence) {
     if (!usedColors.value.includes(color)) {
@@ -252,25 +284,125 @@ const getNextAvailableColor = () => {
   return colorSequence[0]
 }
 
-const exitAndGoHome = () => {
+/**
+ * 清理资源函数
+ */
+const cleanupResources = () => {
+  console.log('开始清理资源...')
+  
+  // 停止渲染循环
   isRendering.value = false
+  
   try {
+    // 移除事件监听器
     const container = document.getElementById('threejs-container')
-    container?.removeEventListener('click', onPointerClick)
-    scene?.clear()
-    renderer?.dispose()
+    if (container) {
+      container.removeEventListener('click', onPointerClick)
+      // 移除canvas元素
+      const canvas = container.querySelector('canvas')
+      if (canvas) {
+        container.removeChild(canvas)
+      }
+    }
+    
+    // 移除window事件监听器
+    window.removeEventListener('resize', handleResize)
+    
+    // 清理Three.js控制器
+    if (controls) {
+      controls.dispose()
+      controls = null
+    }
+    
+    // 清理Three.js场景
+    if (scene) {
+      scene.traverse((child) => {
+        if (child.geometry) {
+          child.geometry.dispose()
+        }
+        if (child.material) {
+          if (Array.isArray(child.material)) {
+            child.material.forEach(material => material.dispose())
+          } else {
+            child.material.dispose()
+          }
+        }
+      })
+      
+      // 清空场景
+      while (scene.children.length > 0) {
+        scene.remove(scene.children[0])
+      }
+      scene = null
+    }
+    
+    // 清理渲染器
+    if (renderer) {
+      renderer.dispose()
+      renderer.forceContextLoss()
+      renderer = null
+    }
+    
+    // 清理图片blob URLs
+    imageCards.value.forEach(card => {
+      if (card.imagePath && card.imagePath.startsWith('blob:')) {
+        URL.revokeObjectURL(card.imagePath)
+      }
+    })
+    
+    if (currentImage.value && currentImage.value.startsWith('blob:')) {
+      URL.revokeObjectURL(currentImage.value)
+    }
+    
+    // 重置所有状态
+    imageCards.value = []
+    redPoints.value = []
+    orangeMarkers.value = []
+    imageCoordinates.value = []
+    usedColors.value = []
+    abnormalTypes.value = []
+    selectedAbnormalTypes.value = []
+    currentImage.value = ''
+    currentAbnormalDetails.value = []
+    dialogVisible.value = false
+    showRedPoints.value = false
+    modelLoading.value = true
+    imageLoading.value = false
+    abnormalDataLoading.value = false
+    abnormalDataReady.value = false
+    
+    console.log('资源清理完成')
   } catch (e) {
-    console.warn('资源清理失败：', e)
+    console.warn('资源清理过程中出现警告：', e)
   }
-  router.push('/')
 }
 
-// 异常类型过滤相关
+/**
+ * 退出并返回首页
+ */
+const exitAndGoHome = async () => {
+  try {
+    cleanupResources()
+    // 延迟跳转确保清理完成
+    await new Promise(resolve => setTimeout(resolve, 100))
+    router.push('/')
+  } catch (error) {
+    console.error('清理失败，强制跳转:', error)
+    router.push('/')
+  }
+}
+
+/**
+ * 计算是否所有类型都被选中
+ */
 const allTypesSelected = computed(() => {
   return abnormalTypes.value.length > 0 && 
          selectedAbnormalTypes.value.length === abnormalTypes.value.length
 })
 
+/**
+ * 全选/取消全选异常类型
+ */
 const selectAllTypes = () => {
   if (allTypesSelected.value) {
     selectedAbnormalTypes.value = []
@@ -280,6 +412,33 @@ const selectAllTypes = () => {
   updateVisiblePoints()
 }
 
+/**
+ * 加载异常数据
+ */
+const loadAbnormalData = async () => {
+  try {
+    const res = await axios.get('/imageData/all-abnormal-images')
+    imageCoordinates.value = res.data.data.map(d => ({
+      imageId: d.imageId,
+      centerX: d.centerX,
+      centerY: d.centerY,
+      centerZ: d.centerZ,
+      abnormalDetailList: d.abnormalDetailList || []
+    }))
+    extractAbnormalTypes()
+    abnormalDataReady.value = true
+  } catch (error) {
+    ElMessage.error('加载异常坐标失败')
+    throw error
+  }
+}
+
+/**
+ * 跟踪图片下载进度
+ * @param {string} imageUrl 图片URL
+ * @param {Ref} progressRef 进度引用
+ * @returns {Promise<string>} blob URL
+ */
 const trackImageDownload = async (imageUrl, progressRef) => {
   progressRef.value = 0
   try {
@@ -288,7 +447,7 @@ const trackImageDownload = async (imageUrl, progressRef) => {
       cache: 'no-cache',
     })
     
-    if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`)
+    if (!response.ok) throw new Error(`HTTP错误! 状态: ${response.status}`)
     
     const contentLength = response.headers.get('content-length')
     const total = parseInt(contentLength, 10) || 0
@@ -312,15 +471,18 @@ const trackImageDownload = async (imageUrl, progressRef) => {
     const blob = await response.blob()
     return URL.createObjectURL(blob)
   } catch (error) {
-    console.error('Error downloading image:', error)
+    console.error('下载图片错误:', error)
     progressRef.value = 0
     return null
   }
 }
 
+/**
+ * 更新可见红点
+ */
 const updateVisiblePoints = () => {
-  if (!showRedPoints.value) return
-  
+  if (!showRedPoints.value || !renderer || !scene || !camera) return
+ 
   redPoints.value.forEach(dot => {
     if (selectedAbnormalTypes.value.length === 0) {
       dot.visible = false
@@ -339,34 +501,83 @@ const updateVisiblePoints = () => {
     
     dot.visible = hasSelectedType
   })
-  
-  renderer.render(scene, camera)
+ 
+  if (renderer && scene && camera) {
+    renderer.render(scene, camera)
+  }
 }
 
+/**
+ * 显示图片弹窗
+ * @param {Object} image 图片对象
+ */
 const showImageDialog = (image) => {
-  currentImage.value = image.imagePath;
-  dialogVisible.value = true;
-};
+  currentImage.value = image.imagePath
+  dialogVisible.value = true
+}
 
-const toggleRedPoints = () => {
-  showRedPoints.value = !showRedPoints.value
-
-  if (showRedPoints.value) {
+/**
+ * 切换红点显示状态
+ */
+const toggleRedPoints = async () => {
+  if (!showRedPoints.value) {
+    // 显示红点前先检查数据是否已加载
+    if (!abnormalDataReady.value) {
+      abnormalDataLoading.value = true
+      try {
+        await loadAbnormalData()
+      } catch (error) {
+        abnormalDataLoading.value = false
+        return
+      }
+      abnormalDataLoading.value = false
+    }
+    
+    showRedPoints.value = true
     orangeMarkers.value.forEach(m => m.visible = false)
+    
     if (redPoints.value.length === 0) {
       createRedPoints()
     } else {
       updateVisiblePoints()
     }
   } else {
+    // 隐藏红点
+    showRedPoints.value = false
     redPoints.value.forEach(dot => dot.visible = false)
     orangeMarkers.value.forEach(m => m.visible = true)
+    
+    // 新增：隐藏所有通过红点添加的照片框
+    imageCards.value = imageCards.value.filter(card => {
+      // 保留非异常图片（通过Shift+点击添加的图片）
+      const isNormalImage = !redPoints.value.some(dot => dot.userData.imageId === card.imageId)
+      if (!isNormalImage && card.imagePath && card.imagePath.startsWith('blob:')) {
+        URL.revokeObjectURL(card.imagePath)
+      }
+      return isNormalImage
+    })
+    
+    // 重置红点的点击状态和颜色
+    redPoints.value.forEach(dot => {
+      dot.userData.clicked = false
+      dot.material.color.set(0xff0000)
+    })
+    
+    // 重置颜色使用记录
+    usedColors.value = []
   }
 
-  renderer.render(scene, camera)
+  if (renderer && scene && camera) {
+    renderer.render(scene, camera)
+  }
 }
 
+/**
+ * 创建红点
+ */
 const createRedPoints = () => {
+  if (!scene) return
+ 
   imageCoordinates.value.forEach(coord => {
     const dot = new THREE.Mesh(
       new THREE.SphereGeometry(0.8),
@@ -384,13 +595,22 @@ const createRedPoints = () => {
   updateVisiblePoints()
 }
 
+/**
+ * 处理指针点击事件
+ * @param {Event} event 点击事件
+ */
 const onPointerClick = async (event) => {
+  if (!scene || !camera || !renderer) return
+ 
   const container = document.getElementById('threejs-container')
+  if (!container) return
+ 
   const rect = container.getBoundingClientRect()
   pointer.x = ((event.clientX - rect.left) / container.clientWidth) * 2 - 1
   pointer.y = -((event.clientY - rect.top) / container.clientHeight) * 2 + 1
   raycaster.setFromCamera(pointer, camera)
 
+  // 处理红点点击
   if (showRedPoints.value) {
     const hits = raycaster.intersectObjects(redPoints.value)
     if (hits.length) {
@@ -413,19 +633,17 @@ const onPointerClick = async (event) => {
           const urlResp = await axios.get(`/imageData/${imageData.imageId}/url`)
           const imageUrl = urlResp.data.data
           
-          if (!imageUrl) throw new Error('No image URL')
+          if (!imageUrl) throw new Error('无图片URL')
           
-          let abnormalType = null
-          if (imageData.abnormalDetailList && imageData.abnormalDetailList.length > 0) {
-            abnormalType = imageData.abnormalDetailList[0].typeName
-          }
+          // 获取所有异常类型
+          const abnormalTypes = imageData.abnormalDetailList?.map(d => d.typeName) || []
 
           const newCard = {
             imageId: imageData.imageId,
             imagePath: '',
             loading: true,
             loadingProgress: 0,
-            abnormalType: abnormalType,
+            abnormalTypes: abnormalTypes, // 改为数组形式存储所有类型
             sequenceNumber: imageCards.value.length + 1,
             dotColor: nextColor
           }
@@ -454,7 +672,7 @@ const onPointerClick = async (event) => {
             ElMessage.error('图片加载失败')
           }
         } catch (error) {
-          console.error('Error:', error)
+          console.error('错误:', error)
           dot.userData.clicked = false
           ElMessage.error('获取图片信息失败')
         }
@@ -463,6 +681,7 @@ const onPointerClick = async (event) => {
     return
   }
 
+  // 处理Shift+点击查看图片
   if (event.shiftKey) {
     const hits = raycaster.intersectObjects(model?.children || [], true)
     if (hits.length) {
@@ -493,7 +712,7 @@ const onPointerClick = async (event) => {
           const urlResp = await axios.get(`/imageData/${d.imageId}/url`)
           const imageUrl = urlResp.data.data
           
-          if (!imageUrl) throw new Error('No image URL')
+          if (!imageUrl) throw new Error('无图片URL')
           
           currentAbnormalDetails.value = d.abnormalDetailList || []
           const blobUrl = await trackImageDownload(imageUrl, dialogLoadingProgress)
@@ -501,27 +720,38 @@ const onPointerClick = async (event) => {
           if (blobUrl) {
             currentImage.value = blobUrl
           } else {
-            throw new Error('Image download failed')
+            throw new Error('图片下载失败')
           }
         } else {
-          throw new Error('no data')
+          throw new Error('无数据')
         }
       } catch (error) {
-        console.error('Error:', error)
+        console.error('错误:', error)
         imageLoading.value = false
         dialogVisible.value = false
         ElMessage.warning('当前位置暂无匹配图片')
-        scene.remove(mk)
+        if (scene && mk) {
+          scene.remove(mk)
+        }
         orangeMarkers.value.pop()
       }
     }
   }
 }
 
+/**
+ * 移除图片
+ * @param {number} idx 图片索引
+ */
 const removeImage = async (idx) => {
   const img = imageCards.value[idx]
   if (img.dotColor) {
     usedColors.value = usedColors.value.filter(c => c !== img.dotColor)
+  }
+  
+  // 清理blob URL
+  if (img.imagePath && img.imagePath.startsWith('blob:')) {
+    URL.revokeObjectURL(img.imagePath)
   }
   
   try {
@@ -536,7 +766,9 @@ const removeImage = async (idx) => {
     }
   } else {
     const mk = orangeMarkers.value[idx]
-    if (mk) scene.remove(mk)
+    if (mk && scene) {
+      scene.remove(mk)
+    }
     orangeMarkers.value.splice(idx, 1)
   }
   
@@ -546,6 +778,9 @@ const removeImage = async (idx) => {
   })
 }
 
+/**
+ * 提取异常类型
+ */
 const extractAbnormalTypes = () => {
   const types = new Set()
   imageCoordinates.value.forEach(coord => {
@@ -559,20 +794,51 @@ const extractAbnormalTypes = () => {
   selectedAbnormalTypes.value = [...abnormalTypes.value]
 }
 
+/**
+ * 处理窗口resize事件
+ */
+const handleResize = () => {
+  if (!camera || !renderer || !isRendering.value) return
+ 
+  const container = document.getElementById('threejs-container')
+  if (container) {
+    camera.aspect = container.clientWidth / container.clientHeight
+    camera.updateProjectionMatrix()
+    renderer.setSize(container.clientWidth, container.clientHeight)
+  }
+}
+
+// 路由离开守卫
+onBeforeRouteLeave((to, from, next) => {
+  cleanupResources()
+  next()
+})
+
+// 组件挂载时初始化
 onMounted(() => {
+  // 初始化Three.js场景
   scene = new THREE.Scene()
   camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000)
   renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true })
+  
   const container = document.getElementById('threejs-container')
+  if (!container) {
+    console.error('Three.js容器未找到')
+    return
+  }
+  
   renderer.setSize(container.clientWidth, container.clientHeight)
   container.appendChild(renderer.domElement)
 
+  // 添加光照
   scene.add(new THREE.AmbientLight(0xffffff, 1.5))
   const dl = new THREE.DirectionalLight(0xffffff, 2)
   dl.position.set(5, 5, 5)
   scene.add(dl)
 
-  new GLTFLoader().load(
+  // 加载GLTF模型
+  const loader = new GLTFLoader()
+  loader.load(
     'Model/SampleScene.gltf',
     gltf => {
       model = gltf.scene
@@ -583,11 +849,19 @@ onMounted(() => {
         }
       })
       scene.add(model)
-      modelLoading.value = false
+      
+      // 添加延迟确保渲染完成
+      setTimeout(() => {
+        modelLoading.value = false
+      }, 300)
     },
     xhr => {
       if (xhr.lengthComputable) {
-        modelLoadingProgress.value = Math.round((xhr.loaded / xhr.total) * 100)
+        // 将进度限制在95%，留5%给后续处理
+        modelLoadingProgress.value = Math.min(
+          Math.round((xhr.loaded / xhr.total) * 95),
+          95
+        )
       }
     },
     e => {
@@ -596,6 +870,7 @@ onMounted(() => {
     }
   )
 
+  // 初始化轨道控制器
   controls = new OrbitControls(camera, renderer.domElement)
   controls.enableDamping = true
   controls.dampingFactor = 0.05
@@ -604,6 +879,7 @@ onMounted(() => {
     MIDDLE: THREE.MOUSE.DOLLY,
   }
 
+  // 处理鼠标事件
   const dom = renderer.domElement
   dom.addEventListener('pointerdown', e => {
     if (e.button === 0) {
@@ -616,11 +892,13 @@ onMounted(() => {
     controls.mouseButtons.LEFT = THREE.MOUSE.ROTATE
   })
 
+  // 设置相机位置
   camera.position.set(0, 5, 10)
   camera.lookAt(0, 0, 0)
 
+  // 渲染循环
   const animate = () => {
-    if (isRendering.value) {
+    if (isRendering.value && controls && renderer && scene && camera) {
       requestAnimationFrame(animate)
       controls.update()
       renderer.render(scene, camera)
@@ -628,39 +906,20 @@ onMounted(() => {
   }
   animate()
 
-  axios.get('/imageData/all-abnormal-images')
-    .then(res => {
-      imageCoordinates.value = res.data.data.map(d => ({
-        imageId: d.imageId,
-        centerX: d.centerX,
-        centerY: d.centerY,
-        centerZ: d.centerZ,
-        abnormalDetailList: d.abnormalDetailList || []
-      }))
-      extractAbnormalTypes()
-    })
-    .catch(() => {
-      ElMessage.error('加载异常坐标失败')
-    })
-
+  // 添加事件监听器
   container.addEventListener('click', onPointerClick)
-  window.addEventListener('resize', () => {
-    camera.aspect = container.clientWidth / container.clientHeight
-    camera.updateProjectionMatrix()
-    renderer.setSize(container.clientWidth, container.clientHeight)
-  })
+  window.addEventListener('resize', handleResize)
 })
 
+// 组件卸载时清理资源
 onUnmounted(() => {
-  isRendering.value = false
-  const c = document.getElementById('threejs-container')
-  c.removeEventListener('click', onPointerClick)
-  scene.clear()
-  renderer.dispose()
+  console.log('组件卸载，开始清理资源...')
+  cleanupResources()
 })
 </script>
 
 <style scoped>
+/* 模型容器样式 */
 .model-container {
   width: 65%;
   height: 65vh;
@@ -668,6 +927,7 @@ onUnmounted(() => {
   position: relative;
 }
 
+/* Three.js容器样式 */
 .threejs-container {
   width: 100%;
   height: 100%;
@@ -676,6 +936,7 @@ onUnmounted(() => {
   background: linear-gradient(145deg, #f5f5f5, #ffffff);
 }
 
+/* 图片容器样式 */
 .image-container {
   position: absolute;
   bottom: 5%;
@@ -688,6 +949,7 @@ onUnmounted(() => {
   box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
 }
 
+/* 卡片基础样式 */
 .card {
   transition: all 0.3s;
   border: 2px solid transparent;
@@ -696,17 +958,23 @@ onUnmounted(() => {
   transform: translateY(-5px);
   box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
 }
+
+/* 图片卡片图片样式 */
 .image-card-img {
   width: 100%;
   height: 180px;
   object-fit: cover;
   border-radius: 4px;
 }
+
+/* 弹窗图片样式 */
 .dialog-image {
   width: 100%;
   border-radius: 8px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
+
+/* 关闭按钮样式 */
 .close-btn {
   transition: all 0.2s ease;
 }
@@ -715,12 +983,15 @@ onUnmounted(() => {
   background-color: rgba(255, 0, 0, 0.8) !important;
 }
 
+/* 信息卡片样式 */
 .info-card {
   position: absolute;
   top: 8%;
   left: 2%;
   z-index: 1000;
 }
+
+/* 附加功能卡片样式 */
 .additional-card {
   position: absolute;
   top:43%;
@@ -728,6 +999,7 @@ onUnmounted(() => {
   z-index: 1000;
 }
 
+/* 卡片基础样式 */
 .box-card {
   width: 200px;
   background-color: #fff;
@@ -735,11 +1007,15 @@ onUnmounted(() => {
   border-radius: 8px;
   box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
 }
+
+/* 卡片标题样式 */
 .card-header-title {
   font-size: 16px;
   font-weight: bold;
   color: #303133;
 }
+
+/* 卡片列表样式 */
 .card-list {
   list-style-type: none;
   padding: 0;
@@ -751,6 +1027,7 @@ onUnmounted(() => {
   font-size: 14px;
 }
 
+/* 加载容器样式 */
 .loading-container {
   width: 100%;
   height: 180px;
@@ -766,12 +1043,14 @@ onUnmounted(() => {
   z-index: 1;
 }
 
+/* 弹窗容器样式 */
 .dialog-container {
   position: relative;
   width: 100%;
   min-height: 300px;
 }
 
+/* 弹窗加载容器样式 */
 .dialog-loading-container {
   width: 100%;
   height: 300px;
@@ -787,6 +1066,7 @@ onUnmounted(() => {
   z-index: 1;
 }
 
+/* 进度文本样式 */
 .progress-text {
   margin-top: 10px;
   font-size: 14px;
@@ -794,59 +1074,77 @@ onUnmounted(() => {
   font-weight: bold;
 }
 
+/* 卡片内容样式 */
 .card-content {
   position: relative;
   width: 100%;
   height: 180px;
 }
 
+/* 筛选容器样式 */
 .filter-container {
   margin-top: 10px;
 }
 
+/* 筛选头部样式 */
 .filter-header {
   display: flex;
   align-items: center;
   margin-bottom: 8px;
 }
 
+/* 筛选标题样式 */
 .filter-title {
   font-size: 14px;
   font-weight: bold;
   color: #303133;
 }
 
-.filter-tip {
-  margin: 8px 0;
-}
-
+/* 复选框项样式 */
 .checkbox-item {
   display: block;
   margin-bottom: 6px;
 }
 
-.abnormal-type-tag {
+/* 异常类型标签容器样式 */
+.abnormal-type-tags {
   position: absolute;
   bottom: 10px;
   left: 10px;
   z-index: 2;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  max-width: 80%; /* 防止标签过多溢出 */
 }
 
+/* 单个标签样式 */
+.abnormal-type-tag {
+  margin-right: 4px;
+  margin-bottom: 4px;
+  white-space: nowrap; /* 防止标签内文字换行 */
+}
+
+/* 异常详情样式 */
 .abnormal-details {
   margin-top: 15px;
 }
 
+/* 异常详情项样式 */
 .abnormal-detail-item {
   margin: 8px 0;
   display: flex;
   align-items: center;
 }
 
+/* 详情描述样式 */
 .detail-description {
   margin-left: 8px;
   font-size: 14px;
   color: #606266;
 }
+
+/* 模型加载覆盖层样式 */
 .model-loading-overlay {
   position: absolute;
   top: 0;
@@ -860,6 +1158,8 @@ onUnmounted(() => {
   align-items: center;
   z-index: 10;
 }
+
+/* 卡片列表键盘样式 */
 .card-list kbd {
   display: inline-block;
   padding: 2px 6px;
@@ -869,6 +1169,8 @@ onUnmounted(() => {
   border: 1px solid #ccc;
   border-radius: 4px;
 }
+
+/* 顶部按钮样式 */
 .top-right-button {
   position: absolute;
   top: 8%;
@@ -876,6 +1178,8 @@ onUnmounted(() => {
   z-index: 2;
   width: 120px;
 }
+
+/* 照片序列标签样式 */
 .photo-sequence-label {
   position: absolute;
   top: 10px;
@@ -892,6 +1196,7 @@ onUnmounted(() => {
   text-shadow: 0 1px 1px rgba(0,0,0,0.3);
   box-shadow: 0 1px 3px rgba(0,0,0,0.2);
 }
+
 /* 弹窗样式 */
 .image-preview-dialog {
   display: flex;
@@ -899,6 +1204,7 @@ onUnmounted(() => {
   justify-content: center;
 }
 
+/* 弹窗图片样式 */
 .dialog-image {
   width: 100%;
   max-height: 70vh;
@@ -908,17 +1214,27 @@ onUnmounted(() => {
   margin: 0 auto;
 }
 
+/* 弹窗容器样式 */
 .dialog-container {
   position: relative;
   width: 100%;
   min-height: 300px;
   text-align: center;
 }
+
+/* 按钮提示样式 */
 .button-hint {
   margin-top: 8px;
   font-size: 18px;
   color: #9f0b0b;
   text-align: center;
   line-height: 1.4;
+}
+
+/* 加载状态文本样式 */
+.loading-status {
+  margin-top: 10px;
+  font-size: 14px;
+  color: #666;
 }
 </style>
