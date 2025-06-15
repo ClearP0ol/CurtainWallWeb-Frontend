@@ -161,6 +161,9 @@ const submitPassword = () => {
       })
 
       ElMessage.success(res.message || '密码修改成功')
+      passwordForm.value.old_password = ''
+      passwordForm.value.new_password = ''
+      passwordForm.value.confirm_password = ''
     } catch (err: any) {
       const msg = err?.data?.message || err?.message || '修改失败，请检查输入'
       ElMessage.error(msg)
