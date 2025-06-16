@@ -49,6 +49,7 @@ const router = useRouter();
 
 onMounted(() => {
   loginUser.value = localStorage.getItem("email");
+  state.name = loginUser.value || '用户';  
 });
 
 const items = computed(() => [
