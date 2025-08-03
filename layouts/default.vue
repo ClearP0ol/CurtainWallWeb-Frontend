@@ -357,6 +357,102 @@ const links = reactive([
   //   ],
   // },
   {
+    id: "resilienceAssessment",
+    label: "幕墙韧性评估",
+    icon: "i-heroicons-bell-alert",
+    to: "/resilience",
+    defaultOpen: false,
+    children: [
+      {
+        id: "dataset",
+        label: "数据集管理",
+        icon: "heroicons-solid:database",
+        to: "/resilience/views/DataSetsView",
+        defaultOpen: false,
+        tooltip: {
+          text: "数据集管理",
+          shortcuts: ["G", "M"],
+        }
+      },
+      {
+        id: "analysisJob",
+        label: "分析任务",
+        icon: "heroicons-solid:calculator",
+        to: "/resilience/views/DataSetsView",
+        defaultOpen: false,
+        tooltip: {
+          text: "分析任务",
+          shortcuts: ["G", "M"],
+        },
+        children: [
+          {
+            label: "模型列表",
+            to: "/resilience/views/AnalysisModelsView",
+          },
+          {
+            label: "任务管理",
+            to: "/resilience/views/AnalysisJobView",
+            exact: true,
+          },
+        ],
+      },
+      {
+        id: "visualization",
+        label: "可视化",
+        icon: "heroicons-solid:computer-desktop",
+        to: "/resilience/visualization",
+        defaultOpen: false,
+        tooltip: {
+          text: "可视化",
+          shortcuts: ["G", "M"],
+        },
+        children: [
+          {
+            label: "聚类分析",
+            to: "/resilience/views/VisualizationClusterView",
+          },
+          {
+            label: "雷达图",
+            to: "/resilience/views/VisualizationRadarView",
+          },
+          {
+            label: "热力图",
+            to: "/resilience/views/VisualizationHeatMapView",
+          },
+          {
+            label: "剖面分析",
+            to: "/resilience/views/VisualizationSliceView",
+          },
+        ],
+      },
+      {
+        id: "reports",
+        label: "报告管理",
+        icon: "heroicons-solid:document-report",
+        to: "/resilience/reports",
+        defaultOpen: false,
+        tooltip: {
+          text: "报告管理",
+          shortcuts: ["G", "M"],
+        },
+        children: [
+          {
+            label: "报告生成",
+            to: "/resilience/views/ReportsGenerateView",
+          },
+          {
+            label: "历史报告",
+            to: "/resilience/views/ReportsHistoryView",
+            exact: true,
+          },
+        ],
+      },
+    ],
+    tooltip: {
+      text: "幕墙韧性评估",
+    },
+  },
+  {
     id: "accountManagement",
     label: "账号管理",
     icon: "i-heroicons-bell-alert",

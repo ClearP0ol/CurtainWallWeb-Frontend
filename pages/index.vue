@@ -120,7 +120,6 @@ const modulesLine2 = reactive([
     permissionKey: "access_system_v",
     icon: "i-simple-icons-tailwindcss",
   },
-
 ]);
 
 const modulesLine3 = reactive([
