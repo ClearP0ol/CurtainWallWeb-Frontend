@@ -349,7 +349,7 @@ interface DimensionConfig {
   enabled: boolean
   method: string
   model_id?: number
-  loading: boolean  // 新增加载状态
+  loading: boolean
 }
 interface Job {
   id: number
@@ -447,7 +447,7 @@ const selectedDimensions = ref<Record<string, DimensionConfig>>(
       enabled: true, 
       method: '', 
       model_id: null,
-      loading: false  // 初始化加载状态
+      loading: false
     }
     return acc
   }, {} as Record<string, DimensionConfig>)

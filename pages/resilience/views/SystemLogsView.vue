@@ -269,7 +269,7 @@
   <script setup>
   import { ref, computed, onMounted } from 'vue'
   import { ElMessage, ElMessageBox } from 'element-plus'
-  import { formatDateTime } from '@/utils/format'
+  import { formatDateTime } from '../utils/format'
   
   // 日志数据
   const logs = ref([])

@@ -314,7 +314,7 @@
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter } from 'vue-router'
 import axios from 'axios'
-import { apiUrl } from '@/config'
+import { apiUrl } from '../config'
 import {
   Refresh,
   Setting,
@@ -328,10 +328,10 @@ import {
   SwitchButton,
   Document
 } from '@element-plus/icons-vue'
-import StatusCard from '@/components/StatusCard.vue'
-import MiniChart from '@/components/MiniChart.vue'
-import ServiceChart from '@/components/ServiceChart.vue'
-import { formatMemory, formatDiskSpace, formatNetwork, formatTime } from '@/utils/format'
+import StatusCard from '../components/StatusCard.vue'
+import MiniChart from '../components/MiniChart.vue'
+import ServiceChart from '..ColumnTypeChart.vue'
+import { formatMemory, formatDiskSpace, formatNetwork, formatTime } from '../utils/format'
 
 const router = useRouter()
 

@@ -190,9 +190,9 @@
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
 import { Download, Check } from '@element-plus/icons-vue'
-import axios from 'axios' // 引入axios
-import { ElMessage } from 'element-plus' // 引入消息提示
-import { apiUrl } from '@/config'
+import axios from 'axios'
+import { ElMessage } from 'element-plus'
+import { apiUrl } from '../config'
 
 // 筛选表单
 const filterForm = reactive({

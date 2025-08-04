@@ -132,8 +132,8 @@ import {
   Bell,
   User
 } from '@element-plus/icons-vue'
-import StatisticCard from '@/components/StatisticCard.vue'
-import { apiUrl } from '@/config'
+import StatisticCard from '../components/StatisticCard.vue'
+import { apiUrl } from '../config'
 
 const router = useRouter()
 
