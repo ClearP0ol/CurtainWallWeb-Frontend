@@ -512,6 +512,18 @@ import { ref, onMounted  } from 'vue'
 import axios from 'axios'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { apiUrl } from '../config'
+import {
+  Upload,
+  UploadFilled,
+  Edit,
+  Document,
+  View,
+  Delete,
+  Search,
+  Refresh,
+  Download,
+  DataLine
+} from '@element-plus/icons-vue'
 
 // 数据状态
 const modelList = ref([])
