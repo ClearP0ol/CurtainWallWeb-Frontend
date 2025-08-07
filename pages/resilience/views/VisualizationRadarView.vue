@@ -1,14 +1,14 @@
 <template>
-  <div class="heatmap-container">
+  <div class="radar-container">
     <!-- 标题和操作区 -->
-    <div class="heatmap-header">
+    <div class="radar-header">
       <h2>幕墙韧性各维度雷达图分析</h2>
       <div class="action-buttons">
         <el-button type="primary" @click="fetchData" :loading="loading">
           <el-icon><refresh /></el-icon>
           <span>刷新数据</span>
         </el-button>
-        <el-button @click="exportImage">
+        <el-button @click="exportImage" class="export-btn">
           <el-icon><download /></el-icon>
           <span>导出图片并上传为报告素材</span>
         </el-button>
@@ -16,17 +16,17 @@
     </div>
 
     <!-- 主内容区 -->
-    <div class="heatmap-content">
+    <div class="radar-content">
       <el-card shadow="hover" class="control-panel">
         <div class="panel-header">
           <el-icon><setting /></el-icon>
           <span>分析参数配置</span>
         </div>
         
-        <el-form label-width="100px" label-position="left">
+        <el-form label-width="100px" label-position="left" class="analysis-form">
           <el-form-item label="选择分析任务" prop="job_id">
             <div class="job-select-wrapper">
-              <el-button type="primary" @click="showJobDialog">
+              <el-button type="primary" @click="showJobDialog" class="job-select-btn">
                 <el-icon v-if="selectedJob == null"><plus /></el-icon>
                 <span>{{ selectedJob == null ? '选择分析任务': `【${selectedJob.job_name}】`}}</span>
               </el-button>
@@ -38,7 +38,7 @@
             <el-dialog
               title="选择分析任务"
               v-model="jobDialogVisible"
-              width="80%"
+              :width="dialogWidth"
             >
               <JobsView 
                 v-if="jobDialogVisible" 
@@ -83,6 +83,7 @@
               @click="fetchData" 
               style="width: 100%"
               :disabled="!selectedJob"
+              class="apply-btn"
             >
               生成雷达图
             </el-button>
@@ -92,7 +93,7 @@
       
       <!-- 雷达图绘制区 -->
       <div class="visualization-area">
-        <el-card shadow="hover" class="heatmap-card">
+        <el-card shadow="hover" class="radar-card">
           <div class="card-header">
             <div class="title">幕墙韧性雷达图</div>
             <div class="subtitle" v-if="selectedJob">
@@ -171,6 +172,12 @@ const colorSchemes = [
 const selectedJob = ref<any>(null)
 const selectedJobID = ref<string | null>(null)
 const jobDialogVisible = ref(false)
+
+// 响应式对话框宽度
+const dialogWidth = computed(() => {
+  const screenWidth = window.innerWidth;
+  return screenWidth > 1600 ? '80%' : screenWidth > 1200 ? '70%' : '90%';
+});
 
 // 任务筛选条件 - 只显示选择了全部维度的任务
 const jobFilterCondition = computed(() => {
@@ -536,6 +543,7 @@ const handleResize = () => {
 // 组件挂载时初始化图表
 onMounted(() => {
   initChart()
+  window.addEventListener('resize', handleResize)
 })
 
 // 监听相关变化
@@ -551,186 +559,279 @@ onBeforeUnmount(() => {
 </script>
 
 <style scoped lang="scss">
-.heatmap-container {
-  padding: 8px;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  
-  .heatmap-header {
+.radar-container {
+  padding: 16px;
+  width: 100%;
+  min-height: 100%;
+  box-sizing: border-box;
+  background-color: #f9fafb;
+
+  .radar-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     margin-bottom: 20px;
-    
+    padding-bottom: 12px;
+    border-bottom: 1px solid #eee;
+
     h2 {
-      font-size: 24px;
-      color: #333;
+      font-size: 20px;
+      color: #1d2129;
       margin: 0;
+      font-weight: 600;
     }
 
     .action-buttons {
       display: flex;
       gap: 12px;
-      
-      .el-button {
-        height: 36px;
-        padding: 0 16px;
-        font-size: 14px;
-        display: inline-flex;
-        align-items: center;
-        
-        &[type="primary"] {
-          padding: 0 18px;
-          font-weight: 500;
-          
-          .el-icon {
-            margin-right: 6px;
-            font-size: 16px;
-          }
-        }
-        
-        &[disabled] {
-          opacity: 0.6;
-        }
-        
-        .el-icon {
-          font-size: 16px;
-          & + span {
-            margin-left: 6px;
-          }
-        }
-      }
-      
-      .el-button:last-child {
-        background-color: #f0f7ff;
-        border-color: #c6e2ff;
+
+      .export-btn {
         color: #409eff;
-        
+        border-color: #409eff;
+        background-color: #ecf5ff;
+
         &:hover {
-          background-color: #ecf5ff;
-        }
-        
-        .el-icon {
-          color: #409eff;
+          background-color: #e6f2ff;
+          color: #3a8ee6;
+          border-color: #3a8ee6;
         }
       }
     }
   }
-  
-  .heatmap-content {
+
+  .radar-content {
     flex: 1;
     display: flex;
     gap: 20px;
-    
+    height: calc(100% - 70px);
+
     .control-panel {
-      width: 400px;
+      width: 360px;
       flex-shrink: 0;
-      
+      border: none;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+
+      :deep(.el-card__body) {
+        padding: 20px;
+      }
+
       .panel-header {
         display: flex;
         align-items: center;
         margin-bottom: 20px;
         font-size: 16px;
-        font-weight: bold;
-        color: #333;
-        
+        font-weight: 500;
+        color: #1d2129;
+
         .el-icon {
           margin-right: 8px;
-          color: var(--el-color-primary);
+          color: #409eff;
         }
       }
-      
-      .job-select-wrapper {
-        width: 100%;
-      }
-      
-      .display-options {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 15px;
-        margin-top: 15px;
-      }
-      
-      .color-scheme-option {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        width: 100%;
-        
-        .scheme-preview {
-          display: inline-block;
-          width: 60px;
-          height: 16px;
-          border-radius: 3px;
+
+      .analysis-form {
+        .job-select-wrapper {
+          width: 100%;
+          position: relative;
+
+          .job-info {
+            margin-top: 8px;
+          }
+        }
+
+        .job-select-btn {
+          width: 100%;
+          justify-content: space-between;
+        }
+
+        .display-options {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 15px;
+          margin-top: 8px;
+
+          :deep(.el-checkbox) {
+            color: #4e5969;
+          }
+        }
+
+        .color-scheme-option {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          width: 100%;
+          padding: 4px 0;
+
+          .scheme-label {
+            flex: 1;
+            color: #4e5969;
+          }
+
+          .scheme-preview {
+            display: inline-block;
+            width: 80px;
+            height: 16px;
+            border-radius: 3px;
+          }
+        }
+
+        .el-form-item {
+          margin-bottom: 16px;
+
+          &:last-child {
+            margin-bottom: 0;
+          }
+        }
+
+        .apply-btn {
+          height: 40px;
+          font-size: 14px;
+          font-weight: 500;
         }
       }
     }
-    
+
     .visualization-area {
       flex: 1;
       display: flex;
       flex-direction: column;
-      
-      .heatmap-card {
+
+      .radar-card {
         flex: 1;
-        
+        display: flex;
+        flex-direction: column;
+        border: none;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+
+        :deep(.el-card__body) {
+          display: flex;
+          flex-direction: column;
+          flex: 1;
+          padding: 20px;
+        }
+
         .card-header {
           margin-bottom: 20px;
-          
+
           .title {
             font-size: 18px;
-            font-weight: bold;
-            color: #333;
+            font-weight: 500;
+            color: #1d2129;
+            margin-bottom: 8px;
           }
-          
+
           .subtitle {
             font-size: 14px;
             color: #666;
-            margin-top: 5px;
           }
         }
-        
+
         .chart-container {
-          width: 750px;
-          height: calc(100% - 120px);
+          flex: 1;
+          width: 100%;
           min-height: 400px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
         }
-        
+
         .legend-container {
           margin-top: 20px;
-          padding: 15px 0;
-          border-top: 1px solid #eee;
-          
+          padding-top: 15px;
+          border-top: 1px solid #f0f0f0;
+
           .legend-title {
-            font-weight: bold;
+            font-weight: 500;
+            color: #4e5969;
             margin-bottom: 10px;
+            font-size: 14px;
           }
-          
+
           .legend-items {
             display: flex;
             flex-wrap: wrap;
             gap: 15px;
-            
+
             .legend-item {
               display: flex;
               align-items: center;
               gap: 8px;
-              
+              color: #4e5969;
+              font-size: 13px;
+
               .legend-color {
                 display: inline-block;
                 width: 15px;
                 height: 15px;
                 border-radius: 3px;
               }
-              
-              .legend-label {
-                font-size: 14px;
-              }
-              
+
               .legend-value {
-                font-size: 12px;
                 color: #666;
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+// 响应式适配
+@media (max-width: 1200px) {
+  .radar-container {
+    .radar-content {
+      flex-direction: column;
+
+      .control-panel {
+        width: 100%;
+        margin-bottom: 20px;
+      }
+
+      .visualization-area {
+        .radar-card {
+          .chart-container {
+            min-height: 400px;
+          }
+        }
+      }
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  .radar-container {
+    padding: 12px;
+
+    .radar-header {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 12px;
+
+      .action-buttons {
+        width: 100%;
+        flex-direction: column;
+
+        .el-button {
+          width: 100%;
+        }
+      }
+    }
+
+    .radar-content {
+      .visualization-area {
+        .radar-card {
+          .chart-container {
+            min-height: 300px;
+          }
+
+          .legend-container {
+            .legend-items {
+              flex-direction: column;
+              gap: 10px;
+
+              .legend-item {
+                width: 100%;
               }
             }
           }

@@ -4,7 +4,7 @@
     <div class="dataset-header">
       <h2>数据集管理</h2>
       <div class="action-buttons">
-        <el-button type="primary" @click="showUploadDialog" size="large">
+        <el-button type="primary" @click="showUploadDialog" size="large" class="primary-btn">
           <el-icon><upload /></el-icon>
           <span>数据集上传和清洗</span>
         </el-button>
@@ -12,7 +12,7 @@
     </div>
 
     <!-- 上传数据集对话框 -->
-    <el-dialog v-model="uploadDialogVisible" title="上传数据集" width="600px">
+    <el-dialog v-model="uploadDialogVisible" title="上传数据集" width="600px" class="custom-dialog">
         <el-upload
             class="dataset-uploader"
             drag
@@ -58,15 +58,17 @@
                 </div>
             </template>
         </el-upload>
-        <el-form-item label="数据集名称" prop="name">
+        <el-form-item label="数据集名称" prop="name" class="form-item">
             <el-input v-model="datasetName" placeholder="请输入数据集名称" />
         </el-form-item>
-        <el-form-item label="数据集描述" prop="description">
+        <el-form-item label="数据集描述" prop="description" class="form-item">
             <el-input v-model="datasetDescription" placeholder="请输入数据集描述" />
         </el-form-item>
         <template #footer>
+          <span class="dialog-footer">
             <el-button @click="uploadDialogVisible = false">取消</el-button>
             <el-button type="primary" @click="submitUpload">开始上传</el-button>
+          </span>
         </template>
     </el-dialog>
 
@@ -95,7 +97,7 @@
               <el-option label="按文件大小" value="size" />
             </el-select>
             
-            <el-button type="info" plain @click="refreshList">
+            <el-button type="info" plain @click="refreshList" class="refresh-btn">
               <el-icon><refresh /></el-icon>
               <span>刷新</span>
             </el-button>
@@ -108,6 +110,7 @@
           v-loading="loading"
           row-key="id"
           @row-click="handleRowClick"
+          class="dataset-table"
         >
           <el-table-column prop="name" label="数据集名称" width="200">
             <template #default="{ row }">
@@ -138,11 +141,11 @@
           
           <el-table-column label="操作" width="180" fixed="right">
             <template #default="{ row }">
-              <el-button size="small" @click.stop="showDetail(row)">
+              <el-button size="small" @click.stop="showDetail(row)" class="view-btn">
                 <el-icon><search /></el-icon>
                 <span>查看</span>
               </el-button>
-              <el-button size="small" type="danger" @click.stop="handleDelete(row)">
+              <el-button size="small" type="danger" @click.stop="handleDelete(row)" class="delete-btn">
                 <el-icon><delete /></el-icon>
                 <span>删除</span>
               </el-button>
@@ -171,6 +174,7 @@
       width="80%"
       top="5vh"
       destroy-on-close
+      class="custom-dialog"
     >
       <div v-if="currentDataset" class="dataset-detail">
         <div class="detail-header">
@@ -191,6 +195,7 @@
                 type="primary" 
                 @click="startEditing"
                 size="small"
+                class="edit-btn"
               >
                 <el-icon><edit /></el-icon>
                 <span>编辑</span>
@@ -199,6 +204,7 @@
                 type="primary" 
                 @click="downloadDataset(currentDataset)"
                 size="small"
+                class="download-btn"
               >
                 <el-icon><download /></el-icon>
                 <span>下载</span>
@@ -206,6 +212,7 @@
               <el-button 
                 @click="showPreview(currentDataset)"
                 size="small"
+                class="preview-btn"
               >
                 <el-icon><data-line /></el-icon>
                 <span>数据预览</span>
@@ -216,8 +223,9 @@
                 v-model="editDialogVisible"
                 title="编辑数据集信息"
                 width="500px"
+                class="custom-dialog"
               >
-                <el-form :model="editForm" label-width="100px">
+                <el-form :model="editForm" label-width="100px" class="form-container">
                   <el-form-item label="数据集名称" required>
                     <el-input 
                       v-model="editForm.name" 
@@ -235,14 +243,16 @@
                   </el-form-item>
                 </el-form>
                 <template #footer>
-                  <el-button @click="editDialogVisible = false">取消</el-button>
-                  <el-button 
-                    type="primary" 
-                    @click="submitEditing"
-                    :loading="editingLoading"
-                  >
-                    保存
-                  </el-button>
+                  <span class="dialog-footer">
+                    <el-button @click="editDialogVisible = false">取消</el-button>
+                    <el-button 
+                      type="primary" 
+                      @click="submitEditing"
+                      :loading="editingLoading"
+                    >
+                      保存
+                    </el-button>
+                  </span>
                 </template>
               </el-dialog>
 
@@ -337,12 +347,12 @@ import {
   Upload,
   UploadFilled,
   Document,
-  View,
-  Delete,
   Search,
   Refresh,
   Download,
-  DataLine
+  DataLine,
+  Edit,
+  Delete
 } from '@element-plus/icons-vue'
 import { formatFileSize, formatDateTime } from '../utils/format'
 import ColumnTypeChart from '../components/ColumnTypeChart.vue'
@@ -741,121 +751,196 @@ onMounted(() => {
 
 <style scoped lang="scss">
 .dataset-container {
-  padding: 20px;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  
+  padding: 16px;
+  width: 100%;
+  min-height: 100%;
+  box-sizing: border-box;
+  background-color: #f9fafb;
+
   .dataset-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     margin-bottom: 20px;
-    
+    padding-bottom: 12px;
+    border-bottom: 1px solid #eee;
+
     h2 {
-      font-size: 24px;
-      color: #333;
+      font-size: 20px;
+      color: #1d2129;
       margin: 0;
+      font-weight: 600;
+    }
+
+    .action-buttons {
+      display: flex;
+      gap: 12px;
+
+      .primary-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+      }
     }
   }
-  
+
   .dataset-uploader {
     :deep(.el-upload) {
       width: 100%;
     }
-    
+
     :deep(.el-upload-dragger) {
       width: 100%;
       padding: 40px 20px;
       border-radius: 8px;
       background-color: #fafafa;
-      
+      margin-bottom: 20px;
+
       .el-icon--upload {
         font-size: 60px;
         color: #409eff;
         margin-bottom: 16px;
       }
-      
+
       .el-upload__text {
         font-size: 16px;
         color: #666;
       }
     }
-    
+
     .el-upload__tip {
-        margin-top: 10px;
-        color: #999;
-        text-align: left;
-        padding: 10px;
-        background-color: #f9f9f9;
-        border: 1px solid #eee;
-        border-radius: 4px;
+      margin-top: 10px;
+      color: #999;
+      text-align: left;
+      padding: 10px;
+      background-color: #f9f9f9;
+      border: 1px solid #eee;
+      border-radius: 4px;
     }
 
     .upload-tip-general {
-        margin-bottom: 10px;
+      margin-bottom: 10px;
     }
 
     .upload-tip-label {
-        font-weight: bold;
-        margin-bottom: 5px;
+      font-weight: bold;
+      margin-bottom: 5px;
     }
 
     .flex-list {
-        display: flex;
-        flex-wrap: wrap;
-        justify-content: flex-start;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-start;
     }
 
     .flex-item {
-        margin-right: 10px;
-        margin-bottom: 5px;
-        padding: 5px 10px;
-        border: 1px solid #eee;
-        border-radius: 4px;
-        background-color: #fff;
+      margin-right: 10px;
+      margin-bottom: 5px;
+      padding: 5px 10px;
+      border: 1px solid #eee;
+      border-radius: 4px;
+      background-color: #fff;
+      font-size: 12px;
+    }
+
+    .form-item {
+      margin-top: 16px;
     }
   }
-  
+
   .dataset-list-container {
     flex: 1;
-    
+
     .dataset-card {
       height: 100%;
+      border: none;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
       border-radius: 8px;
-      
+
       :deep(.el-card__body) {
         padding: 0;
         height: 100%;
         display: flex;
         flex-direction: column;
       }
-      
+
       .filter-bar {
         padding: 16px 20px;
         display: flex;
         justify-content: space-between;
         align-items: center;
         border-bottom: 1px solid #eee;
-        
+        flex-wrap: wrap;
+        gap: 15px;
+
+        .el-input {
+          width: 300px;
+
+          &:deep(.el-input__wrapper) {
+            border-radius: 4px;
+          }
+        }
+
         .filter-actions {
           display: flex;
           gap: 10px;
+          flex-wrap: wrap;
+          align-items: center;
+
+          .el-select {
+            width: 120px;
+
+            &:deep(.el-select__wrapper) {
+              border-radius: 4px;
+            }
+          }
+
+          .refresh-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 0 12px;
+          }
         }
       }
-      
-      .el-table {
+
+      .dataset-table {
         flex: 1;
-        
+
+        :deep(.el-table) {
+          width: 100%;
+          border-collapse: collapse;
+        }
+
+        :deep(.el-table__header-wrapper) {
+          background-color: #f5f7fa;
+        }
+
+        :deep(.el-table__header tr th) {
+          background-color: #f5f7fa;
+          color: #4e5969;
+          font-weight: 500;
+          border-bottom: 1px solid #eee;
+        }
+
+        :deep(.el-table__body tr td) {
+          border-bottom: 1px solid #f0f0f0;
+        }
+
+        :deep(.el-table__body tr:hover > td) {
+          background-color: #f5f7fa;
+          cursor: pointer;
+        }
+
         :deep(.dataset-name-cell) {
           display: flex;
           align-items: center;
-          
+
           .el-icon {
             margin-right: 8px;
             color: #409eff;
           }
-          
+
           .name-text {
             flex: 1;
             overflow: hidden;
@@ -863,17 +948,46 @@ onMounted(() => {
             white-space: nowrap;
           }
         }
+
+        :deep(.view-btn) {
+          color: #409eff;
+          border-color: #409eff;
+          background-color: #ecf5ff;
+          margin-right: 5px;
+
+          &:hover {
+            background-color: #e6f2ff;
+            color: #3a8ee6;
+            border-color: #3a8ee6;
+          }
+        }
+
+        :deep(.delete-btn) {
+          &:hover {
+            opacity: 0.9;
+          }
+        }
       }
-      
-      .pagination-container {
+
+      .pagination-container      .pagination-container {
         padding: 16px;
         display: flex;
         justify-content: flex-end;
         border-top: 1px solid #eee;
+
+        :deep(.el-pagination) {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+        }
+
+        :deep(.el-pagination__sizes) {
+          margin-right: 10px;
+        }
       }
     }
   }
-  
+
   .dataset-detail {
     .detail-header {
       display: flex;
@@ -882,54 +996,227 @@ onMounted(() => {
       margin-bottom: 20px;
       padding-bottom: 15px;
       border-bottom: 1px solid #eee;
-      
+      flex-wrap: wrap;
+      gap: 15px;
+
       .basic-info {
         display: flex;
         gap: 30px;
-        
+        flex-wrap: wrap;
+
         .info-item {
           .label {
             color: #666;
             font-size: 14px;
           }
-          
+
           .value {
             font-weight: 500;
           }
         }
       }
-      
+
       .action-buttons {
         display: flex;
         gap: 10px;
+
+        .edit-btn, .download-btn, .preview-btn {
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+        }
       }
     }
-    
+
     .detail-tabs {
       :deep(.el-tabs__header) {
-        margin: 0;
+        margin: 0 0 16px 0;
+        border-bottom: 1px solid #eee;
       }
-      
+
       .statistics-container {
         margin-bottom: 30px;
       }
-      
+
       .column-types {
         margin-top: 30px;
-        
+
         h3 {
           margin: 0 0 20px 0;
           font-size: 16px;
           color: #333;
         }
       }
-      
+
       .data-preview {
         .preview-pagination {
           margin-top: 15px;
           display: flex;
           justify-content: flex-end;
         }
+      }
+    }
+  }
+}
+
+/* 对话框样式 */
+.custom-dialog {
+  border-radius: 8px;
+  overflow: hidden;
+
+  :deep(.el-dialog__header) {
+    padding: 18px 20px;
+    border-bottom: 1px solid #eee;
+  }
+
+  :deep(.el-dialog__title) {
+    font-size: 16px;
+    font-weight: 500;
+    color: #1d2129;
+  }
+
+  :deep(.el-dialog__body) {
+    padding: 20px;
+    max-height: 70vh;
+    overflow-y: auto;
+  }
+
+  :deep(.el-dialog__footer) {
+    padding: 16px 20px;
+    border-top: 1px solid #eee;
+  }
+
+  :deep(.dialog-footer) {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+  }
+
+  :deep(.el-button) {
+    margin-left: 0;
+  }
+}
+
+.form-container {
+  :deep(.el-form) {
+    width: 100%;
+  }
+
+  :deep(.el-form-item) {
+    margin-bottom: 16px;
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+
+  :deep(.el-form-item__label) {
+    color: #4e5969;
+    font-weight: 500;
+  }
+
+  :deep(.el-input),
+  :deep(.el-select),
+  :deep(.el-input-number) {
+    width: 100%;
+  }
+}
+
+/* 响应式调整 */
+@media (max-width: 1200px) {
+  .dataset-container {
+    .dataset-list-container {
+      .dataset-card {
+        .filter-bar {
+          flex-direction: column;
+          align-items: flex-start;
+
+          .el-input {
+            width: 100% !important;
+          }
+
+          .filter-actions {
+            width: 100%;
+            justify-content: flex-start;
+          }
+        }
+      }
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  .dataset-container {
+    padding: 12px;
+
+    .dataset-header {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 12px;
+
+      .action-buttons {
+        width: 100%;
+
+        .primary-btn {
+          width: 100%;
+          justify-content: center;
+        }
+      }
+    }
+
+    .dataset-list-container {
+      .dataset-card {
+        .filter-bar {
+          .filter-actions {
+            flex-direction: column;
+            width: 100%;
+            gap: 8px;
+
+            .el-select {
+              width: 100% !important;
+            }
+
+            .refresh-btn {
+              width: 100%;
+              justify-content: center;
+            }
+          }
+        }
+
+        .dataset-table {
+          :deep(.el-table__fixed-right) {
+            width: 120px !important;
+          }
+
+          :deep(.el-button) {
+            padding: 0 8px;
+            font-size: 12px;
+
+            .el-icon {
+              font-size: 14px;
+            }
+
+            span {
+              display: none;
+            }
+          }
+        }
+      }
+    }
+  }
+
+  .custom-dialog {
+    width: 90% !important;
+  }
+
+  .dataset-detail {
+    .detail-header {
+      flex-direction: column;
+      align-items: flex-start;
+
+      .action-buttons {
+        width: 100%;
+        flex-wrap: wrap;
       }
     }
   }

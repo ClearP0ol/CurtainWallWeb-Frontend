@@ -8,7 +8,7 @@
           <el-icon><refresh /></el-icon>
           <span>刷新数据</span>
         </el-button>
-        <el-button @click="exportImage">
+        <el-button @click="exportImage" class="export-btn">
           <el-icon><download /></el-icon>
           <span>导出图片并上传为报告素材</span>
         </el-button>
@@ -23,11 +23,11 @@
           <span>分析参数配置</span>
         </div>
         
-        <el-form label-width="100px" label-position="left">
+        <el-form label-width="100px" label-position="left" class="analysis-form">
           <el-form-item label="选择分析任务" prop="job_id">
             <div class="job-select-wrapper">
-              <el-button type="primary" @click="showJobDialog">
-                <el-icon v-if="selectedJob == null"><plus /></el-icon>
+              <el-button type="primary" @click="showJobDialog" class="job-select-btn">
+                <el-icon v-if="selectedJob == null"><Plus /></el-icon>
                 <span>{{ selectedJob == null ? '选择分析任务': `【${selectedJob.job_name}】`}}</span>
               </el-button>
             </div>
@@ -35,7 +35,7 @@
             <el-dialog
               title="选择分析任务"
               v-model="jobDialogVisible"
-              style="width: 200vh;"
+              :width="dialogWidth"
             >
               <JobsView v-if="jobDialogVisible" @job-selected="handleJobSelected" key="job-selector"/>
             </el-dialog>
@@ -62,22 +62,52 @@
           </el-form-item>
 
           <el-form-item label="选择维度">
-              <el-select v-model="selectedDimension" placeholder="请选择维度" @change="onDimensionChange" style="width: 100%">
-                <el-option v-for="dim in dimensionOptions" :key="dim.value" :label="dim.label" :value="dim.value" />
-              </el-select>
-            </el-form-item>
+            <el-select 
+              v-model="selectedDimension" 
+              placeholder="请选择维度" 
+              @change="onDimensionChange" 
+              style="width: 100%"
+              :loading="isLoadingOptions && !selectedDimension"
+              :disabled="isLoadingOptions && !selectedDimension"
+            >
+              <el-option v-for="dim in dimensionOptions" :key="dim.value" :label="dim.label" :value="dim.value" />
+            </el-select>
+            <!-- 维度加载提示 -->
+            <p v-if="isLoadingOptions && !selectedDimension" class="loading-tip">
+              <el-icon size="14" class="rotating-icon"><Refresh /></el-icon>
+              <span>正在获取维度，请稍候...</span>
+            </p>
+          </el-form-item>
 
-            <el-form-item label="选择方法">
-              <el-select v-model="selectedMethod" placeholder="请选择方法" :disabled="!methodOptions.length" @change="onSelectionChange" style="width: 100%">
-                <el-option v-for="method in methodOptions" :key="method" :label="method" :value="method" />
-              </el-select>
-            </el-form-item>
+          <el-form-item label="选择方法">
+            <el-select 
+              v-model="selectedMethod" 
+              placeholder="请选择方法" 
+              @change="onSelectionChange" 
+              style="width: 100%"
+              :loading="isLoadingOptions && selectedDimension"
+              :disabled="!selectedDimension || (isLoadingOptions && selectedDimension)"
+            >
+              <el-option v-for="method in methodOptions" :key="method" :label="method" :value="method" />
+            </el-select>
+            <!-- 方法加载提示 -->
+            <p v-if="isLoadingOptions && selectedDimension" class="loading-tip">
+              <el-icon size="14" class="rotating-icon"><Refresh /></el-icon>
+              <span>正在获取方法，请稍候...</span>
+            </p>
+          </el-form-item>
           
-            <el-form-item>
-              <el-button type="primary" @click="createHeatmap" style="width: 100%">
-                应用参数
-              </el-button>
-            </el-form-item>
+          <el-form-item>
+            <el-button 
+              type="primary" 
+              @click="createHeatmap" 
+              style="width: 100%"
+              :disabled="!selectedDimension || !selectedMethod || isLoadingOptions"
+              class="apply-btn"
+            >
+              应用参数
+            </el-button>
+          </el-form-item>
         </el-form>
 
       </el-card>
@@ -120,15 +150,14 @@
           </div>
         </el-card>
       </div>
-      <!-- <HeatMap /> -->
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onBeforeUnmount, watch, nextTick, computed, type Ref } from 'vue'
+import { ref, onMounted, onBeforeUnmount, watch, nextTick, computed } from 'vue'
 import * as echarts from 'echarts'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElLoading } from 'element-plus'
 import {
   Refresh,
   Download,
@@ -136,7 +165,8 @@ import {
   Top,
   Bottom,
   DataLine,
-  TrendCharts
+  TrendCharts,
+  Plus
 } from '@element-plus/icons-vue'
 import StatisticCard from '../components/StatisticCard.vue'
 import { formatDateTime } from '../utils/format'
@@ -150,9 +180,16 @@ let legendInstance: echarts.ECharts | null = null
 
 // 数据相关
 const loading = ref(false)
+const isLoadingOptions = ref(false) // 维度/方法选项加载状态
 const selectedJob: Ref< { id: string; job_name: any; finished_at: any } | null> = ref(null)
 const selectedJobID = ref('')
 const job_id = ref('')
+
+// 响应式对话框宽度
+const dialogWidth = computed(() => {
+  const screenWidth = window.innerWidth;
+  return screenWidth > 1600 ? '80%' : screenWidth > 1200 ? '70%' : '90%';
+});
 
 // 热力图参数
 const colorScheme = ref('viridis')
@@ -166,7 +203,15 @@ const availableData = ref({})
 
 watch(selectedJob, async (newJob) => {
   if (newJob) {
+    isLoadingOptions.value = true // 开始加载维度
     await fetchHeatmapData();
+    isLoadingOptions.value = false // 维度加载完成
+  } else {
+    // 清空任务时重置选项
+    dimensionOptions.value = []
+    methodOptions.value = []
+    selectedDimension.value = ''
+    selectedMethod.value = ''
   }
 });
 
@@ -175,26 +220,36 @@ const fetchedData = ref([])
 
 // 选项
 const dimensionOptions = ref<{ value: string; label: string; }[]>([])
-const methodOptions: Ref<string[], string[]> = ref([])
+const methodOptions: Ref<string[]> = ref([])
 
 const selectedDimension = ref('')
 const selectedMethod = ref('')
 
 const onDimensionChange = () => {
   selectedMethod.value = ''
-  const dimObj = fetchedData.value.find(item => Object.keys(item)[0] === selectedDimension.value)
-  if (dimObj) {
-    const methodObj = dimObj[selectedDimension.value]
-    methodOptions.value = Object.keys(methodObj)
-  }
+  methodOptions.value = []
+  
+  isLoadingOptions.value = true // 开始加载方法
+  nextTick(async () => {
+    try {
+      const dimObj = fetchedData.value.find(item => Object.keys(item)[0] === selectedDimension.value)
+      if (dimObj) {
+        const methodObj = dimObj[selectedDimension.value]
+        methodOptions.value = Object.keys(methodObj)
+      }
+    } catch (error) {
+      ElMessage.error('获取方法列表失败')
+      console.error('方法列表获取失败:', error)
+    } finally {
+      isLoadingOptions.value = false // 方法加载完成
+    }
+  })
 }
 
 const onSelectionChange = () => {
   if (selectedDimension.value && selectedMethod.value) {
-    // 清空旧数据
     HeatMapData.value = [];
 
-    // 遍历 fetchedData，找到包含目标维度的对象
     const matchedEntry = fetchedData.value.find(entry =>
       entry[selectedDimension.value]
     );
@@ -209,18 +264,15 @@ const onSelectionChange = () => {
             batch: item.batch,
             score: score
           };
-        }).filter((item: { score: undefined }) => item.score !== undefined); // 过滤掉无评分的
+        }).filter((item: { score: undefined }) => item.score !== undefined);
       }
     }
     
-    // 创建热力图
     nextTick(() => {
       createHeatmap();
     });
   }
 };
-
-
 
 // 展示分析任务对话框部分
 const jobDialogVisible = ref(false)
@@ -279,7 +331,6 @@ const createHeatmap = async () => {
 
   loading.value = true
   try {
-    // 1. 从后端获取热力图数据
     const response = await axios.get(
       `${apiUrl}/visualization/heatmap/${selectedJob.value.id}/`,
       {
@@ -295,13 +346,10 @@ const createHeatmap = async () => {
       throw new Error('未获取到有效数据')
     }
 
-    // 2. 处理数据格式
     const { batch_labels, indicator_labels, score_matrix } = responseData
-
-    // 准备热力图数据
     const heatmapData = [];
 
-    // 3. 计算统计信息
+    // 计算统计信息
     const allScores = score_matrix.flatMap(batch => batch.scores)
     minValue.value = Math.min(...allScores)
     maxValue.value = Math.max(...allScores)
@@ -311,15 +359,13 @@ const createHeatmap = async () => {
         .reduce((sum, squaredDiff) => sum + squaredDiff, 0) / allScores.length
     )
 
-    const ITEMS_PER_COLUMN = 40; // 每列显示 20 条数据
-    const totalItems = batch_labels.length; // 总数据量（1000 条）
-    const columnCount = Math.ceil(totalItems / ITEMS_PER_COLUMN); // 计算列数（50 列）
+    const ITEMS_PER_COLUMN = 40;
+    const totalItems = batch_labels.length;
+    const columnCount = Math.ceil(totalItems / ITEMS_PER_COLUMN);
     
     const newBatchLabels = [];
     for (let col = 0; col < columnCount; col++) {
-      const startIdx = col * ITEMS_PER_COLUMN;
-      const endIdx = Math.min(startIdx + ITEMS_PER_COLUMN, totalItems);
-      newBatchLabels.push(`批次组 ${col + 1}`); // 列名（批次组 1、批次组 2...）
+      newBatchLabels.push(`批次组 ${col + 1}`);
     }
 
     for (let col = 0; col < columnCount; col++) {
@@ -328,14 +374,14 @@ const createHeatmap = async () => {
 
       for (let batchIdx = startIdx; batchIdx < endIdx; batchIdx++) {
         heatmapData.push([
-          col, // x 轴（列索引）
-          batchIdx % ITEMS_PER_COLUMN, // y 轴（行索引）
-          score_matrix[batchIdx].scores[0] // 假设只显示 structural_composite_score
+          col,
+          batchIdx % ITEMS_PER_COLUMN,
+          score_matrix[batchIdx].scores[0]
         ]);
       }
     }
 
-    // 4. 配置图表选项
+    // 配置图表选项
     const option = {
       tooltip: {
         position: 'top',
@@ -357,7 +403,7 @@ const createHeatmap = async () => {
       },
       xAxis: {
         type: 'category',
-        data: newBatchLabels, // 列名（批次组 1、批次组 2...）
+        data: newBatchLabels,
         splitArea: { show: true },
         axisLabel: {
           show: false,
@@ -367,12 +413,10 @@ const createHeatmap = async () => {
       },
       yAxis: {
         type: 'category',
-        data: Array.from({ length: ITEMS_PER_COLUMN }, (_, i) => `行 ${i + 1}`), // 行名（行 1、行 2...）
+        data: Array.from({ length: ITEMS_PER_COLUMN }, (_, i) => `行 ${i + 1}`),
         splitArea: { show: true }
       },
       visualMap: {
-        // min: Math.min(...score_matrix.flatMap(b => b.scores)),
-        // max: Math.max(...score_matrix.flatMap(b => b.scores)),
         min:0,
         max:1,
         calculable: true,
@@ -395,13 +439,11 @@ const createHeatmap = async () => {
       }]
     };
 
-    // 5. 初始化或更新图表
     if (!heatmapInstance) {
       heatmapInstance = echarts.init(heatmapChart.value)
     }
     heatmapInstance.setOption(option)
 
-    // 6. 更新元数据
     availableData.value = {
       dimension: responseData.dimension,
       method: responseData.method,
@@ -437,7 +479,7 @@ const drawLegend = () => {
       min: minValue.value,
       max: maxValue.value,
       inRange: {
-        color: getColorRange() // 使用相同的颜色方案
+        color: getColorRange()
       },
       orient: 'vertical',
       itemWidth: 20,
@@ -475,10 +517,8 @@ const getColorRange = () => {
 
 watch ([selectedDimension, selectedMethod], () => {
   if(selectedDimension.value && selectedMethod.value) {
-    // 清空旧数据
     HeatMapData.value = []
 
-    // 遍历 fetchedData，找到包含目标维度的对象
     const matchedEntry = fetchedData.value.find(entry =>
       entry[selectedDimension.value]
     )
@@ -493,7 +533,7 @@ watch ([selectedDimension, selectedMethod], () => {
             batch: item.batch,
             score: score
           }
-        }).filter((item: { score: undefined }) => item.score !== undefined) // 过滤掉无评分的
+        }).filter((item: { score: undefined }) => item.score !== undefined)
       }
     }
   }
@@ -501,32 +541,42 @@ watch ([selectedDimension, selectedMethod], () => {
 
 const fetchHeatmapData = async () => {
   try {
+    isLoadingOptions.value = true
     const response = await axios.get(`${apiUrl}/analysis/jobs/${selectedJobID.value}/`)
     fetchedData.value = response.data.data.result
-    // 提取维度列表
     dimensionOptions.value = fetchedData.value.map(item => {
       const dimension = Object.keys(item)[0];
-      return { value: dimension, label: dimension }; // 转换为对象形式
+      return { value: dimension, label: dimension };
     });
+    selectedDimension.value = ''
+    selectedMethod.value = ''
+    methodOptions.value = []
   } catch (error) {
     ElMessage.error('分析结果获取失败')
+    console.error('分析结果获取失败:', error)
+    dimensionOptions.value = []
+    methodOptions.value = []
+  } finally {
+    isLoadingOptions.value = false
+    drawLegend()
   }
-  // drawHeatmap()
-  drawLegend()
 }
 
 const refreshHeatmap = () => {
-
+  if (selectedJob.value) {
+    isLoadingOptions.value = true
+    fetchHeatmapData().finally(() => {
+      isLoadingOptions.value = false
+    })
+  }
 }
 
 const exportImage = async () => {
-  // 1. 检查热力图实例
   if (!heatmapInstance) {
     ElMessage.warning('请先生成热力图')
     return
   }
 
-  // 2. 检查是否关联了任务
   if (!selectedJob.value?.id) {
     ElMessage.error('请先选择关联的分析任务')
     return
@@ -535,33 +585,28 @@ const exportImage = async () => {
   const loading = ElMessage.info('正在处理图片...')
 
   try {
-    // 3. 生成图片数据URL
     const url = heatmapInstance.getDataURL({
       type: 'png',
       pixelRatio: 2,
       backgroundColor: '#fff',
-      excludeComponents: ['toolbox'] // 可选：排除不需要的组件
+      excludeComponents: ['toolbox']
     })
 
-    // 4. 转换为Blob对象用于上传
     const blob = await fetch(url).then(res => res.blob())
     const fileName = `heatmap_${selectedJob.value.id}_${Date.now()}.png`
     const file = new File([blob], fileName, { type: 'image/png' })
 
-    // 5. 创建FormData
     const formData = new FormData()
     formData.append('job_id', selectedJob.value.id)
     formData.append('heatmap', file)
     formData.append('dimension', selectedDimension.value)
     formData.append('method', selectedMethod.value)
 
-    // 6. 同时执行两个操作：下载和上传
     const [_, uploadResponse] = await Promise.all([
-      // 本地下载
       new Promise<void>((resolve) => {
         const link = document.createElement('a')
         link.href = url
-        link.download = `热力图_${selectedJob.value.name || '未命名'}_${formatDateTime(new Date())}.png`
+        link.download = `热力图_${selectedJob.value.job_name || '未命名'}_${formatDateTime(new Date())}.png`
         document.body.appendChild(link)
         link.click()
         setTimeout(() => {
@@ -570,12 +615,11 @@ const exportImage = async () => {
         }, 100)
       }),
       
-      // 服务器上传
       axios.post(`${apiUrl}/visualization/upload/heatmap/${selectedJob.value.id}/`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data'
         },
-        timeout: 30000 // 30秒超时
+        timeout: 30000
       })
     ])
 
@@ -602,172 +646,294 @@ onBeforeUnmount(() => {
   legendInstance?.dispose()
 })
 
-// 监听配置变化
 watch([colorScheme, showValue], () => {
   if (HeatMapData.value.length > 0) {
     createHeatmap();
   }
 });
 
-// 监听参数变化
 watch([colorScheme, showValue, cellSize], () => {
   fetchHeatmapData()
+})
+
+onMounted(() => {
+  window.addEventListener('resize', handleResize)
 })
 </script>
 
 <style scoped lang="scss">
 .heatmap-container {
-  padding: 8px;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  
+  padding: 16px;
+  width: 100%;
+  min-height: 100%;
+  box-sizing: border-box;
+  background-color: #f9fafb;
+
   .heatmap-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     margin-bottom: 20px;
-    
+    padding-bottom: 12px;
+    border-bottom: 1px solid #eee;
+
     h2 {
-      font-size: 24px;
-      color: #333;
+      font-size: 20px;
+      color: #1d2129;
       margin: 0;
+      font-weight: 600;
     }
 
     .action-buttons {
       display: flex;
       gap: 12px;
-      
-      .el-button {
-        height: 36px;
-        padding: 0 16px;
-        font-size: 14px;
-        display: inline-flex;
-        align-items: center;
-        
-        &[type="primary"] {
-          padding: 0 18px;
-          font-weight: 500;
-          
-          .el-icon {
-            margin-right: 6px;
-            font-size: 16px;
-          }
-        }
-        
-        &[disabled] {
-          opacity: 0.6;
-        }
-        
-        .el-icon {
-          font-size: 16px;
-          & + span {
-            margin-left: 6px;
-          }
-        }
-      }
-      
-      .el-button:last-child {
-        background-color: #f0f7ff;
-        border-color: #c6e2ff;
+
+      .export-btn {
         color: #409eff;
-        
+        border-color: #409eff;
+        background-color: #ecf5ff;
+
         &:hover {
-          background-color: #ecf5ff;
-        }
-        
-        .el-icon {
-          color: #409eff;
+          background-color: #e6f2ff;
+          color: #3a8ee6;
+          border-color: #3a8ee6;
         }
       }
     }
   }
-  
+
   .heatmap-content {
     flex: 1;
     display: flex;
     gap: 20px;
-    
+    height: calc(100% - 70px);
+
     .control-panel {
-      width: 400px;
+      width: 360px;
       flex-shrink: 0;
-      
+      border: none;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+
+      :deep(.el-card__body) {
+        padding: 20px;
+      }
+
       .panel-header {
         display: flex;
         align-items: center;
         margin-bottom: 20px;
         font-size: 16px;
-        font-weight: bold;
-        color: #333;
-        
+        font-weight: 500;
+        color: #1d2129;
+
         .el-icon {
           margin-right: 8px;
-          color: var(--el-color-primary);
+          color: #409eff;
         }
       }
-      
-      .color-scheme-option {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        width: 100%;
-        
-        .scheme-preview {
-          display: inline-block;
-          width: 60px;
-          height: 16px;
-          border-radius: 3px;
+
+      .analysis-form {
+        .job-select-btn {
+          width: 100%;
+          justify-content: space-between;
+        }
+
+        .el-form-item {
+          margin-bottom: 16px;
+
+          &:last-child {
+            margin-bottom: 0;
+          }
+        }
+
+        .color-scheme-option {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          width: 100%;
+          padding: 4px 0;
+
+          .scheme-label {
+            flex: 1;
+            color: #4e5969;
+          }
+
+          .scheme-preview {
+            display: inline-block;
+            width: 80px;
+            height: 16px;
+            border-radius: 3px;
+          }
+        }
+
+        .apply-btn {
+          height: 40px;
+          font-size: 14px;
+          font-weight: 500;
         }
       }
     }
-    
+
     .visualization-area {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  
-  .heatmap-card {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    
-    .card-header {
-      margin-bottom: 20px;
-      
-      .title {
-        font-size: 18px;
-        font-weight: bold;
-        color: #333;
-      }
-      
-      .subtitle {
-        font-size: 14px;
-        color: #666;
-        margin-top: 5px;
-      }
-    }
-    
-    .heatmap-wrapper {
       flex: 1;
       display: flex;
-      min-height: 500px;
-      justify-content: center; // 水平居中
-      align-items: center;     // 垂直居中
-      
-      .heatmap-chart {
-        width: 760px;           // 响应式宽度
-        height: 570px;          // 响应式高度
-        min-width: 600px;     // 防止过度缩小
+      flex-direction: column;
+
+      .heatmap-card {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        border: none;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+
+        :deep(.el-card__body) {
+          display: flex;
+          flex-direction: column;
+          flex: 1;
+          padding: 20px;
+        }
+
+        .card-header {
+          margin-bottom: 20px;
+
+          .title {
+            font-size: 18px;
+            font-weight: 500;
+            color: #1d2129;
+            margin-bottom: 8px;
+          }
+
+          .subtitle {
+            font-size: 14px;
+            color: #666;
+          }
+        }
+
+        .heatmap-wrapper {
+          flex: 1;
+          display: flex;
+          min-height: 500px;
+          width: 100%;
+          justify-content: center;
+          align-items: center;
+          overflow: hidden;
+
+          .heatmap-chart {
+            width: 100%;
+            height: 100%;
+            min-width: 600px;
+            min-height: 500px;
+            max-height: 700px;
+          }
+        }
+
+        .stats-container {
+          margin-top: 20px;
+          padding-top: 15px;
+          border-top: 1px solid #f0f0f0;
+
+          :deep(.el-col) {
+            padding: 0 10px;
+          }
+        }
       }
-    }
-    
-    .stats-container {
-      margin-top: 20px;
-      padding-top: 15px;
-      border-top: 1px solid #eee;
     }
   }
 }
+
+/* 加载提示样式 */
+.loading-tip {
+  margin: 5px 0 0 0;
+  padding: 0;
+  color: #666;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* 旋转动画效果 */
+.rotating-icon {
+  animation: rotate 1.5s linear infinite;
+}
+
+@keyframes rotate {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* 响应式适配 */
+@media (max-width: 1200px) {
+  .heatmap-container {
+    .heatmap-content {
+      flex-direction: column;
+
+      .control-panel {
+        width: 100%;
+        margin-bottom: 20px;
+      }
+
+      .visualization-area {
+        .heatmap-card {
+          .heatmap-wrapper {
+            .heatmap-chart {
+              min-width: 100%;
+              height: 500px;
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  .heatmap-container {
+    padding: 12px;
+
+    .heatmap-header {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 12px;
+
+      .action-buttons {
+        width: 100%;
+        flex-direction: column;
+
+        .el-button {
+          width: 100%;
+        }
+      }
+    }
+
+    .heatmap-content {
+      .visualization-area {
+        .heatmap-card {
+          .heatmap-wrapper {
+            min-height: 300px;
+
+            .heatmap-chart {
+              min-height: 300px;
+            }
+          }
+
+          .stats-container {
+            :deep(.el-row) {
+              flex-direction: column;
+            }
+
+            :deep(.el-col) {
+              width: 100%;
+              margin-bottom: 15px;
+            }
+          }
+        }
+      }
+    }
   }
 }
 </style>

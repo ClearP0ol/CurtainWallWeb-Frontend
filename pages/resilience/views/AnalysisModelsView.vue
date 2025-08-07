@@ -4,7 +4,7 @@
     <div class="model-header">
       <h2>模型列表管理</h2>
       <div class="action-buttons">
-        <el-button type="primary" @click="showCreateDialog" size="large">
+        <el-button type="primary" @click="showCreateDialog" size="large" class="primary-btn">
           <el-icon><plus /></el-icon>
           <span>创建模型</span>
         </el-button>
@@ -12,8 +12,8 @@
     </div>
 
     <!-- 创建模型对话框 -->
-    <el-dialog v-model="dialogCreateVisible" title="创建模型" width="600px">
-      <el-form :model="form" label-width="120px" :rules="rules">
+    <el-dialog v-model="dialogCreateVisible" title="创建模型" width="600px" class="custom-dialog">
+      <el-form :model="form" label-width="120px" :rules="rules" class="form-container">
         <el-form-item label="模型名称" prop="name">
           <el-input v-model="form.name" />
         </el-form-item>
@@ -36,15 +36,15 @@
             />
           </el-select>
         </el-form-item>
-        <div style="font-size: 12px; color: #999; margin-top: 4px; margin-left: 120px;">
+        <div class="form-hint" style="font-size: 12px; color: #999; margin-top: 4px; margin-left: 120px;">
           注意：分析维度和方法一旦创建后将不可修改
         </div>
         <el-form-item label="描述" prop="description">
           <el-input v-model="form.description" type="textarea" />
         </el-form-item>
         <el-form-item label="参数配置" prop="parameters">
-          <el-button @click="openParamDialog" type="primary">点击配置</el-button>
-          <div style="font-size: 12px; color: #999; margin-top: 4px; margin-left: 20px;">
+          <el-button @click="openParamDialog" type="primary" class="param-btn">点击配置</el-button>
+          <div class="form-hint" style="font-size: 12px; color: #999; margin-top: 4px; margin-left: 20px;">
             注意：参数配置若为空，则采用默认推荐配置
           </div>
         </el-form-item>
@@ -54,7 +54,7 @@
           width="700px"
           class="param-config-dialog"
         >
-          <el-form :model="form.parameters" label-width="140px" label-position="left">
+          <el-form :model="form.parameters" label-width="140px" label-position="left" class="param-form">
             <el-scrollbar height="500px">
               <el-form-item
                 v-for="item in currentParamConfig"
@@ -107,7 +107,7 @@
 
                 <!-- 滑块 -->
                 <template v-else-if="item.type === 'slider'">
-                  <div style="display: flex; align-items: center; width: 100%">
+                  <div class="slider-container">
                     <el-slider
                       v-model="form.parameters[item.prop]"
                       :min="item.min"
@@ -129,7 +129,7 @@
 
                 <!-- 单选框 -->
                 <template v-else-if="item.type === 'radio'">
-                  <el-radio-group v-model="form.parameters[item.prop]">
+                  <el-radio-group v-model="form.parameters[item.prop]" class="radio-group">
                     <el-radio
                       v-for="opt in item.options"
                       :key="opt.value"
@@ -165,7 +165,7 @@
 
           <template #footer>
             <span class="dialog-footer">
-              <el-button @click="paramEditDialogVisible = false">取消</el-button>
+              <el-button @click="paramDialogVisible = false">取消</el-button>
               <el-button type="primary" @click="saveParamConfig">保存配置</el-button>
               <el-button v-if="hasDefaultValues" @click="resetToDefault">恢复默认</el-button>
             </span>
@@ -176,7 +176,7 @@
 
       <template #footer>
         <span class="dialog-footer">
-          <el-button @click="dialogVisible = false">取消</el-button>
+          <el-button @click="dialogCreateVisible = false">取消</el-button>
           <el-button type="primary" @click="createModel">创建</el-button>
         </span>
       </template>
@@ -243,7 +243,7 @@
               <el-option label="按更新时间" value="updated_at" />
             </el-select>
 
-            <el-button @click="toggleSortOrder">
+            <el-button @click="toggleSortOrder" class="sort-btn">
               <el-icon>
                 <sort v-if="!filters.sortField" />
                 <sort-up v-else-if="filters.sortOrder === 'asc'" />
@@ -252,11 +252,11 @@
               {{ filters.sortOrder === 'asc' ? '升序' : '降序' }}
             </el-button>
 
-            <el-button type="info" plain @click="resetFilters">
+            <el-button type="info" plain @click="resetFilters" class="reset-btn">
               <el-icon><refresh /></el-icon>
               <span>重置筛选</span>
             </el-button>
-            <el-button type="info" plain @click="refreshList">
+            <el-button type="info" plain @click="refreshList" class="refresh-btn">
               <el-icon><refresh /></el-icon>
               <span>刷新</span>
             </el-button>
@@ -269,6 +269,7 @@
           style="width: 100%"
           v-loading="loading"
           row-key="id"
+          class="model-table"
         >
           <el-table-column prop="name" label="模型名称" width="200">
             <template #default="{ row }">
@@ -324,6 +325,7 @@
               <el-button 
                 size="small" 
                 @click.stop="editModel(row)"
+                class="edit-btn"
               >
                 <el-icon><edit /></el-icon>
                 <span>编辑</span>
@@ -332,6 +334,7 @@
                 size="small" 
                 type="danger" 
                 @click.stop="handleDelete(row)"
+                class="delete-btn"
               >
                 <el-icon><delete /></el-icon>
                 <span>删除</span>
@@ -360,8 +363,9 @@
       title="编辑模型"
       width="50%"
       @close="handleEditDialogClose"
+      class="custom-dialog"
     >
-      <el-form :model="form" label-width="120px">
+      <el-form :model="form" label-width="120px" class="form-container">
         <el-form-item label="模型名称">
           <el-input v-model="form.name" />
         </el-form-item>
@@ -369,7 +373,7 @@
           <el-input v-model="form.description" type="textarea" />
         </el-form-item>
         <el-form-item label="参数配置">
-          <el-button @click="openEditParamDialog(selectedModel)" type="primary">编辑参数</el-button>
+          <el-button @click="openEditParamDialog(selectedModel)" type="primary" class="param-btn">编辑参数</el-button>
         </el-form-item>
         <el-dialog 
           v-model="paramEditDialogVisible" 
@@ -377,7 +381,7 @@
           width="700px"
           class="param-config-dialog"
         >
-          <el-form :model="form.parameters" label-width="140px" label-position="left">
+          <el-form :model="form.parameters" label-width="140px" label-position="left" class="param-form">
             <el-scrollbar height="500px">
               <el-form-item
                 v-for="item in currentParamConfig"
@@ -430,7 +434,7 @@
 
                 <!-- 滑块 -->
                 <template v-else-if="item.type === 'slider'">
-                  <div style="display: flex; align-items: center; width: 100%">
+                  <div class="slider-container">
                     <el-slider
                       v-model="form.parameters[item.prop]"
                       :min="item.min"
@@ -452,7 +456,7 @@
 
                 <!-- 单选框 -->
                 <template v-else-if="item.type === 'radio'">
-                  <el-radio-group v-model="form.parameters[item.prop]">
+                  <el-radio-group v-model="form.parameters[item.prop]" class="radio-group">
                     <el-radio
                       v-for="opt in item.options"
                       :key="opt.value"
@@ -498,7 +502,7 @@
 
       <template #footer>
         <span class="dialog-footer">
-          <el-button @click="dialogVisible = false">取消</el-button>
+          <el-button @click="dialogModifyVisible = false">取消</el-button>
           <el-button type="primary" @click="saveModel">修改</el-button>
         </span>
       </template>
@@ -508,26 +512,24 @@
 
 <script setup lang="ts">
 import { formatDateTime } from '../utils/format'
-import { ref, onMounted  } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import axios from 'axios'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { apiUrl } from '../config'
 import {
-  Upload,
-  UploadFilled,
+  Plus,
   Edit,
   Document,
-  View,
   Delete,
   Search,
   Refresh,
-  Download,
-  DataLine
+  Sort,
+  SortUp,
+  SortDown
 } from '@element-plus/icons-vue'
 
 // 数据状态
 const modelList = ref([])
-const page = ref(1)
 const pageSize = ref(10)
 const dialogCreateVisible = ref(false)
 const dialogModifyVisible = ref(false)
@@ -536,11 +538,7 @@ const paramEditDialogVisible = ref(false)
 const loading = ref(false)
 const selectedModel = ref(null)
 const currentPage = ref(1)
-const dialogVisible = ref(false)
 const totalModels = ref(0)
-const sortField = ref()
-const selectedDimension = ref('')
-const selectedMethod = ref('')
 
 const rules = {
   name: [
@@ -778,6 +776,7 @@ const saveParamConfig = () => {
   })
   
   paramEditDialogVisible.value = false
+  paramDialogVisible.value = false
   ElMessage.success('参数配置已保存')
 }
 
@@ -796,10 +795,19 @@ const currentMethodName = computed(() => {
   return methodMap[form.value.method] || form.value.method
 })
 
+const hasDefaultValues = computed(() => {
+  return currentParamConfig.value.length > 0
+})
+
+const resetToDefault = () => {
+  const key = `${form.value.dimension}_${form.value.method}`
+  form.value.parameters = initParameters(paramForms[key] || [], {})
+}
+
 
 const handleEditDialogClose = () => {
   paramEditDialogVisible.value = false
-  // 重置表单数据（可选）
+  // 重置表单数据
   form.value = {
     id: null,
     name: '',
@@ -813,7 +821,6 @@ const handleEditDialogClose = () => {
 function applyFilters() {
   currentPage.value = 1  // 重置到第一页
   fetchModels()
-  
 }
 
 
@@ -1048,7 +1055,7 @@ const paramForms = {
         prop: 'panel_size',
         label: '面板尺寸(理想值)',
         type: 'number',
-        default: 100.0,  // 示例默认值，需根据业务实际调整
+        default: 100.0,  // 示例默认值
         tip: '单位：mm'
       },
       {
@@ -1111,16 +1118,7 @@ const paramForms = {
         tip: 'Z方向偏移量的CPK权重'
       },
     ],
-    tip: '权重总和建议为1，系统会自动归一化',
-    rules: [
-      {
-        validator: (val) => {
-          const sum = Object.values(val).reduce((a, b) => a + b, 0);
-          return Math.abs(sum - 1) < 0.01;  // 允许1%的浮点误差
-        },
-        message: '权重总和必须等于1'
-      }
-    ]
+    tip: '权重总和建议为1，系统会自动归一化'
   },
 
   {
@@ -1156,16 +1154,7 @@ const paramForms = {
         default: 0.3
       }
     ],
-    tip: '权重总和建议为1，系统会自动归一化',
-    rules: [
-      {
-        validator: (val) => {
-          const sum = Object.values(val).reduce((a, b) => a + b, 0);
-          return Math.abs(sum - 1) < 0.01;
-        },
-        message: '权重总和必须等于1'
-      }
-    ]
+    tip: '权重总和建议为1，系统会自动归一化'
   }
   ],
 
@@ -1198,14 +1187,6 @@ const paramForms = {
       default: '0.2,0.5,0.8',
       tip: '逗号分隔，用于划分损伤等级（建议3个值）'
     },
-    // {
-    //   label: '离散型指标',
-    //   prop: 'discrete_indicators',
-    //   type: 'multi-select',
-    //   options: ['panel_damage_area', 'structural_adhesive_damage_length', 'cracks'],
-    //   default: ['cracks'],
-    //   tip: '指定哪些指标使用阶梯型隶属函数'
-    // },
 
     // 3. 结果分级
     {
@@ -1282,13 +1263,7 @@ const paramForms = {
       prop: 'score_weights',
       type: 'input',
       default: '0.6,0.3,0.1',
-      tip: 'DSI,模糊评分,耐久性的权重比（逗号分隔）',
-      rules: [
-        {
-          validator: (val) => val.split(',').reduce((a, b) => a + parseFloat(b), 0) === 1,
-          message: '权重总和必须等于1'
-        }
-      ]
+      tip: 'DSI,模糊评分,耐久性的权重比（逗号分隔）'
     }
   ],
 
@@ -1336,10 +1311,6 @@ const paramForms = {
 };
 
 
-
-import { computed } from 'vue'
-
-
 // 获取模型列表
 const fetchModels = async () => {
   try {
@@ -1380,6 +1351,7 @@ const openCreateDialog = (model = null) => {
       description: '',
       parameters: {},
       applicable_resilience_types: [],
+      dimension: ''
     }
   }
   dialogCreateVisible.value = true
@@ -1388,7 +1360,7 @@ const openCreateDialog = (model = null) => {
 // 打开编辑对话框
 const openModifyDialog = (model = null) => {
   if (model) {
-    form.value = model
+    form.value = { ...model }
   } else {
     form.value = {
       id: null,
@@ -1433,12 +1405,12 @@ const saveModel = async () => {
     dialogModifyVisible.value = false
     refreshList()
   } catch (error) {
-    ElMessage.error(error)
+    ElMessage.error('保存失败')
   }
 }
 
 // 编辑模型
-const editModel = (model: null | undefined) => {
+const editModel = (model: any) => {
   if(model.parameters && typeof model.parameters === 'string') {
     model.parameters = JSON.parse(model.parameters)
   }
@@ -1457,8 +1429,10 @@ const handleDelete = async (row: any) => {
     ElMessage.success('删除成功')
     fetchModels()
   } catch (e) {
-    // 用户取消操作
-    ElMessage.error('删除失败')
+    // 用户取消操作不提示错误
+    if (e !== 'cancel') {
+      ElMessage.error('删除失败')
+    }
   }
 }
 
@@ -1468,7 +1442,19 @@ const getMethodText = (method) => {
     'SVM': '支持向量机',
     'RandomForest': '随机森林',
     'Fuzzy-AHP': '模糊层次分析',
-    'DecisionTree': '决策树'
+    'DecisionTree': '决策树',
+    'grey_fuzzy': '灰色关联度法',
+    'entropy': '熵权法',
+    'topsis': 'TOPSIS法',
+    'fuzzy': '模糊综合评价',
+    'composite': '精度综合评价',
+    'error': '误差分析法',
+    'fuzzy_vikor': '模糊VIKOR法',
+    'state_transition': '状态转移分析',
+    'ahp': 'AHP层次分析法',
+    'defect_analysis': '缺陷检测法',
+    'expert': '专家赋权法',
+    'vikor_entropy': 'VIKOR熵权法'
   }
   return map[method] || method
 }
@@ -1479,7 +1465,19 @@ const getMethodTagType = (method) => {
     'SVM': 'info',
     'RandomForest': 'warning',
     'Fuzzy-AHP': 'primary',
-    'DecisionTree': 'danger'
+    'DecisionTree': 'danger',
+    'grey_fuzzy': 'primary',
+    'entropy': 'info',
+    'topsis': 'success',
+    'fuzzy': 'warning',
+    'composite': 'info',
+    'error': 'primary',
+    'fuzzy_vikor': 'warning',
+    'state_transition': 'info',
+    'ahp': 'primary',
+    'defect_analysis': 'info',
+    'expert': 'warning',
+    'vikor_entropy': 'success'
   }
   return map[method] || 'default'
 }
@@ -1503,127 +1501,166 @@ const refreshList = () => {
 // 初始化加载
 onMounted(() => {
   fetchModels()
-  applyFilters()
 })
 </script>
 
 <style scoped lang="scss">
 .model-container {
-  padding: 20px;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  
+  padding: 16px;
+  width: 100%;
+  min-height: 100%;
+  box-sizing: border-box;
+  background-color: #f9fafb;
+
   .model-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     margin-bottom: 20px;
-    
+    padding-bottom: 12px;
+    border-bottom: 1px solid #eee;
+
     h2 {
-      font-size: 24px;
-      color: #333;
+      font-size: 20px;
+      color: #1d2129;
       margin: 0;
+      font-weight: 600;
+    }
+
+    .action-buttons {
+      display: flex;
+      gap: 12px;
+
+      .el-button {
+        height: 36px;
+        padding: 0 16px;
+        font-size: 14px;
+        display: inline-flex;
+        align-items: center;
+
+        &[type="primary"] {
+          padding: 0 18px;
+          font-weight: 500;
+          
+          .el-icon {
+            margin-right: 6px;
+            font-size: 16px;
+          }
+        }
+        
+        &[disabled] {
+          opacity: 0.6;
+        }
+        
+        .el-icon {
+          font-size: 16px;
+          & + span {
+            margin-left: 6px;
+          }
+        }
+      }
     }
   }
-  
-  .model-uploader {
-    :deep(.el-upload) {
-      width: 100%;
-    }
-    
-    :deep(.el-upload-dragger) {
-      width: 100%;
-      padding: 40px 20px;
-      border-radius: 8px;
-      background-color: #fafafa;
-      
-      .el-icon--upload {
-        font-size: 60px;
-        color: #409eff;
-        margin-bottom: 16px;
-      }
-      
-      .el-upload__text {
-        font-size: 16px;
-        color: #666;
-      }
-    }
-    
-    .el-upload__tip {
-        margin-top: 10px;
-        color: #999;
-        text-align: left;
-        padding: 10px;
-        background-color: #f9f9f9;
-        border: 1px solid #eee;
-        border-radius: 4px;
-    }
 
-    .upload-tip-general {
-        margin-bottom: 10px;
-    }
-
-    .upload-tip-label {
-        font-weight: bold;
-        margin-bottom: 5px;
-    }
-
-    .flex-list {
-        display: flex;
-        flex-wrap: wrap;
-        justify-content: flex-start;
-    }
-
-    .flex-item {
-        margin-right: 10px;
-        margin-bottom: 5px;
-        padding: 5px 10px;
-        border: 1px solid #eee;
-        border-radius: 4px;
-        background-color: #fff;
-    }
-  }
-  
   .model-list-container {
     flex: 1;
-    
+
     .model-card {
       height: 100%;
+      border: none;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
       border-radius: 8px;
-      
+
       :deep(.el-card__body) {
         padding: 0;
         height: 100%;
         display: flex;
         flex-direction: column;
       }
-      
+
       .filter-bar {
         padding: 16px 20px;
         display: flex;
         justify-content: space-between;
         align-items: center;
         border-bottom: 1px solid #eee;
-        
+        flex-wrap: wrap;
+        gap: 15px;
+
+        .el-input {
+          width: 300px;
+
+          &:deep(.el-input__wrapper) {
+            border-radius: 4px;
+          }
+        }
+
         .filter-actions {
           display: flex;
           gap: 10px;
+          flex-wrap: wrap;
+          align-items: center;
+
+          .el-select {
+            width: 150px;
+
+            &:deep(.el-select__wrapper) {
+              border-radius: 4px;
+            }
+          }
+
+          .sort-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 0 12px;
+          }
+
+          .reset-btn, .refresh-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 0 12px;
+          }
         }
       }
-      
-      .el-table {
+
+      .model-table {
         flex: 1;
-        
+
+        :deep(.el-table) {
+          width: 100%;
+          border-collapse: collapse;
+        }
+
+        :deep(.el-table__header-wrapper) {
+          background-color: #f5f7fa;
+        }
+
+        :deep(.el-table__header tr th) {
+          background-color: #f5f7fa;
+          color: #4e5969;
+          font-weight: 500;
+          border-bottom: 1px solid #eee;
+        }
+
+        :deep(.el-table__body tr td) {
+          border-bottom: 1px solid #f0f0f0;
+        }
+
+        :deep(.el-table__body tr:hover > td) {
+          background-color: #f5f7fa;
+        }
+
         :deep(.model-name-cell) {
           display: flex;
           align-items: center;
-          
+
           .el-icon {
             margin-right: 8px;
             color: #409eff;
           }
-          
+
           .name-text {
             flex: 1;
             overflow: hidden;
@@ -1631,176 +1668,306 @@ onMounted(() => {
             white-space: nowrap;
           }
         }
+
+        :deep(.dimension-method-cell) {
+          display: flex;
+          gap: 8px;
+          flex-wrap: wrap;
+
+          .dimension-tag, .method-tag {
+            margin-bottom: 4px;
+            height: 24px;
+            line-height: 24px;
+            padding: 0 8px;
+            border-radius: 4px;
+            font-size: 12px;
+          }
+        }
+
+        :deep(.edit-btn) {
+          color: #409eff;
+          border-color: #409eff;
+          background-color: #ecf5ff;
+          margin-right: 5px;
+
+          &:hover {
+            background-color: #e6f2ff;
+            color: #3a8ee6;
+            border-color: #3a8ee6;
+          }
+        }
+
+        :deep(.delete-btn) {
+          &:hover {
+            opacity: 0.9;
+          }
+        }
       }
-      
+
       .pagination-container {
         padding: 16px;
         display: flex;
         justify-content: flex-end;
         border-top: 1px solid #eee;
-      }
-    }
-  }
-  
-  .model-detail {
-    .detail-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 20px;
-      padding-bottom: 15px;
-      border-bottom: 1px solid #eee;
-      
-      .basic-info {
-        display: flex;
-        gap: 30px;
-        
-        .info-item {
-          .label {
-            color: #666;
-            font-size: 14px;
-          }
-          
-          .value {
-            font-weight: 500;
-          }
-        }
-      }
-      
-      .action-buttons {
-        display: flex;
-        gap: 10px;
-      }
-    }
-    
-    .detail-tabs {
-      :deep(.el-tabs__header) {
-        margin: 0;
-      }
-      
-      .statistics-container {
-        margin-bottom: 30px;
-      }
-      
-      .column-types {
-        margin-top: 30px;
-        
-        h3 {
-          margin: 0 0 20px 0;
-          font-size: 16px;
-          color: #333;
-        }
-      }
-      
-      .data-preview {
-        .preview-pagination {
-          margin-top: 15px;
+
+        :deep(.el-pagination) {
           display: flex;
-          justify-content: flex-end;
+          align-items: center;
+          gap: 10px;
+        }
+
+        :deep(.el-pagination__sizes) {
+          margin-right: 10px;
         }
       }
     }
   }
 }
 
+/* 对话框样式 */
+.custom-dialog {
+  border-radius: 8px;
+  overflow: hidden;
+
+  :deep(.el-dialog__header) {
+    padding: 18px 20px;
+    border-bottom: 1px solid #eee;
+  }
+
+  :deep(.el-dialog__title) {
+    font-size: 16px;
+    font-weight: 500;
+    color: #1d2129;
+  }
+
+  :deep(.el-dialog__body) {
+    padding: 20px;
+    max-height: 70vh;
+    overflow-y: auto;
+  }
+
+  :deep(.el-dialog__footer) {
+    padding: 16px 20px;
+    border-top: 1px solid #eee;
+  }
+
+  :deep(.el-button) {
+    margin-left: 8px;
+  }
+}
+
+.form-container {
+  :deep(.el-form) {
+    width: 100%;
+  }
+
+  :deep(.el-form-item) {
+    margin-bottom: 16px;
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+
+  :deep(.el-form-item__label) {
+    color: #4e5969;
+    font-weight: 500;
+  }
+
+  :deep(.el-input),
+  :deep(.el-select),
+  :deep(.el-input-number) {
+    width: 100%;
+  }
+
+  .form-hint {
+    line-height: 1.5;
+    font-size: 12px;
+    color: #909399;
+  }
+
+  .param-btn {
+    margin-bottom: 4px;
+  }
+}
+
+/* 参数配置对话框 */
 .param-config-dialog {
   border-radius: 8px;
-}
 
-/* 表单容器样式 */
-.param-config-dialog :deep(.el-dialog__body) {
-  padding: 20px;
-}
+  :deep(.el-dialog__body) {
+    padding: 20px;
+  }
 
-/* 表单项样式 */
-.param-config-dialog :deep(.el-form-item) {
-  margin-bottom: 22px;
-  padding: 0 10px;
-}
+  :deep(.el-form-item) {
+    margin-bottom: 22px;
+    padding: 0 10px;
+  }
 
-.param-config-dialog :deep(.el-form-item__label) {
-  font-weight: 500;
-  color: #606266;
-  padding-right: 20px;
-}
+  :deep(.el-form-item__label) {
+    font-weight: 500;
+    color: #606266;
+    padding-right: 20px;
+  }
 
-/* 滚动条容器 */
-.param-config-dialog :deep(.el-scrollbar__view) {
-  padding: 5px 10px;
-}
+  :deep(.el-scrollbar__view) {
+    padding: 5px 10px;
+  }
 
-/* 输入控件样式 */
-.param-config-dialog :deep(.el-input),
-.param-config-dialog :deep(.el-select) {
-  width: 100%;
-}
+  :deep(.el-input),
+  :deep(.el-select) {
+    width: 100%;
+  }
 
-/* 滑块+数字输入组合 */
-.param-config-dialog :deep(.el-slider) {
-  margin-top: 8px;
-}
+  .slider-container {
+    display: flex;
+    align-items: center;
+    width: 100%;
+  }
 
-/* 参数提示文本 */
-.param-tip {
-  font-size: 12px;
-  color: #909399;
-  margin-top: 6px;
-  line-height: 1.4;
-}
+  :deep(.el-slider) {
+    margin-top: 8px;
+  }
 
-/* 动态输入字段容器 */
-.dynamic-field {
-  background-color: #f8f9fa;
-  border-radius: 4px;
-  padding: 12px;
-  margin-bottom: 12px;
-  border: 1px solid #ebeef5;
-}
+  .param-tip {
+    font-size: 12px;
+    color: #909399;
+    margin-top: 6px;
+    line-height: 1.4;
+  }
 
-.dynamic-field:last-child {
-  margin-bottom: 0;
-}
+  .radio-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
 
-.dynamic-field :deep(.el-form-item) {
-  margin-bottom: 12px;
-}
+  :deep(.el-radio) {
+    margin-right: 0;
+  }
 
-/* 单选组样式 */
-.param-config-dialog :deep(.el-radio-group) {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-}
+  .dynamic-field {
+    background-color: #f8f9fa;
+    border-radius: 4px;
+    padding: 12px;
+    margin-bottom: 12px;
+    border: 1px solid #ebeef5;
+  }
 
-.param-config-dialog :deep(.el-radio) {
-  margin-right: 0;
-}
+  .dynamic-field:last-child {
+    margin-bottom: 0;
+  }
 
-/* 对话框底部按钮 */
-.param-config-dialog :deep(.el-dialog__footer) {
-  padding: 16px 20px;
-  border-top: 1px solid #e4e7ed;
-}
+  .dynamic-field :deep(.el-form-item) {
+    margin-bottom: 12px;
+  }
 
-.dialog-footer {
-  display: flex;
-  justify-content: flex-end;
-  align-items: center;
-  gap: 12px;
+  :deep(.dialog-footer) {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 12px;
+  }
 }
 
 /* 响应式调整 */
+@media (max-width: 1200px) {
+  .model-container {
+    .model-list-container {
+      .model-card {
+        .filter-bar {
+          flex-direction: column;
+          align-items: flex-start;
+
+          .el-input {
+            width: 100% !important;
+          }
+
+          .filter-actions {
+            width: 100%;
+            justify-content: flex-start;
+          }
+        }
+      }
+    }
+  }
+}
+
 @media (max-width: 768px) {
+  .model-container {
+    padding: 12px;
+
+    .model-header {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 12px;
+
+      .action-buttons {
+        width: 100%;
+        flex-direction: column;
+
+        .el-button {
+          width: 100%;
+          justify-content: center;
+        }
+      }
+    }
+
+    .model-list-container {
+      .model-card {
+        .filter-bar {
+          .filter-actions {
+            flex-direction: column;
+            width: 100%;
+            gap: 8px;
+
+            .el-select {
+              width: 100% !important;
+            }
+
+            .sort-btn, .reset-btn, .refresh-btn {
+              width: 100%;
+              justify-content: center;
+            }
+          }
+        }
+
+        .model-table {
+          :deep(.el-table__fixed-right) {
+            width: 120px !important;
+          }
+
+          :deep(.el-button) {
+            padding: 0 8px;
+            font-size: 12px;
+
+            .el-icon {
+              font-size: 14px;
+            }
+
+            span {
+              display: none;
+            }
+          }
+        }
+      }
+    }
+  }
+
   .param-config-dialog {
     width: 90% !important;
   }
-  
+
   .param-config-dialog :deep(.el-form-item__label) {
     width: 100px !important;
   }
-  
+
   .dynamic-field :deep(.el-form-item__content) {
     margin-left: 0 !important;
+  }
+
+  .custom-dialog {
+    width: 90% !important;
   }
 }
 </style>

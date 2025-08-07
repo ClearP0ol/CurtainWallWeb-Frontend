@@ -8,17 +8,18 @@
           <el-icon><refresh /></el-icon>
           <span>执行聚类分析</span>
         </el-button>
-        <el-button @click="exportImage">
+        <el-button @click="exportImage" class="export-btn">
           <el-icon><download /></el-icon>
-          <span>导出图片</span>
+          <span>导出图片并上传为报告素材</span>
         </el-button>
         <el-button 
           type="primary" 
           @click="exportBatchLists"
           :disabled="!hasClusterData"
           size="small"
+          class="batch-export-btn"
         >
-          <el-icon><document /></el-icon>
+          <el-icon><Document /></el-icon>
           <span>导出批次名单</span>
         </el-button>
       </div>
@@ -32,13 +33,13 @@
           <span>分析参数配置</span>
         </div>
         
-        <el-form label-width="120px" label-position="left" :model="clusterParams">
+        <el-form label-width="120px" label-position="left" :model="clusterParams" class="analysis-form">
           <el-form-item label="选择分析任务" prop="job_id">
             <div class="job-select-wrapper">
-              <el-tag v-if="selectedJob" closable @close="selectedJob = null">
+              <el-tag v-if="selectedJob" closable @close="selectedJob = null" class="job-tag">
                 {{ selectedJob.job_name }}
               </el-tag>
-              <el-button v-else type="primary" @click="showJobDialog">
+              <el-button v-else type="primary" @click="showJobDialog" class="job-select-btn">
                 <el-icon><plus /></el-icon>
                 <span>选择分析任务</span>
               </el-button>
@@ -47,7 +48,7 @@
             <el-dialog
               title="选择分析任务"
               v-model="jobDialogVisible"
-              width="80%"
+              :width="dialogWidth"
             >
               <JobsView 
                 v-if="jobDialogVisible"
@@ -68,7 +69,7 @@
           </el-form-item>
           
           <el-form-item label="降维方式">
-            <el-radio-group v-model="clusterParams.use_pca">
+            <el-radio-group v-model="clusterParams.use_pca" class="radio-group">
               <el-radio-button :label="true">PCA降维</el-radio-button>
               <el-radio-button :label="false">原始特征</el-radio-button>
             </el-radio-group>
@@ -132,7 +133,7 @@
               @keyup.enter="highlightBatch"
             >
               <template #append>
-                <el-button @click="highlightBatch">
+                <el-button @click="highlightBatch" class="search-btn">
                   <el-icon><search /></el-icon>
                 </el-button>
               </template>
@@ -156,6 +157,7 @@
                 v-for="(stat, idx) in clusterStats" 
                 :key="idx"
                 :color="getClusterColor(idx)"
+                class="stat-tag"
               >
                 类{{ idx }}: {{ stat.count }}个样本 ({{ stat.percentage }}%)
               </el-tag>
@@ -177,10 +179,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onBeforeUnmount, watch, nextTick } from 'vue'
+import { ref, onMounted, onBeforeUnmount, watch, nextTick, computed } from 'vue'
 import * as echarts from 'echarts'
 import { ElMessage } from 'element-plus'
-import { Refresh, Download, Setting, Plus } from '@element-plus/icons-vue'
+import { Refresh, Download, Setting, Plus, Document, Search } from '@element-plus/icons-vue'
 import { formatDateTime } from '../utils/format'
 import JobsView from '../views/AnalysisJobView.vue'
 import axios from 'axios'
@@ -247,6 +249,12 @@ const jobDialogVisible = ref(false)
 const showJobDialog = () => {
   jobDialogVisible.value = true
 }
+
+// 响应式对话框宽度
+const dialogWidth = computed(() => {
+  const screenWidth = window.innerWidth;
+  return screenWidth > 1600 ? '80%' : screenWidth > 1200 ? '70%' : '90%';
+});
 
 const handleJobSelected = (row: any) => {
   if (!row) {
@@ -530,7 +538,7 @@ const exportImage = async () => {
       type: 'png',
       pixelRatio: 2,
       backgroundColor: '#fff',
-      excludeComponents: ['toolbox'] // 可选：排除不需要的组件
+      excludeComponents: ['toolbox']
     })
 
     const blob = await fetch(url).then(res => res.blob())
@@ -539,7 +547,7 @@ const exportImage = async () => {
 
     const formData = new FormData()
     formData.append('job_id', selectedJob.value.id)
-    formData.append('cluster', file)  // 修改参数名从radar变为cluster
+    formData.append('cluster', file)
 
     // 同时执行下载和上传
     await Promise.all([
@@ -556,12 +564,12 @@ const exportImage = async () => {
         }, 100)
       }),
       
-      // 服务器上传（接口路径从radar改为cluster）
+      // 服务器上传
       axios.post(`${apiUrl}/visualization/upload/cluster/${selectedJob.value.id}/`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data'
         },
-        timeout: 30000 // 30秒超时
+        timeout: 30000
       })
     ])
 
@@ -695,29 +703,13 @@ const downloadFile = (content: string, mimeType: string, filename: string) => {
     URL.revokeObjectURL(url)
   }, 100)
 }
+
 // 响应式调整
 const handleResize = () => {
   chartInstance?.resize()
 }
 
-onMounted(() => {
-  window.addEventListener('resize', handleResize)
-})
-
-onBeforeUnmount(() => {
-  window.removeEventListener('resize', handleResize)
-  chartInstance?.dispose()
-})
-
-// 监听参数变化
-watch(clusterParams, () => {
-  if (hasClusterData.value) {
-    runClusterAnalysis()
-  }
-}, { deep: true })
-
-
-// 在 setup 中添加以下变量和方法
+// 批次搜索相关
 const searchBatch = ref('')
 const highlightedPoint = ref<any>(null)
 
@@ -790,155 +782,307 @@ const highlightBatch = () => {
     })
   }
 }
+
+onMounted(() => {
+  window.addEventListener('resize', handleResize)
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('resize', handleResize)
+  chartInstance?.dispose()
+})
+
+// 监听参数变化
+watch(clusterParams, () => {
+  if (hasClusterData.value) {
+    runClusterAnalysis()
+  }
+}, { deep: true })
 </script>
 
 <style scoped lang="scss">
 .cluster-container {
-  padding: 8px;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  
+  padding: 16px;
+  width: 100%;
+  min-height: 100%;
+  box-sizing: border-box;
+  background-color: #f9fafb;
+
   .cluster-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     margin-bottom: 20px;
-    
+    padding-bottom: 12px;
+    border-bottom: 1px solid #eee;
+
     h2 {
-      font-size: 24px;
-      color: #333;
+      font-size: 20px;
+      color: #1d2129;
       margin: 0;
+      font-weight: 600;
     }
 
     .action-buttons {
-    display: flex;
-    gap: 12px;
-    
-    .el-button {
-      height: 36px;
-      padding: 0 16px;
-      font-size: 14px;
-      display: inline-flex;
-      align-items: center;
-      
-      // 主按钮特殊样式
-      &[type="primary"] {
-        padding: 0 18px;
-        font-weight: 500;
-        
-        .el-icon {
-          margin-right: 6px;
-          font-size: 16px;
-        }
-      }
-      
-      // 禁用状态按钮
-      &[disabled] {
-        opacity: 0.6;
-      }
-      
-      // 图标按钮调整
-      .el-icon {
-        font-size: 16px;
-        & + span {
-          margin-left: 6px;
-        }
-      }
-    }
-    
-    // 导出批次名单按钮特殊样式
-    .el-button:last-child {
-      background-color: #f0f7ff;
-      border-color: #c6e2ff;
-      color: #409eff;
-      
-      &:hover {
-        background-color: #ecf5ff;
-      }
-      
-      .el-icon {
+      display: flex;
+      gap: 12px;
+
+      .export-btn {
         color: #409eff;
+        border-color: #409eff;
+        background-color: #ecf5ff;
+
+        &:hover {
+          background-color: #e6f2ff;
+          color: #3a8ee6;
+          border-color: #3a8ee6;
+        }
+      }
+
+      .batch-export-btn {
+        background-color: #f0f7ff;
+        border-color: #c6e2ff;
+        color: #409eff;
+
+        &:hover {
+          background-color: #ecf5ff;
+        }
+
+        &:disabled {
+          opacity: 0.6;
+          cursor: not-allowed;
+        }
       }
     }
   }
 
-  }
-  
   .cluster-content {
     flex: 1;
     display: flex;
     gap: 20px;
-    
+    height: calc(100% - 70px);
+
     .control-panel {
-      width: 400px;
+      width: 360px;
       flex-shrink: 0;
-      
+      border: none;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+
+      :deep(.el-card__body) {
+        padding: 20px;
+      }
+
       .panel-header {
         display: flex;
         align-items: center;
         margin-bottom: 20px;
         font-size: 16px;
-        font-weight: bold;
-        color: #333;
-        
+        font-weight: 500;
+        color: #1d2129;
+
         .el-icon {
           margin-right: 8px;
-          color: var(--el-color-primary);
+          color: #409eff;
         }
       }
-      
-      .color-scheme-option {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        width: 100%;
-        
-        .scheme-preview {
-          display: inline-block;
-          width: 60px;
-          height: 16px;
-          border-radius: 3px;
+
+      .analysis-form {
+        .job-select-wrapper {
+          width: 100%;
+          position: relative;
+
+          .job-tag {
+            width: 100%;
+            text-align: left;
+            padding: 8px 12px;
+            font-size: 14px;
+            background-color: #f5f7fa;
+            border-color: #e4e7ed;
+            color: #4e5969;
+          }
+
+          .job-select-btn {
+            width: 100%;
+            justify-content: space-between;
+          }
+        }
+
+        .radio-group {
+          display: flex;
+          width: 100%;
+
+          :deep(.el-radio-button) {
+            flex: 1;
+            text-align: center;
+          }
+        }
+
+        .color-scheme-option {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          width: 100%;
+          padding: 4px 0;
+
+          .scheme-label {
+            flex: 1;
+            color: #4e5969;
+          }
+
+          .scheme-preview {
+            display: inline-block;
+            width: 80px;
+            height: 16px;
+            border-radius: 3px;
+          }
+        }
+
+        .search-btn {
+          padding: 0 12px;
+        }
+
+        .el-form-item {
+          margin-bottom: 16px;
+
+          &:last-child {
+            margin-bottom: 0;
+          }
         }
       }
     }
-    
+
     .visualization-area {
       flex: 1;
       display: flex;
       flex-direction: column;
-      
+
       .cluster-card {
         flex: 1;
-        
+        display: flex;
+        flex-direction: column;
+        border: none;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+
+        :deep(.el-card__body) {
+          display: flex;
+          flex-direction: column;
+          flex: 1;
+          padding: 20px;
+        }
+
         .card-header {
           margin-bottom: 20px;
-          
+
           .title {
             font-size: 18px;
-            font-weight: bold;
-            color: #333;
+            font-weight: 500;
+            color: #1d2129;
+            margin-bottom: 8px;
           }
-          
+
           .subtitle {
             font-size: 14px;
             color: #666;
-            margin-top: 5px;
+            margin-bottom: 12px;
+          }
+
+          .cluster-stats {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 10px;
+          }
+
+          .stat-tag {
+            height: 28px;
+            line-height: 28px;
+            padding: 0 10px;
+            border-radius: 14px;
+            font-size: 13px;
           }
         }
-        
+
         .cluster-wrapper {
+          flex: 1;
           display: flex;
-          height: calc(100% - 150px);
-          
+          justify-content: center;
+          align-items: center;
+          min-height: 400px;
+
           .cluster-chart {
-            width: 750px;
-            height: 550px;
+            width: 100%;
+            height: 100%;
+            min-width: 600px;
+            min-height: 400px;
+            max-height: 600px;
           }
         }
-        
-        .stats-container {
-          margin-top: 30px;
+      }
+    }
+  }
+}
+
+/* 响应式适配 */
+@media (max-width: 1200px) {
+  .cluster-container {
+    .cluster-content {
+      flex-direction: column;
+
+      .control-panel {
+        width: 100%;
+        margin-bottom: 20px;
+      }
+
+      .visualization-area {
+        .cluster-card {
+          .cluster-wrapper {
+            .cluster-chart {
+              min-width: 100%;
+              height: 500px;
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  .cluster-container {
+    padding: 12px;
+
+    .cluster-header {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 12px;
+
+      .action-buttons {
+        width: 100%;
+        flex-direction: column;
+
+        .el-button {
+          width: 100%;
+        }
+      }
+    }
+
+    .cluster-content {
+      .visualization-area {
+        .cluster-card {
+          .card-header {
+            .cluster-stats {
+              flex-direction: column;
+              gap: 8px;
+            }
+          }
+
+          .cluster-wrapper {
+            min-height: 300px;
+
+            .cluster-chart {
+              min-height: 300px;
+            }
+          }
         }
       }
     }

@@ -8,7 +8,7 @@
           <el-icon><Refresh /></el-icon>
           <span>刷新分析</span>
         </el-button>
-        <el-button @click="exportImage">
+        <el-button @click="exportImage" class="export-btn">
           <el-icon><Document /></el-icon>
           <span>导出图片并上传为报告素材</span>
         </el-button>
@@ -24,10 +24,10 @@
           <span>分析参数配置</span>
         </div>
         
-        <el-form label-width="100px" label-position="left">
+        <el-form label-width="100px" label-position="left" class="analysis-form">
           <el-form-item label="选择分析任务" prop="job_id">
             <div class="job-select-wrapper">
-              <el-button type="primary" @click="showJobDialog">
+              <el-button type="primary" @click="showJobDialog" class="job-select-btn">
                 <el-icon v-if="selectedJob == null"><Plus /></el-icon>
                 <span>{{ selectedJob == null ? '选择分析任务' : `【${selectedJob.job_name}】` }}</span>
               </el-button>
@@ -35,30 +35,47 @@
             <el-dialog
               title="选择分析任务"
               v-model="jobDialogVisible"
-              style="width: 200vh;"
+              :width="dialogWidth"
             >
               <JobsView v-if="jobDialogVisible" @job-selected="handleJobSelected" key="job-selector"/>
             </el-dialog>
           </el-form-item>
           
           <el-form-item label="选择维度">
-            <el-select v-model="selectedDimension" placeholder="请选择维度" @change="onDimensionChange" style="width: 100%">
+            <el-select 
+              v-model="selectedDimension" 
+              placeholder="请选择维度" 
+              @change="onDimensionChange" 
+              style="width: 100%"
+              :loading="isLoadingOptions && !selectedDimension"
+              :disabled="isLoadingOptions && !selectedDimension"
+            >
               <el-option v-for="dim in dimensionOptions" :key="dim.value" :label="dim.label" :value="dim.value" />
             </el-select>
+            <!-- 维度加载提示 -->
+            <p v-if="isLoadingOptions && !selectedDimension" class="loading-tip">
+              <el-icon size="14" class="rotating-icon"><Refresh /></el-icon>
+              <span>正在获取维度，请稍候...</span>
+            </p>
           </el-form-item>
 
           <el-form-item label="选择方法">
-            <el-select v-model="selectedMethod" placeholder="请选择方法" :disabled="!methodOptions.length" @change="onSelectionChange" style="width: 100%">
+            <el-select 
+              v-model="selectedMethod" 
+              placeholder="请选择方法" 
+              :disabled="!methodOptions.length || (isLoadingOptions && selectedDimension)"
+              @change="onSelectionChange" 
+              style="width: 100%"
+              :loading="isLoadingOptions && selectedDimension"
+            >
               <el-option v-for="method in methodOptions" :key="method" :label="method" :value="method" />
             </el-select>
+            <!-- 方法加载提示 -->
+            <p v-if="isLoadingOptions && selectedDimension" class="loading-tip">
+              <el-icon size="14" class="rotating-icon"><Refresh /></el-icon>
+              <span>正在获取方法，请稍候...</span>
+            </p>
           </el-form-item>
-          
-          <!-- <el-form-item label="剖面方向">
-            <el-radio-group v-model="sectionDirection">
-              <el-radio-button label="horizontal">水平剖面</el-radio-button>
-              <el-radio-button label="vertical">垂直剖面</el-radio-button>
-            </el-radio-group>
-          </el-form-item> -->
           
           <el-form-item label="剖面位置" v-if="sectionDirection === 'horizontal'">
             <el-slider
@@ -82,22 +99,6 @@
             />
           </el-form-item>
           
-          <!-- <el-form-item label="颜色方案">
-            <el-select v-model="colorScheme" style="width: 100%">
-              <el-option
-                v-for="scheme in colorSchemes"
-                :key="scheme.value"
-                :label="scheme.label"
-                :value="scheme.value"
-              >
-                <div class="color-scheme-option">
-                  <span class="scheme-label">{{ scheme.label }}</span>
-                  <span class="scheme-preview" :style="`background: ${scheme.preview}`"></span>
-                </div>
-              </el-option>
-            </el-select>
-          </el-form-item> -->
-          
           <el-form-item label="线宽">
             <el-slider
               v-model="lineWidth"
@@ -111,21 +112,7 @@
           <el-form-item label="显示网格">
             <el-switch v-model="showGrid" />
           </el-form-item>
-          
-          <!-- <el-form-item label="显示标注">
-            <el-switch v-model="showAnnotation" />
-          </el-form-item> -->
-          
-          <!-- <el-form-item label="动画效果">
-            <el-switch v-model="enableAnimation" />
-          </el-form-item> -->
         </el-form>
-        
-        <!-- <div class="apply-button">
-          <el-button type="primary" @click="applyAnalysis" style="width: 100%">
-            应用分析
-          </el-button>
-        </div> -->
       </el-card>
       
       <!-- 可视化区域 -->
@@ -188,7 +175,7 @@
 
 <script lang="ts" setup>
 import JobsView from '../views/AnalysisJobView.vue'
-import { ref, onMounted, onBeforeUnmount, watch, nextTick } from 'vue'
+import { ref, onMounted, onBeforeUnmount, watch, nextTick, computed } from 'vue'
 import * as echarts from 'echarts'
 import { ElMessage } from 'element-plus'
 import {
@@ -206,9 +193,16 @@ let mainChartInstance: echarts.ECharts | null = null
 
 // 数据相关
 const loading = ref(false)
+const isLoadingOptions = ref(false) // 维度/方法加载状态
 const selectedJob = ref<{id: string, job_name: string} | null>(null)
 const selectedJobID = ref('')
 const jobDialogVisible = ref(false)
+
+// 响应式对话框宽度
+const dialogWidth = computed(() => {
+  const screenWidth = window.innerWidth;
+  return screenWidth > 1600 ? '80%' : screenWidth > 1200 ? '70%' : '90%';
+});
 
 // 分析参数
 const sectionDirection = ref('horizontal')
@@ -236,6 +230,7 @@ const fetchedData = ref<Record<string, any>[]>([])
 
 // DOM 引用
 const mainChart = ref<HTMLElement | null>(null)
+const chartRef = ref<HTMLElement | null>(null)
 
 // 颜色方案选项
 const colorSchemes = ref([
@@ -272,6 +267,7 @@ const initChart = () => {
   
   mainChartInstance = echarts.init(mainChart.value)
   window.addEventListener('resize', handleResize)
+  chartRef.value = mainChart.value
 }
 
 const handleResize = () => {
@@ -286,17 +282,40 @@ const handleJobSelected = (row: { id: string; job_name: string } | null) => {
   selectedJob.value = row
   if (row) {
     selectedJobID.value = row.id
+    // 选择任务后加载维度
+    isLoadingOptions.value = true
+    fetchSliceData().finally(() => {
+      isLoadingOptions.value = false
+    })
+  } else {
+    // 清空任务时重置选项
+    dimensionOptions.value = []
+    methodOptions.value = []
+    selectedDimension.value = ''
+    selectedMethod.value = ''
   }
   jobDialogVisible.value = false
 }
 
 const onDimensionChange = () => {
   selectedMethod.value = ''
-  const dimObj = fetchedData.value.find(item => Object.keys(item)[0] === selectedDimension.value)
-  if (dimObj) {
-    const methodObj = dimObj[selectedDimension.value]
-    methodOptions.value = Object.keys(methodObj)
-  }
+  methodOptions.value = []
+  // 维度变化时加载方法
+  isLoadingOptions.value = true
+  
+  nextTick(() => {
+    try {
+      const dimObj = fetchedData.value.find(item => Object.keys(item)[0] === selectedDimension.value)
+      if (dimObj) {
+        const methodObj = dimObj[selectedDimension.value]
+        methodOptions.value = Object.keys(methodObj)
+      }
+    } catch (error) {
+      ElMessage.error('获取方法列表失败')
+    } finally {
+      isLoadingOptions.value = false
+    }
+  })
 }
 
 const onSelectionChange = () => {
@@ -311,8 +330,14 @@ const fetchSliceData = async () => {
       const dimension = Object.keys(item)[0]
       return { value: dimension, label: dimension }
     })
+    // 重置选择状态
+    selectedDimension.value = ''
+    selectedMethod.value = ''
+    methodOptions.value = []
   } catch (error) {
     ElMessage.error('分析结果获取失败')
+    dimensionOptions.value = []
+    methodOptions.value = []
   }
 }
 
@@ -333,7 +358,7 @@ const updateChart = async () => {
   }
 
   try {
-    // 1. 从后端获取剖面分析数据
+    // 从后端获取剖面分析数据
     const response = await axios.get(`${apiUrl}/visualization/slice/${selectedJob.value.id}/`, {
       params: {
         dimension: selectedDimension.value,
@@ -346,21 +371,20 @@ const updateChart = async () => {
       throw new Error('未获取到有效数据')
     }
 
-    // 2. 处理数据格式
+    // 处理数据格式
     const profileData = responseData.scores.map(item => ({
       batch: item.batch,
       score: item.composite_score,
-      riskLevel: item.risk_level // 保留风险等级信息
+      riskLevel: item.risk_level
     })).sort((a, b) => a.batch.localeCompare(b.batch))
-    console.log(profileData)
 
-    // 3. 更新统计信息（优先使用后端计算的统计数据）
+    // 更新统计信息
     const stats = responseData.metadata?.score_stats || responseData.score_stats
     maxValue.value = stats?.max || Math.max(...profileData.map(item => item.score))
     minValue.value = stats?.min || Math.min(...profileData.map(item => item.score))
     avgValue.value = stats?.mean || profileData.reduce((sum, item) => sum + item.score, 0) / profileData.length
 
-    // 4. 配置图表选项
+    // 配置图表选项
     const labelInterval = Math.max(1, Math.floor(profileData.length / 10));
     const option = {
     tooltip: {
@@ -542,13 +566,10 @@ const updateChart = async () => {
     animationEasing: 'cubicOut'
   };
 
-    // 5. 更新图表
-    if (!mainChartInstance) {
-      mainChartInstance = echarts.init(chartRef.value)
-    }
+    // 更新图表
     mainChartInstance.setOption(option, true)
 
-    // 6. 更新风险分布信息
+    // 更新风险分布信息
     riskDistribution.value = responseData.metadata?.risk_distribution || responseData.risk_distribution
 
   } catch (error) {
@@ -574,7 +595,10 @@ const getColorByRiskLevel = (dimension: string) => {
 
 const refreshAnalysis = () => {
   if (selectedJobID.value) {
-    fetchSliceData()
+    isLoadingOptions.value = true
+    fetchSliceData().finally(() => {
+      isLoadingOptions.value = false
+    })
   }
 }
 
@@ -652,7 +676,10 @@ watch([lineWidth, showGrid, showAnnotation, enableAnimation, colorScheme], () =>
 
 watch(selectedJob, (newJob) => {
   if (newJob) {
-    fetchSliceData()
+    isLoadingOptions.value = true
+    fetchSliceData().finally(() => {
+      isLoadingOptions.value = false
+    })
   }
 })
 
@@ -668,184 +695,148 @@ onBeforeUnmount(() => {
 
 <style scoped lang="scss">
 .section-analysis-container {
-  padding: 8px;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  
+  padding: 16px;
+  width: 100%;
+  min-height: 100%;
+  box-sizing: border-box;
+  background-color: #f9fafb;
+
   .analysis-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     margin-bottom: 20px;
-    padding: 0 8px;
-    
+    padding-bottom: 12px;
+    border-bottom: 1px solid #eee;
+
     h2 {
-      font-size: 24px;
-      color: #333;
+      font-size: 20px;
+      color: #1d2129;
       margin: 0;
+      font-weight: 600;
     }
 
     .action-buttons {
       display: flex;
       gap: 12px;
-      
-      .el-button {
-        height: 36px;
-        padding: 0 16px;
-        font-size: 14px;
-        display: inline-flex;
-        align-items: center;
-        border-radius: 4px;
-        transition: all 0.2s;
-        
-        &[type="primary"] {
-          padding: 0 18px;
-          font-weight: 500;
-          background-color: var(--el-color-primary);
-          
-          .el-icon {
-            margin-right: 6px;
-            font-size: 16px;
-          }
-          
-          &:hover {
-            opacity: 0.9;
-          }
-        }
-        
-        &[disabled] {
-          opacity: 0.6;
-          cursor: not-allowed;
-        }
-        
-        .el-icon {
-          font-size: 16px;
-          & + span {
-            margin-left: 6px;
-          }
-        }
-      }
-      
-      .el-button:last-child {
-        background-color: #f0f7ff;
-        border-color: #c6e2ff;
+
+      .export-btn {
         color: #409eff;
-        
+        border-color: #409eff;
+        background-color: #ecf5ff;
+
         &:hover {
-          background-color: #ecf5ff;
-          border-color: #b3d8ff;
-        }
-        
-        .el-icon {
-          color: #409eff;
+          background-color: #e6f2ff;
+          color: #3a8ee6;
+          border-color: #3a8ee6;
         }
       }
     }
   }
-  
+
   .analysis-content {
     flex: 1;
     display: flex;
     gap: 20px;
-    
+    height: calc(100% - 70px);
+
     .control-panel {
-      width: 400px;
+      width: 360px;
       flex-shrink: 0;
-      border-radius: 8px;
-      border: 1px solid #ebeef5;
-      
+      border: none;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+
+      :deep(.el-card__body) {
+        padding: 20px;
+      }
+
       .panel-header {
         display: flex;
         align-items: center;
         margin-bottom: 20px;
         font-size: 16px;
-        font-weight: bold;
-        color: #333;
-        
+        font-weight: 500;
+        color: #1d2129;
+
         .el-icon {
           margin-right: 8px;
-          color: var(--el-color-primary);
-          font-size: 18px;
+          color: #409eff;
         }
       }
-      
-      .el-form-item {
-        margin-bottom: 18px;
-        
-        &:last-child {
-          margin-bottom: 0;
+
+      .analysis-form {
+        .job-select-btn {
+          width: 100%;
+          justify-content: space-between;
         }
-      }
-      
-      .color-scheme-option {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        width: 100%;
-        
-        .scheme-preview {
-          display: inline-block;
-          width: 60px;
-          height: 16px;
-          border-radius: 3px;
-          box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+
+        .el-form-item {
+          margin-bottom: 16px;
+
+          &:last-child {
+            margin-bottom: 0;
+          }
         }
-      }
-      
-      .apply-button {
-        margin-top: 20px;
-        
-        .el-button {
-          height: 40px;
-          font-size: 15px;
+
+        .el-slider {
+          width: 100%;
         }
       }
     }
-    
+
     .visualization-area {
       flex: 1;
       display: flex;
       flex-direction: column;
       min-width: 0;
-      
+
       .visualization-card {
         flex: 1;
         display: flex;
         flex-direction: column;
-        border-radius: 8px;
-        border: 1px solid #ebeef5;
-        
+        border: none;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+
+        :deep(.el-card__body) {
+          display: flex;
+          flex-direction: column;
+          flex: 1;
+          padding: 20px;
+        }
+
         .card-header {
           margin-bottom: 20px;
-          
+
           .title {
             font-size: 18px;
-            font-weight: bold;
-            color: #333;
+            font-weight: 500;
+            color: #1d2129;
             display: flex;
+            flex-wrap: wrap;
             align-items: center;
-            
+
             .position-indicator {
               font-size: 14px;
               color: #666;
               margin-left: 10px;
               font-weight: normal;
+              white-space: nowrap;
             }
           }
-          
+
           .subtitle {
             font-size: 14px;
             color: #666;
             margin-top: 5px;
           }
         }
-        
+
         .chart-container {
           flex: 1;
-          min-height: 500px;
+          min-height: 400px;
           position: relative;
-          width: 750px;
+          width: 100%;
+
           .main-chart {
             position: absolute;
             top: 0;
@@ -854,43 +845,49 @@ onBeforeUnmount(() => {
             bottom: 0;
           }
         }
-        
+
         .stats-panel {
           margin-top: 20px;
           padding-top: 15px;
-          border-top: 1px solid #eee;
-          
+          border-top: 1px solid #f0f0f0;
+
+          :deep(.el-collapse) {
+            border: none;
+
+            :deep(.el-collapse-item) {
+              border-bottom: none;
+
+              :deep(.el-collapse-item__header) {
+                font-weight: 500;
+                color: #4e5969;
+                border-bottom: 1px solid #f0f0f0;
+                padding: 8px 0;
+                height: auto;
+                line-height: normal;
+              }
+
+              :deep(.el-collapse-item__content) {
+                padding: 15px 0 0 0;
+              }
+            }
+          }
+
           .stat-card {
-            background: #f8f9fa;
+            background: #f7f8fa;
             border-radius: 6px;
             padding: 12px;
             text-align: center;
-            
+
             .stat-title {
               font-size: 13px;
               color: #666;
               margin-bottom: 5px;
             }
-            
+
             .stat-value {
               font-size: 18px;
-              font-weight: bold;
-              color: #333;
-            }
-          }
-          
-          .el-collapse {
-            border: none;
-            
-            :deep(.el-collapse-item__header) {
-              font-weight: bold;
-              border: none;
-              height: 40px;
-              line-height: 40px;
-            }
-            
-            :deep(.el-collapse-item__wrap) {
-              border: none;
+              font-weight: 500;
+              color: #1d2129;
             }
           }
         }
@@ -899,14 +896,87 @@ onBeforeUnmount(() => {
   }
 }
 
-/* 响应式调整 */
+/* 加载提示样式 */
+.loading-tip {
+  margin: 5px 0 0 0;
+  padding: 0;
+  color: #666;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* 旋转动画效果 */
+.rotating-icon {
+  animation: rotate 1.5s linear infinite;
+}
+
+@keyframes rotate {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* 响应式适配 */
 @media (max-width: 1200px) {
-  .analysis-content {
-    flex-direction: column !important;
-    
-    .control-panel,
-    .visualization-area {
-      width: 100% !important;
+  .section-analysis-container {
+    .analysis-content {
+      flex-direction: column;
+
+      .control-panel {
+        width: 100%;
+        margin-bottom: 20px;
+      }
+
+      .visualization-area {
+        .visualization-card {
+          .chart-container {
+            min-height: 400px;
+          }
+        }
+      }
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  .section-analysis-container {
+    padding: 12px;
+
+    .analysis-header {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 12px;
+
+      .action-buttons {
+        width: 100%;
+        flex-direction: column;
+
+        .el-button {
+          width: 100%;
+        }
+      }
+    }
+
+    .analysis-content {
+      .visualization-area {
+        .visualization-card {
+          .stats-panel {
+            :deep(.el-row) {
+              flex-direction: column;
+            }
+
+            :deep(.el-col) {
+              width: 100%;
+              margin-bottom: 15px;
+            }
+          }
+        }
+      }
     }
   }
 }

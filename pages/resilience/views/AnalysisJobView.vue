@@ -4,7 +4,7 @@
     <div class="analysis-header">
       <h2>分析任务管理</h2>
       <div class="action-buttons">
-        <el-button type="primary" @click="showCreateDialog" size="large">
+        <el-button type="primary" @click="showCreateDialog" size="large" class="primary-btn">
           <el-icon><plus /></el-icon>
           <span>创建分析任务</span>
         </el-button>
@@ -55,7 +55,7 @@
               <el-option label="按完成时间" value="finished_at" />
             </el-select>
 
-            <el-button @click="toggleSortOrder">
+            <el-button @click="toggleSortOrder" class="sort-btn">
               <el-icon>
                 <sort v-if="!filters.sortField" />
                 <sort-up v-else-if="filters.sortOrder === 'asc'" />
@@ -64,11 +64,11 @@
               {{ filters.sortOrder === 'asc' ? '升序' : '降序' }}
             </el-button>
 
-            <el-button type="info" plain @click="resetFilters">
+            <el-button type="info" plain @click="resetFilters" class="reset-btn">
               <el-icon><refresh /></el-icon>
               <span>重置</span>
             </el-button>
-            <el-button type="info" plain @click="refreshList">
+            <el-button type="info" plain @click="refreshList" class="refresh-btn">
               <el-icon><refresh /></el-icon>
               <span>刷新</span>
             </el-button>
@@ -80,6 +80,7 @@
           v-loading="loading"
           row-key="id"
           @row-click="handleRowClick"
+          class="job-table"
         >
           <el-table-column prop="job_name" label="任务名称" width="220">
             <template #default="{ row }">
@@ -92,7 +93,7 @@
           
           <el-table-column prop="status" label="状态" width="120">
             <template #default="{ row }">
-              <el-tag :type="getStatusTagType(row.status)">
+              <el-tag :type="getStatusTagType(row.status)" class="status-tag">
                 {{ getStatusText(row.status) }}
               </el-tag>
             </template>
@@ -120,6 +121,7 @@
                 size="small" 
                 :disabled="row.status !== 'completed'"
                 @click.stop="downloadResult(row)"
+                class="download-btn"
               >
                 <el-icon><download /></el-icon>
                 <span>下载</span>
@@ -128,6 +130,7 @@
                 size="small" 
                 type="danger" 
                 @click.stop="handleDelete(row)"
+                class="delete-btn"
               >
                 <el-icon><delete /></el-icon>
                 <span>删除</span>
@@ -157,12 +160,14 @@
       width="800px"
       top="5vh"
       destroy-on-close
+      class="custom-dialog"
     >
       <el-form
         ref="jobForm"
         label-width="120px"
         label-position="left"
         :rules="jobRules"
+        class="form-container"
       >
         <el-form-item label="任务名称" prop="name">
           <el-input v-model="job_name" placeholder="请输入任务名称" />
@@ -170,7 +175,7 @@
         
         <el-form-item label="选择数据集" prop="dataset_id">
           <div class="dataset-select-wrapper">
-            <el-button type="primary" @click="showDataSetDialog">
+            <el-button type="primary" @click="showDataSetDialog" class="dataset-select-btn">
               <el-icon><plus /></el-icon>
               <span>选择数据集</span>
             </el-button>
@@ -186,6 +191,7 @@
             title="选择数据集"
             v-model="datasetDialogVisible"
             width="80%"
+            class="custom-dialog"
           >
             <DataSetsView 
               v-if="datasetDialogVisible"
@@ -262,10 +268,12 @@
       </el-form>
       
       <template #footer>
-        <el-button @click="closeCreateDialog">取消</el-button>
-        <el-button type="primary" @click="submitJobForm" :loading="submitting">
-          立即创建
-        </el-button>
+        <span class="dialog-footer">
+          <el-button @click="closeCreateDialog">取消</el-button>
+          <el-button type="primary" @click="submitJobForm" :loading="submitting">
+            立即创建
+          </el-button>
+        </span>
       </template>
     </el-dialog>
 
@@ -274,6 +282,7 @@
       v-model="statusDialogVisible"
       :title="`任务状态 - ${currentJob?.job_name || ''}`"
       width="600px"
+      class="custom-dialog"
     >
       <div v-if="currentJob" class="job-status">
         <el-steps :active="getStepActive(currentJob.status)" finish-status="success">
@@ -305,21 +314,23 @@
       </div>
       
       <template #footer>
-        <el-button @click="statusDialogVisible = false">关闭</el-button>
-        <el-button
-          v-if="currentJob?.status === 'completed'"
-          type="primary"
-          @click="downloadResult(currentJob)"
-        >
-          下载结果
-        </el-button>
+        <span class="dialog-footer">
+          <el-button @click="statusDialogVisible = false">关闭</el-button>
+          <el-button
+            v-if="currentJob?.status === 'completed'"
+            type="primary"
+            @click="downloadResult(currentJob)"
+          >
+            下载结果
+          </el-button>
+        </span>
       </template>
     </el-dialog>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import {
   Plus,
@@ -330,7 +341,8 @@ import {
   Sort,
   SortUp,
   SortDown,
-  Refresh
+  Refresh,
+  Star
 } from '@element-plus/icons-vue'
 import { formatDateTime } from '../utils/format'
 import axios from 'axios'
@@ -344,6 +356,7 @@ interface Model {
   version?: string
   dimension: string
   method: string
+  is_default?: boolean
 }
 interface DimensionConfig {
   enabled: boolean
@@ -800,219 +813,447 @@ onMounted(() => {
 
 <style scoped lang="scss">
 .analysis-container {
-  padding: 20px;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  
+  padding: 16px;
+  width: 100%;
+  min-height: 100%;
+  box-sizing: border-box;
+  background-color: #f9fafb;
+
   .analysis-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     margin-bottom: 20px;
-    
+    padding-bottom: 12px;
+    border-bottom: 1px solid #eee;
+
     h2 {
+      font-size: 20px;
+      color: #1d2129;
       margin: 0;
-      font-size: 24px;
-      color: var(--el-text-color-primary);
-      font-weight: 500;
+      font-weight: 600;
+    }
+
+    .action-buttons {
+      display: flex;
+      gap: 12px;
+
+      .primary-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+      }
+    }
+  }
+
+  .job-list-container {
+    flex: 1;
+
+    .job-card {
+      height: 100%;
+      border: none;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+      border-radius: 8px;
+
+      :deep(.el-card__body) {
+        padding: 0;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .filter-bar {
+        padding: 16px 20px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 1px solid #eee;
+        flex-wrap: wrap;
+        gap: 15px;
+
+        .el-input {
+          width: 300px;
+
+          &:deep(.el-input__wrapper) {
+            border-radius: 4px;
+          }
+        }
+
+        .filter-actions {
+          display: flex;
+          gap: 10px;
+          flex-wrap: wrap;
+          align-items: center;
+
+          .el-select {
+            width: 120px;
+
+            &:deep(.el-select__wrapper) {
+              border-radius: 4px;
+            }
+          }
+
+          .sort-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 0 12px;
+          }
+
+          .reset-btn, .refresh-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 0 12px;
+          }
+        }
+      }
+
+      .job-table {
+        flex: 1;
+
+        :deep(.el-table) {
+          width: 100%;
+          border-collapse: collapse;
+        }
+
+        :deep(.el-table__header-wrapper) {
+          background-color: #f5f7fa;
+        }
+
+        :deep(.el-table__header tr th) {
+          background-color: #f5f7fa;
+          color: #4e5969;
+          font-weight: 500;
+          border-bottom: 1px solid #eee;
+        }
+
+        :deep(.el-table__body tr td) {
+          border-bottom: 1px solid #f0f0f0;
+        }
+
+        :deep(.el-table__body tr:hover > td) {
+          background-color: #f5f7fa;
+          cursor: pointer;
+        }
+
+        :deep(.job-name-cell) {
+          display: flex;
+          align-items: center;
+
+          .el-icon {
+            margin-right: 8px;
+            color: #409eff;
+          }
+
+          .name-text {
+            flex: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+          }
+        }
+
+        :deep(.status-tag) {
+          height: 24px;
+          line-height: 24px;
+          padding: 0 8px;
+          border-radius: 4px;
+          font-size: 12px;
+        }
+
+        :deep(.download-btn) {
+          color: #409eff;
+          border-color: #409eff;
+          background-color: #ecf5ff;
+          margin-right: 5px;
+
+          &:hover {
+            background-color: #e6f2ff;
+            color: #3a8ee6;
+            border-color: #3a8ee6;
+          }
+
+          &:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+          }
+        }
+
+        :deep(.delete-btn) {
+          &:hover {
+            opacity: 0.9;
+          }
+        }
+      }
+
+      .pagination-container {
+        padding: 16px;
+        display: flex;
+        justify-content: flex-end;
+        border-top: 1px solid #eee;
+
+        :deep(.el-pagination) {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+        }
+
+        :deep(.el-pagination__sizes) {
+          margin-right: 10px;
+        }
+      }
     }
   }
 }
 
-.job-list-container {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  
-  .job-card {
-    flex: 1;
+/* 对话框样式 */
+.custom-dialog {
+  border-radius: 8px;
+  overflow: hidden;
+
+  :deep(.el-dialog__header) {
+    padding: 18px 20px;
+    border-bottom: 1px solid #eee;
+  }
+
+  :deep(.el-dialog__title) {
+    font-size: 16px;
+    font-weight: 500;
+    color: #1d2129;
+  }
+
+  :deep(.el-dialog__body) {
+    padding: 20px;
+    max-height: 70vh;
+    overflow-y: auto;
+  }
+
+  :deep(.el-dialog__footer) {
+    padding: 16px 20px;
+    border-top: 1px solid #eee;
+  }
+
+  :deep(.dialog-footer) {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+  }
+
+  :deep(.el-button) {
+    margin-left: 0;
+  }
+}
+
+.form-container {
+  :deep(.el-form) {
+    width: 100%;
+  }
+
+  :deep(.el-form-item) {
+    margin-bottom: 16px;
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+
+  :deep(.el-form-item__label) {
+    color: #4e5969;
+    font-weight: 500;
+  }
+
+  :deep(.el-input),
+  :deep(.el-select),
+  :deep(.el-input-number) {
+    width: 100%;
+  }
+
+  .dataset-select-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+
+    .dataset-select-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .selected-dataset-name {
+      font {
+      font-weight: 500;
+      color: #409eff;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      flex: 1;
+    }
+  }
+
+  .dimension-grid-container {
+    padding: 8px;
+    background-color: #f5f7fa;
+    border-radius: 8px;
+  }
+
+  .dimension-card {
+    background: #fff;
+    border-radius: 8px;
+    padding: 12px;
+    height: 100%;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+    transition: all 0.3s ease;
+    margin-bottom: 16px;
+
+    &:hover {
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+      transform: translateY(-2px);
+    }
+  }
+
+  .dimension-header {
+    margin-bottom: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    .dimension-title {
+      font-weight: 500;
+      font-size: 14px;
+      color: #1d2129;
+    }
+  }
+
+  .method-controls {
     display: flex;
     flex-direction: column;
-    border-radius: 8px;
-    overflow: hidden;
-    
-    :deep(.el-card__body) {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      padding: 0;
-    }
-  }
-}
-
-.filter-bar {
-  padding: 16px 20px;
-  border-bottom: 1px solid var(--el-border-color-light);
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-  align-items: center;
-  
-  .filter-actions {
-    margin-left: auto;
-    display: flex;
     gap: 8px;
-    flex-wrap: wrap;
   }
-}
-
-.pagination-container {
-  padding: 16px 20px;
-  border-top: 1px solid var(--el-border-color-light);
-  display: flex;
-  justify-content: flex-end;
-}
-
-.job-name-cell {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  
-  .name-text {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-}
-
-.dataset-select-wrapper {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  
-  .selected-dataset-name {
-    font-weight: 500;
-    color: var(--el-color-primary);
-  }
-}
-
-.dimension-grid-container {
-  padding: 8px;
-  background-color: var(--el-fill-color-lighter);
-  border-radius: 8px;
-}
-
-.dimension-card {
-  background: var(--el-bg-color);
-  border-radius: 8px;
-  padding: 12px;
-  height: 100%;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
-  transition: all 0.3s ease;
-  margin-bottom: 16px;
-  
-  &:hover {
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
-    transform: translateY(-2px);
-  }
-}
-
-.dimension-header {
-  margin-bottom: 12px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  
-  .dimension-title {
-    font-weight: 500;
-    font-size: 14px;
-    color: var(--el-text-color-primary);
-  }
-}
-
-.method-controls {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
 }
 
 .job-status {
   .progress-container {
     margin: 20px 0;
-    
+
     .progress-text {
       margin-top: 8px;
       font-size: 13px;
-      color: var(--el-text-color-secondary);
+      color: #666;
       text-align: center;
     }
   }
-  
+
   .status-detail {
     margin-top: 20px;
   }
 }
 
-/* 响应式调整 */
-@media (max-width: 992px) {
-  .dimension-card {
-    padding: 10px;
+/* 步骤条样式调整 */
+:deep(.el-steps) {
+  padding: 0 20px;
+  margin-top: 10px;
+
+  .el-step__title {
+    font-size: 13px;
   }
-  
-  .filter-bar {
-    flex-direction: column;
-    align-items: flex-start;
-    
-    .filter-actions {
-      margin-left: 0;
-      width: 100%;
-      justify-content: flex-end;
+
+  .el-step__description {
+    font-size: 12px;
+    color: #666;
+  }
+}
+
+/* 响应式调整 */
+@media (max-width: 1200px) {
+  .analysis-container {
+    .job-list-container {
+      .job-card {
+        .filter-bar {
+          flex-direction: column;
+          align-items: flex-start;
+
+          .el-input {
+            width: 100% !important;
+          }
+
+          .filter-actions {
+            width: 100%;
+            justify-content: flex-start;
+          }
+        }
+      }
     }
   }
 }
 
 @media (max-width: 768px) {
-  .analysis-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 12px;
+  .analysis-container {
+    padding: 12px;
+
+    .analysis-header {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 12px;
+
+      .action-buttons {
+        width: 100%;
+
+        .primary-btn {
+          width: 100%;
+          justify-content: center;
+        }
+      }
+    }
+
+    .job-list-container {
+      .job-card {
+        .filter-bar {
+          .filter-actions {
+            flex-direction: column;
+            width: 100%;
+            gap: 8px;
+
+            .el-select {
+              width: 100% !important;
+            }
+
+            .sort-btn, .reset-btn, .refresh-btn {
+              width: 100%;
+              justify-content: center;
+            }
+          }
+        }
+
+        .job-table {
+          :deep(.el-table__fixed-right) {
+            width: 120px !important;
+          }
+
+          :deep(.el-button) {
+            padding: 0 8px;
+            font-size: 12px;
+
+            .el-icon {
+              font-size: 14px;
+            }
+
+            span {
+              display: none;
+            }
+          }
+        }
+      }
+    }
   }
-  
+
+  .custom-dialog {
+    width: 90% !important;
+  }
+
   .dimension-card {
     margin-bottom: 12px;
   }
 }
-
-/* 表格行悬停效果 */
-:deep(.el-table__body tr:hover > td) {
-  background-color: var(--el-fill-color-light) !important;
-  cursor: pointer;
-}
-
-/* 步骤条样式调整 */
-:deep(.el-steps) {
-  padding: 0 20px;
-  
-  .el-step__title {
-    font-size: 13px;
-  }
-  
-  .el-step__description {
-    font-size: 12px;
-    color: var(--el-text-color-secondary);
-  }
-}
-
-/* 对话框标题样式 */
-:deep(.el-dialog__header) {
-  border-bottom: 1px solid var(--el-border-color-light);
-  margin-right: 0;
-  padding-bottom: 16px;
-  
-  .el-dialog__title {
-    font-weight: 500;
-  }
-}
-
-/* 对话框底部按钮区 */
-:deep(.el-dialog__footer) {
-  border-top: 1px solid var(--el-border-color-light);
-  padding-top: 16px;
-}
-
-/* 禁用按钮样式调整 */
-:deep(.el-button.is-disabled) {
-  opacity: 0.6;
 }
 </style>
