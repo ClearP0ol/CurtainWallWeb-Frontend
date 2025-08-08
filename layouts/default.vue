@@ -359,7 +359,7 @@ const links = reactive([
   {
     id: "resilienceAssessment",
     label: "幕墙韧性评估",
-    icon: "i-heroicons-bell-alert",
+    icon: "i-simple-icons-testcafe",
     to: "/resilience",
     defaultOpen: false,
     children: [

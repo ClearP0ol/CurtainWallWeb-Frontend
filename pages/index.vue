@@ -128,7 +128,7 @@ const modulesLine3 = reactive([
     description: "用于幕墙韧性多维数据分析评估和预警",
     target_address: "/resilience/views/DataSetsView",
     permissionKey: "",
-    icon: "i-heroicons-bell-alert",
+    icon: "i-simple-icons-testcafe",
   },
   {
     title: "用户管理",
