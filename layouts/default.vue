@@ -236,7 +236,7 @@ const links = reactive([
             label: "异常数据",
             to: "/vibration/abnormal",
           },
-          
+
         ],
       },
     ],
@@ -452,15 +452,15 @@ const links = reactive([
       text: "幕墙韧性评估",
     },
   },
-  {
-    id: "accountManagement",
-    label: "账号管理",
-    icon: "i-heroicons-bell-alert",
-    to: "/accountManagement",
-    tooltip: {
-      text: "账号管理",
-    },
-  },
+  // {
+  //   id: "accountManagement",
+  //   label: "账号管理",
+  //   icon: "i-heroicons-bell-alert",
+  //   to: "/accountManagement",
+  //   tooltip: {
+  //     text: "账号管理",
+  //   },
+  // },
   {
     id: "userManage",
     label: "用户管理",

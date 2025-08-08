@@ -27,7 +27,7 @@
       <div class="text-left">
         <p>已登录为 {{ loginUser }}</p>
         <!-- <p class="truncate font-medium text-gray-900 dark:text-white">
-            
+
         </p> -->
       </div>
     </template>
@@ -49,7 +49,7 @@ const router = useRouter();
 
 onMounted(() => {
   loginUser.value = localStorage.getItem("email");
-  state.name = loginUser.value || '用户';  
+  state.name = loginUser.value || '用户';
 });
 
 const items = computed(() => [
@@ -84,6 +84,24 @@ const items = computed(() => [
       target: "_blank",
     },
   ],
+  [
+    {
+      id: "accountManagement",
+      label: "账号管理",
+      icon: "i-heroicons-bell-alert",
+      to: "/accountManagement",
+      target: "_blank",
+    },
+  ],
+  // {
+  //   id: "accountManagement",
+  //   label: "账号管理",
+  //   icon: "i-heroicons-bell-alert",
+  //   to: "/accountManagement",
+  //   tooltip: {
+  //     text: "账号管理",
+  //   },
+  // },
   [
     {
       label: "退出登录",
