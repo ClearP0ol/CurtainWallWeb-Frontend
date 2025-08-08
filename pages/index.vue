@@ -125,7 +125,7 @@ const modulesLine2 = reactive([
 const modulesLine3 = reactive([
   {
     title: "幕墙韧性评估",
-    description: "管理账号用户名及密码",
+    description: "用于幕墙韧性多维数据分析评估和预警",
     target_address: "/resilience/views/DataSetsView",
     permissionKey: "",
     icon: "i-heroicons-bell-alert",
