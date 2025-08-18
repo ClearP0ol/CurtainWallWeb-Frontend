@@ -28,7 +28,7 @@
             ></el-switch>
           </template>
         </el-table-column>
-        <el-table-column label="3D模型权限" prop="access_system_a">
+        <el-table-column label="幕墙韧性评估权限" prop="access_system_a">
           <template #default="{ row }">
             <el-switch
               v-model="row.access_system_a"
