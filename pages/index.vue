@@ -80,20 +80,29 @@ const userAuth = ref({});
 
 
 const modulesLine1 = reactive([
+
   {
-    title: "3D建筑模型",
-    description: "用于查看3D建筑模型，可视化反映建筑问题",
-    target_address: "/3DModel",
-    icon: "i-simple-icons-googlehome",
-    permissionKey: "access_system_a",
+    title: "幕墙振动数据检测与展示",
+    description: "用于检测和展示幕墙的振动数据",
+    target_address: "/vibration/dashboard",
+    permissionKey: "access_system_v",
+    icon: "i-simple-icons-tailwindcss",
   },
   {
-    title: "石材污渍检测",
-    description: "用于识别建筑石材幕墙表面污渍",
-    target_address: "/stonedirty/mainpage",
-    icon: "i-heroicons-fire",
-    permissionKey: "access_system_b",
+    title: "幕墙韧性评估",
+    description: "用于幕墙韧性多维数据分析评估和预警",
+    target_address: "/resilience/views/DataSetsView",
+    permissionKey: "",
+    icon: "i-simple-icons-testcafe",
   },
+  // {
+  //   title: "3D建筑模型",
+  //   description: "用于查看3D建筑模型，可视化反映建筑问题",
+  //   target_address: "/3DModel",
+  //   icon: "i-simple-icons-googlehome",
+  //   permissionKey: "access_system_a",
+  // },
+
 
 
 ]);
@@ -114,22 +123,17 @@ const modulesLine2 = reactive([
     icon: "i-simple-icons-affinitypublisher",
   },
   {
-    title: "幕墙振动数据检测与展示",
-    description: "用于检测和展示幕墙的振动数据",
-    target_address: "/vibration/dashboard",
-    permissionKey: "access_system_v",
-    icon: "i-simple-icons-tailwindcss",
+    title: "石材污渍检测",
+    description: "用于识别建筑石材幕墙表面污渍",
+    target_address: "/stonedirty/mainpage",
+    icon: "i-heroicons-fire",
+    permissionKey: "access_system_b",
   },
+
 ]);
 
 const modulesLine3 = reactive([
-  {
-    title: "幕墙韧性评估",
-    description: "用于幕墙韧性多维数据分析评估和预警",
-    target_address: "/resilience/views/DataSetsView",
-    permissionKey: "",
-    icon: "i-simple-icons-testcafe",
-  },
+
   {
     title: "用户管理",
     description: "管理用户权限",

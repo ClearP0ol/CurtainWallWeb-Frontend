@@ -131,77 +131,6 @@ const links = reactive([
     },
   },
   {
-    id: "3DBuildingModel",
-    label: "3D建筑模型",
-    to: "/3DModel",
-    icon: "i-simple-icons-googlehome",
-    tooltip: {
-      text: "3D建筑模型",
-    },
-    //click: goto3DModel,
-  },
-  {
-    id: "stoneDirty",
-    label: "石材污渍检测",
-    to: "/stonedirty/mainpage",
-    // to: "/userManage",
-    icon: "i-heroicons-fire",
-    tooltip: {
-      text: "石材污渍检测",
-    },
-    defaultOpen: false,
-    children: [
-      {
-        label: "上传图片",
-        to: "/stonedirty/mainpage",
-        exact: true,
-      },
-      {
-        label: "历史图片",
-        to: "/stonedirty/otherpage",
-      },
-    ],
-
-  },
-  // {
-  //   id: "corrosiondetection",
-  //   label: "金属锈蚀检测",
-  //   //icon: "i-amazon-s3",
-  //   icon: "i-simple-icons-amazons3",
-  //   defaultOpen: false,
-  //   children: [
-  //     {
-  //       label: "上传图片",
-  //       to: "/corrosiondetection/detect",
-  //       exact: true,
-  //     },
-  //   ],
-
-  // },
-  {
-    id: "stoneCrack",
-    label: "石材裂缝检测",
-    icon: "i-simple-icons-affinitypublisher",
-    to: "/crackdetect",
-    //to: "http://1.92.72.113:5050",
-    defaultOpen: false,
-    children: [
-      {
-        label: "检测中心",
-        to : "/crackdetect",
-        exact: true,
-      },
-      {
-        label:"历史记录",
-        to : "/crackdetect/history",
-      },
-      {
-        label: "数据集一览",
-        to: "/crackdetect/datasets",
-      }
-    ]
-  },
-  {
     id: "wind",
     label: "震动数据检测",
     icon: "i-simple-icons-tailwindcss",
@@ -245,6 +174,178 @@ const links = reactive([
       // shortcuts: ["G", "H"],
     },
   },
+
+  {
+    id: "resilienceAssessment",
+    label: "幕墙韧性评估",
+    icon: "i-simple-icons-testcafe",
+    to: "/resilience",
+    defaultOpen: false,
+    children: [
+      {
+        id: "dataset",
+        label: "数据集管理",
+        icon: "heroicons-solid:database",
+        to: "/resilience/views/DataSetsView",
+        defaultOpen: false,
+        tooltip: {
+          text: "数据集管理",
+          shortcuts: ["G", "M"],
+        }
+      },
+      {
+        id: "analysisJob",
+        label: "分析任务",
+        icon: "heroicons-solid:calculator",
+        to: "/resilience/views/DataSetsView",
+        defaultOpen: false,
+        tooltip: {
+          text: "分析任务",
+          shortcuts: ["G", "M"],
+        },
+        children: [
+          {
+            label: "模型列表",
+            to: "/resilience/views/AnalysisModelsView",
+          },
+          {
+            label: "任务管理",
+            to: "/resilience/views/AnalysisJobView",
+            exact: true,
+          },
+        ],
+      },
+      {
+        id: "visualization",
+        label: "可视化",
+        icon: "heroicons-solid:computer-desktop",
+        to: "/resilience/visualization",
+        defaultOpen: false,
+        tooltip: {
+          text: "可视化",
+          shortcuts: ["G", "M"],
+        },
+        children: [
+          {
+            label: "聚类分析",
+            to: "/resilience/views/VisualizationClusterView",
+          },
+          {
+            label: "雷达图",
+            to: "/resilience/views/VisualizationRadarView",
+          },
+          {
+            label: "热力图",
+            to: "/resilience/views/VisualizationHeatMapView",
+          },
+          {
+            label: "剖面分析",
+            to: "/resilience/views/VisualizationSliceView",
+          },
+        ],
+      },
+      {
+        id: "reports",
+        label: "报告管理",
+        icon: "heroicons-solid:document-report",
+        to: "/resilience/reports",
+        defaultOpen: false,
+        tooltip: {
+          text: "报告管理",
+          shortcuts: ["G", "M"],
+        },
+        children: [
+          {
+            label: "报告生成",
+            to: "/resilience/views/ReportsGenerateView",
+          },
+          {
+            label: "历史报告",
+            to: "/resilience/views/ReportsHistoryView",
+            exact: true,
+          },
+        ],
+      },
+    ],
+    tooltip: {
+      text: "幕墙韧性评估",
+    },
+  },
+
+  // {
+  //   id: "3DBuildingModel",
+  //   label: "3D建筑模型",
+  //   to: "/3DModel",
+  //   icon: "i-simple-icons-googlehome",
+  //   tooltip: {
+  //     text: "3D建筑模型",
+  //   },
+  //   //click: goto3DModel,
+  // },
+
+  {
+    id: "stoneCrack",
+    label: "石材裂缝检测",
+    icon: "i-simple-icons-affinitypublisher",
+    to: "/crackdetect",
+    //to: "http://1.92.72.113:5050",
+    defaultOpen: false,
+    children: [
+      {
+        label: "检测中心",
+        to : "/crackdetect",
+        exact: true,
+      },
+      {
+        label:"历史记录",
+        to : "/crackdetect/history",
+      },
+      {
+        label: "数据集一览",
+        to: "/crackdetect/datasets",
+      }
+    ]
+  },
+  {
+    id: "stoneDirty",
+    label: "石材污渍检测",
+    to: "/stonedirty/mainpage",
+    // to: "/userManage",
+    icon: "i-heroicons-fire",
+    tooltip: {
+      text: "石材污渍检测",
+    },
+    defaultOpen: false,
+    children: [
+      {
+        label: "上传图片",
+        to: "/stonedirty/mainpage",
+        exact: true,
+      },
+      {
+        label: "历史图片",
+        to: "/stonedirty/otherpage",
+      },
+    ],
+
+  },
+  // {
+  //   id: "corrosiondetection",
+  //   label: "金属锈蚀检测",
+  //   //icon: "i-amazon-s3",
+  //   icon: "i-simple-icons-amazons3",
+  //   defaultOpen: false,
+  //   children: [
+  //     {
+  //       label: "上传图片",
+  //       to: "/corrosiondetection/detect",
+  //       exact: true,
+  //     },
+  //   ],
+
+  // },
+
+
   // {
   //   id: "segment",
   //   label: "幕墙材质分割",
@@ -356,102 +457,7 @@ const links = reactive([
   //     },
   //   ],
   // },
-  {
-    id: "resilienceAssessment",
-    label: "幕墙韧性评估",
-    icon: "i-simple-icons-testcafe",
-    to: "/resilience",
-    defaultOpen: false,
-    children: [
-      {
-        id: "dataset",
-        label: "数据集管理",
-        icon: "heroicons-solid:database",
-        to: "/resilience/views/DataSetsView",
-        defaultOpen: false,
-        tooltip: {
-          text: "数据集管理",
-          shortcuts: ["G", "M"],
-        }
-      },
-      {
-        id: "analysisJob",
-        label: "分析任务",
-        icon: "heroicons-solid:calculator",
-        to: "/resilience/views/DataSetsView",
-        defaultOpen: false,
-        tooltip: {
-          text: "分析任务",
-          shortcuts: ["G", "M"],
-        },
-        children: [
-          {
-            label: "模型列表",
-            to: "/resilience/views/AnalysisModelsView",
-          },
-          {
-            label: "任务管理",
-            to: "/resilience/views/AnalysisJobView",
-            exact: true,
-          },
-        ],
-      },
-      {
-        id: "visualization",
-        label: "可视化",
-        icon: "heroicons-solid:computer-desktop",
-        to: "/resilience/visualization",
-        defaultOpen: false,
-        tooltip: {
-          text: "可视化",
-          shortcuts: ["G", "M"],
-        },
-        children: [
-          {
-            label: "聚类分析",
-            to: "/resilience/views/VisualizationClusterView",
-          },
-          {
-            label: "雷达图",
-            to: "/resilience/views/VisualizationRadarView",
-          },
-          {
-            label: "热力图",
-            to: "/resilience/views/VisualizationHeatMapView",
-          },
-          {
-            label: "剖面分析",
-            to: "/resilience/views/VisualizationSliceView",
-          },
-        ],
-      },
-      {
-        id: "reports",
-        label: "报告管理",
-        icon: "heroicons-solid:document-report",
-        to: "/resilience/reports",
-        defaultOpen: false,
-        tooltip: {
-          text: "报告管理",
-          shortcuts: ["G", "M"],
-        },
-        children: [
-          {
-            label: "报告生成",
-            to: "/resilience/views/ReportsGenerateView",
-          },
-          {
-            label: "历史报告",
-            to: "/resilience/views/ReportsHistoryView",
-            exact: true,
-          },
-        ],
-      },
-    ],
-    tooltip: {
-      text: "幕墙韧性评估",
-    },
-  },
+
   // {
   //   id: "accountManagement",
   //   label: "账号管理",

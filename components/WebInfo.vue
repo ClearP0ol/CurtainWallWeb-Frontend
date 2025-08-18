@@ -5,13 +5,13 @@
   </div>
   <!--
     <UAvatar :src="team.avatar.src" size="md" />
-    
+
     -->
 </template>
 
 <script setup lang="ts">
 const CurtainWeb = [{
-  label: '幕墙脉动',
+  label: '幕墙系统',
   avatar: {
     src: '/assets/images/curtain-wall.png'
   },
