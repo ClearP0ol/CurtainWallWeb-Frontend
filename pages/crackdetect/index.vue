@@ -3,7 +3,7 @@
     <p class="title">石材裂缝检测</p>
     
     <div v-if="store.currentStep">
-      <el-button  type="primary" class="button" :disabled="(store.pickedImage===null || !store.pickedImage.detected) && store.currentStep===2" @click="store.nextStep">
+      <el-button  type="primary" class="button" :disabled="(store.pickedImage===null || !store.pickedImage.detected) && store.currentStep===2" @click="handleButtonClick">
           <p v-if="store.currentStep<3">下一步</p>
           <p v-else>生成报告</p>
       </el-button>
@@ -41,6 +41,7 @@
 
 <script setup>
 import { ref } from 'vue'
+import { useRouter } from 'vue-router'
 import './asset/icon/iconfont.css'
 import pickProject from './steps/pickProject.vue'
 import uploadPicture from './steps/uploadPicture.vue'
@@ -49,6 +50,7 @@ import CrackDetection from './steps/crackDetection.vue'
 
 import { useCrackDetectionStore } from './store/CrackDetection'
 const store = useCrackDetectionStore()
+const router = useRouter()
 
 const steps = ref([
   { title: '选择项目',component: 'pickProject' },
@@ -82,6 +84,26 @@ const getStepIcon = (index) => {
     return baseClass + 'icon-circle1'; // 未完成 - 空心圆
   }
 };
+
+// 处理按钮点击事件
+const handleButtonClick = async () => {
+  if (store.currentStep < 3) {
+    // 如果从分割步骤进入裂缝检测步骤，需要刷新数据
+    if (store.currentStep === 2) {
+      // 可以在这里调用API重新获取最新的分割结果
+      // 或者确保store.pickedImage包含最新数据
+      console.log('即将进入裂缝检测，当前数据:', store.pickedImage)
+    }
+    store.nextStep()
+  } else {
+    // 如果是最后一步（生成报告），跳转到项目详情页面
+    ElMessage.success('裂缝检测完成，正在跳转到编辑报告页面')
+    router.push({
+      path: '/crackdetect/editReport',
+      query: { id: store.projectId }
+    })
+  }
+}
 </script>
 
 <style scoped>

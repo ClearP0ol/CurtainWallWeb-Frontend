@@ -113,6 +113,7 @@ const pickImage = (image) => {
     store.pickedImage = image.segments;
     store.pickedImage.detected = image.detected;
     store.pickedImage.image_id = image.image_id;
+    store.pickedImage.segimages = updatedSegimages;
   }
 };
 
@@ -132,7 +133,18 @@ const startSeg = async () => {
       picked.value.detected = true
       picked.value.segimages = urls.filter(url => !url.includes('segment-whole'))
       picked.value.overview = urls.find(url => url.includes('segment-whole'))
-      store.pickedImage.detected = true;
+      
+      // 修复：完整设置store.pickedImage的数据结构
+      store.pickedImage = {
+        image_path: urls.find(url => url.includes('segment-whole')), // 分割概览图
+        segimages: urls.filter(url => !url.includes('segment-whole')).map(url => ({
+          image_path: url,
+          crackimages: [] // 初始化裂缝检测结果数组
+        })),
+        detected: true,
+        image_id: picked.value.image_id
+      }
+      
       const targetImage = carouselImages.value.find(img => img.image_id === picked.value.image_id);
       if (targetImage) {
         targetImage.detected = true;
@@ -148,6 +160,10 @@ const startSeg = async () => {
         if (overviewResponse.data.segoverview_id) {
 
           store.pickedImage.segId = overviewResponse.data.segoverview_id;
+
+          // 修复：创建一个数组来保存更新后的segimages
+          const updatedSegimages = [];
+          
           for (const url of picked.value.segimages) {
             // 先上传几何变换图片作为 segimage
             try {
@@ -155,16 +171,24 @@ const startSeg = async () => {
                 segoverview_id: overviewResponse.data.segoverview_id,
                 image_path: url
               })
-
-              if (!segImageResponse.data.seg_id) {
+          
+              // 修复：当seg_id存在时才保存数据
+              if (segImageResponse.data.seg_id) {
+                updatedSegimages.push({
+                  image_path: url,
+                  segId: segImageResponse.data.seg_id,  // 保存segId
+                  crackimages: []
+                });
+              } else {
                 console.error('Failed to add segment image:', segImageResponse.data)
-                continue
               }
             } catch (error) {
               console.error('Error adding segment image:', error)
-              continue
             }
           }
+          
+          // 修复：更新store.pickedImage.segimages为包含segId的完整数据
+          store.pickedImage.segimages = updatedSegimages;
         } else {
           throw new Error('添加分割概览失败')
         }
@@ -201,7 +225,8 @@ const fetchPendingImages = async (projectId) => {
             segimages: overview?.segimages.map(seg => ({
               segId: seg.seg_id,
               image_path: seg.image_path,
-              crackimages: seg.crackimages.map(crack => crack.image_path)
+              crackimages: seg.crackimages.map(crack => crack.image_path),
+              have_crack: seg.have_crack
             }))
           } 
         };

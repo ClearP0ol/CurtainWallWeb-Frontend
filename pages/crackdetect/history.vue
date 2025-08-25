@@ -41,6 +41,13 @@
           >
             查看详情
           </el-button>
+          <el-button 
+            type="warning" 
+            link
+            @click="editReport(project)"
+          >
+            编辑报告
+          </el-button>
           <el-popconfirm
             title="确定要删除这个项目吗？"
            
@@ -307,6 +314,14 @@ const deleteProject = async (projectId) => {
   }
 }
 
+// 编辑报告
+const editReport = (project) => {
+  router.push({
+    path: '/crackdetect/editReport',
+    query: { id: project.project_id }
+  })
+}
+
 onMounted(() => {
   fetchProjects()
 })
@@ -317,6 +332,9 @@ onMounted(() => {
   padding: 20px;
   background-color: #F5F7FA;
   min-height: 100vh;
+  /* 添加以下样式确保可以滚动 */
+  overflow-y: auto;
+  max-height: 100vh;
 }
 
 .header {
@@ -455,4 +473,4 @@ onMounted(() => {
   height: 150px;
   object-fit: contain;
 }
-</style> 
+</style>

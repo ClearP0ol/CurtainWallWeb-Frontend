@@ -290,10 +290,130 @@ const generateReport = () => {
 }
 
 // 打印报告
-const printReport = () => {
-  setTimeout(() => {
-    window.print()
-  }, 300)
+const printReport = async () => {
+  try {
+    ElMessage.info('正在生成打印页面，请稍候...')
+    
+    // 创建新窗口
+    const printWindow = window.open('', '_blank', 'width=800,height=600')
+    
+    // 获取报告内容
+    const reportHtml = reportContent.value.innerHTML
+    
+    // 写入HTML内容
+    printWindow.document.write(`
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>检测报告 - ${projectDetails.value.project_name}</title>
+        <meta charset="utf-8">
+        <style>
+          body {
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+            margin: 20px;
+            line-height: 1.6;
+          }
+          .report-header {
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #333;
+            padding-bottom: 20px;
+          }
+          .report-header h1 {
+            color: #333;
+            margin-bottom: 10px;
+          }
+          .report-overview {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 30px;
+            page-break-inside: avoid;
+          }
+          .report-image-item {
+            flex: 1;
+            text-align: center;
+          }
+          .report-image-item h4 {
+            margin-bottom: 10px;
+            color: #666;
+          }
+          .report-result-row {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 30px;
+            page-break-inside: avoid;
+          }
+          .report-result-item {
+            flex: 1;
+            text-align: center;
+          }
+          img {
+            max-width: 100%;
+            height: auto;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+          }
+          .report-image-section {
+            page-break-after: always;
+            margin-bottom: 40px;
+          }
+          .report-image-section:last-child {
+            page-break-after: auto;
+          }
+          @media print {
+            body { margin: 0; }
+            .report-image-section { page-break-after: always; }
+            .report-result-row { page-break-inside: avoid; }
+          }
+        </style>
+      </head>
+      <body>
+        ${reportHtml}
+      </body>
+      </html>
+    `)
+    
+    printWindow.document.close()
+    
+    // 等待新窗口中的图片加载
+    const images = printWindow.document.querySelectorAll('img')
+    const imageLoadPromises = Array.from(images).map(img => {
+      return new Promise((resolve) => {
+        if (img.complete && img.naturalHeight !== 0) {
+          resolve()
+        } else {
+          const handleLoad = () => {
+            img.removeEventListener('load', handleLoad)
+            img.removeEventListener('error', handleLoad)
+            resolve()
+          }
+          img.addEventListener('load', handleLoad)
+          img.addEventListener('error', handleLoad)
+        }
+      })
+    })
+    
+    // 等待所有图片加载完成
+    await Promise.race([
+      Promise.all(imageLoadPromises),
+      new Promise(resolve => setTimeout(resolve, 15000)) // 15秒超时
+    ])
+    
+    // 额外延迟确保渲染完成
+    await new Promise(resolve => setTimeout(resolve, 1000))
+    
+    // 执行打印
+    printWindow.print()
+    
+    // 打印完成后关闭窗口
+    setTimeout(() => {
+      printWindow.close()
+    }, 1000)
+    
+  } catch (error) {
+    console.error('打印失败:', error)
+    ElMessage.error('打印失败，请重试')
+  }
 }
 
 // 关闭报告对话框
@@ -552,4 +672,4 @@ h5 {
     height: auto;
   }
 }
-</style> 
+</style>

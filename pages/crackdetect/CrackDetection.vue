@@ -283,9 +283,14 @@ const finishDetection = async () => {
         }
       })
     } else {
-      // 如果没有未处理的图片，提示用户并跳转到历史记录页面
-      ElMessage.success('所有图片已处理完成，请前往历史记录页面查看记录并打印报告')
-      router.push('/crackdetect/history')
+      // 如果没有未处理的图片，直接跳转到项目详情页面
+      ElMessage.success('所有图片已处理完成，正在跳转到项目详情页面')
+      router.push({
+        path: '/crackdetect/ProjectDetail',
+        query: {
+          project_id: projectId
+        }
+      })
     }
   } catch (error) {
     console.error('Error in finishDetection:', error)
@@ -403,4 +408,4 @@ onMounted(() => {
   font-size: 13px;
   color: #606266;
 }
-</style> 
+</style>
