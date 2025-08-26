@@ -154,10 +154,11 @@ const deleteProject = async (projectId) => {
   }
 }
 
-// 格式化日期
 const formatDate = (dateString) => {
   const date = new Date(dateString)
-  return date.toLocaleString('zh-CN', {
+  // 直接加8小时（8 * 60 * 60 * 1000 毫秒）
+  const beijingTime = new Date(date.getTime() + 8 * 60 * 60 * 1000)
+  return beijingTime.toLocaleString('zh-CN', {
     year: 'numeric',
     month: '2-digit',
     day: '2-digit',

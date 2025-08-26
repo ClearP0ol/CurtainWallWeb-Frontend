@@ -344,64 +344,103 @@ const startCrackDetection = async () => {
     let allDetectionSuccess = true
     globalLoading.value = true
 
+    // 为检测请求创建重试函数
+    const retryDetectionRequests = async (url, maxRetries = 3) => {
+      for (let attempt = 1; attempt <= maxRetries; attempt++) {
+        try {
+          console.log(`开始第 ${attempt} 次检测请求: ${url}`)
+          const [response1, response2] = await Promise.all([
+            axios.post('/crackdetection/segformer/predict', {
+              url: url
+            }),
+            axios.post('/crackdetection/crack-detection/detect', {
+              url: url
+            })
+          ])
+          
+          // 检查HTTP状态码
+          if (response1.status !== 200 || response2.status !== 200) {
+            throw new Error(`HTTP错误 - response1状态: ${response1.status}, response2状态: ${response2.status}`)
+          }
+          
+          // 检查业务逻辑是否成功
+          if (response1.data.success && response2.data.success) {
+            console.log(`第 ${attempt} 次请求成功`)
+            return [response1, response2]
+          } else {
+            // 业务逻辑失败，抛出错误以触发重试
+            const error1 = !response1.data.success ? `segformer预测失败: ${response1.data.message || '未知错误'}` : ''
+            const error2 = !response2.data.success ? `crack-detection检测失败: ${response2.data.message || '未知错误'}` : ''
+            throw new Error(`业务逻辑失败 - ${error1} ${error2}`.trim())
+          }
+        } catch (error) {
+          console.warn(`检测请求失败，第 ${attempt} 次尝试:`, error.message)
+          console.warn('错误详情:', error)
+          
+          // 检查是否是HTTP错误（包括500错误）
+          if (error.response) {
+            console.warn(`HTTP错误状态码: ${error.response.status}`)
+          }
+          
+          if (attempt === maxRetries) {
+            console.error(`检测请求失败，已重试 ${maxRetries} 次: ${error.message}`)
+            throw new Error(`检测请求失败，已重试 ${maxRetries} 次: ${error.message}`)
+          }
+          
+          console.log(`等待 ${1000 * attempt}ms 后进行第 ${attempt + 1} 次重试...`)
+          // 等待一段时间后重试（指数退避）
+          await new Promise(resolve => setTimeout(resolve, 1000 * attempt))
+        }
+      }
+    }
+
     // 对每个几何变换的图片进行检测
     for (let i = 0; i < picked.value.segimages.length; i++) {
       const seg = picked.value.segimages[i]
 
       try {
-        const [response1, response2] = await Promise.all([
-          axios.post('/crackdetection/segformer/predict', {
-            url: seg.image_path
-          }),
-          axios.post('/crackdetection/crack-detection/detect', {
-            url: seg.image_path
-          })
-        ])
+        const [response1, response2] = await retryDetectionRequests(seg.image_path)
 
-        if (response1.data.success && response2.data.success) {
-          // 添加第一个模型的检测结果
-          crackResult.value.push({
-            url: response1.data.data,
-            have_crack: response1.data.have_crack
+        // 添加第一个模型的检测结果
+        crackResult.value.push({
+          url: response1.data.data,
+          have_crack: response1.data.have_crack ? "1" : "0"  // 将布尔值转换为字符串
+        })
+        
+        // 添加第二个模型的检测结果（只使用 mask_url）
+        crackResult2.value.push({
+          url: response2.data.data.mask_url
+        })
+
+        // 修改：每完成一个区域的检测，进度增加1
+        progress.value = i + 1
+        seg.crackimages.push(response1.data.data);
+        seg.crackimages.push(response2.data.data.mask_url);
+
+        // 上传两个模型的检测结果
+        try {
+          // 上传第一个模型的检测结果
+          console.log('seg_id:', seg.segId)
+          await axios.post('/crackdetection/addCrackImage', {
+            seg_id: seg.segId,
+            image_path: response1.data.data
           })
           
-          // 添加第二个模型的检测结果（只使用 mask_url）
-          crackResult2.value.push({
-            url: response2.data.data.mask_url
+          // 上传第二个模型的检测结果
+          await axios.post('/crackdetection/addCrackImage', {
+            seg_id: seg.segId,
+            image_path: response2.data.data.mask_url
           })
 
-          // 修改：每完成一个区域的检测，进度增加1
-          progress.value = i + 1
-          seg.crackimages.push(response1.data.data);
-          seg.crackimages.push(response2.data.data.mask_url);
-
-          // 上传两个模型的检测结果
-          try {
-            // 上传第一个模型的检测结果
-            console.log('seg_id:', seg.segId)
-            await axios.post('/crackdetection/addCrackImage', {
-              seg_id: seg.segId,
-              image_path: response1.data.data
-            })
-            
-            // 上传第二个模型的检测结果
-            await axios.post('/crackdetection/addCrackImage', {
-              seg_id: seg.segId,
-              image_path: response2.data.data.mask_url
-            })
-
-            // 新增：调用更新分割图像的裂缝状态接口
-            await axios.post('/crackdetection/update_seg_image', {
-              seg_id: seg.segId,
-              have_crack: response1.data.have_crack ? "1" : "0"
-            })
-            
-            console.log(`区域 ${i + 1} 裂缝状态已更新: ${response1.data.have_crack ? '有裂缝' : '无裂缝'}`)
-          } catch (error) {
-            console.error('Error uploading crack detection results or updating seg image:', error)
-          }
-        } else {
-          throw new Error(`裂缝检测失败: ${seg.image_path}`)
+          // 新增：调用更新分割图像的裂缝状态接口
+          await axios.post('/crackdetection/update_seg_image', {
+            seg_id: seg.segId,
+            have_crack: response1.data.have_crack ? "1" : "0"
+          })
+          
+          console.log(`区域 ${i + 1} 裂缝状态已更新: ${response1.data.have_crack ? '有裂缝' : '无裂缝'}`)
+        } catch (error) {
+          console.error('Error uploading crack detection results or updating seg image:', error)
         }
       } catch (error) {
         allDetectionSuccess = false
@@ -413,15 +452,43 @@ const startCrackDetection = async () => {
 
     // 所有检测完成后，更新状态
     if (allDetectionSuccess && crackResult.value.length > 0) {
-      // 检查是否有裂缝
-      const hasCrack = crackResult.value.some(result => result.have_crack)
+      // 添加详细的调试日志
+      console.log('=== 检测结果分析 ===')
+      console.log('crackResult.value:', crackResult.value)
+      
+      // 检查每个结果的详细信息
+      crackResult.value.forEach((result, index) => {
+        console.log(`第${index + 1}个区域:`, {
+          url: result.url,
+          have_crack: result.have_crack,
+          have_crack_type: typeof result.have_crack,
+          is_crack: result.have_crack === "1" || result.have_crack === true
+        })
+      })
+      
+      // 检查是否有裂缝 - 修复判断逻辑
+      const hasCrack = crackResult.value.some(result => {
+        const isCrack = result.have_crack === "1" || result.have_crack === true
+        console.log(`检查结果: ${result.have_crack} -> ${isCrack}`)
+        return isCrack
+      })
+      
+      console.log('最终判断结果:', hasCrack ? '有裂缝' : '无裂缝')
+      console.log('===================')
+      
       try {
         // 上传检测状态
-        await axios.post('/crackdetection/update_image', {
+        const updateData = {
           image_id: store.pickedImage.image_id,
           have_crack: hasCrack ? "1" : "0",
           status: "processed"
-        })
+        }
+        
+        console.log('准备上传的数据:', updateData)
+        
+        await axios.post('/crackdetection/update_image', updateData)
+        
+        console.log('状态更新成功')
       } catch (error) {
         console.error('Error updating image status:', error)
       }
