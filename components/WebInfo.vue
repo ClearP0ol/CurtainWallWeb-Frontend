@@ -11,7 +11,7 @@
 
 <script setup lang="ts">
 const CurtainWeb = [{
-  label: '幕墙系统',
+  label: '智慧幕墙',
   avatar: {
     src: '/assets/images/curtain-wall.png'
   },

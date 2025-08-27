@@ -82,7 +82,7 @@ const userAuth = ref({});
 const modulesLine1 = reactive([
 
   {
-    title: "幕墙振动数据检测与展示",
+    title: "幕墙振动监测",
     description: "用于检测和展示幕墙的振动数据",
     target_address: "/vibration/dashboard",
     permissionKey: "access_system_v",

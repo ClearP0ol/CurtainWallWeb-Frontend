@@ -76,14 +76,14 @@ const items = computed(() => [
       click: () => (isHelpSlideoverOpen.value = true),
     },
   ],
-  [
-    {
-      label: "GitHub",
-      icon: "i-simple-icons-github",
-      to: "https://github.com/CurtainWallMonitoringPlatform",
-      target: "_blank",
-    },
-  ],
+  // [
+  //   {
+  //     label: "GitHub",
+  //     icon: "i-simple-icons-github",
+  //     to: "https://github.com/CurtainWallMonitoringPlatform",
+  //     target: "_blank",
+  //   },
+  // ],
   [
     {
       id: "accountManagement",

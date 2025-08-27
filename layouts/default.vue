@@ -132,7 +132,7 @@ const links = reactive([
   },
   {
     id: "wind",
-    label: "震动数据检测",
+    label: "幕墙振动监测",
     icon: "i-simple-icons-tailwindcss",
     to: "/monitor",
     defaultOpen: false,
