@@ -8,7 +8,7 @@
           <el-tooltip content="X/Y/Z轴及CH1/CH2通道异常数据监控" placement="bottom">
             <el-icon><InfoFilled /></el-icon>
           </el-tooltip>
-          <el-button type="primary" @click="router.push('/subindex')">返回主页</el-button>
+          <el-button type="primary" @click="router.push('/')">返回主页</el-button>
         </div>
       </div>
     </div>
@@ -99,16 +99,16 @@
 
         <!-- 查询按钮 -->
         <div class="flex justify-end mt-4 space-x-4">
-          <el-button 
-            type="primary" 
+          <el-button
+            type="primary"
             @click="handleSearch"
             :loading="loading"
             :disabled="!params.device || !params.start_time || !params.end_time || !params.direction"
           >
             查询
           </el-button>
-          <el-button 
-            type="primary" 
+          <el-button
+            type="primary"
             @click="downloadData"
             :loading="loading"
             :disabled="!params.device || !params.start_time || !params.end_time || !params.direction"
@@ -126,9 +126,9 @@
             <el-icon class="is-loading"><Loading /></el-icon>
           </div>
           <div v-else-if="chartData && chartData.length > 0" class="table-container w-[90%]">
-            <el-table 
-              :data="chartData" 
-              border 
+            <el-table
+              :data="chartData"
+              border
               style="width: 100%"
               height="500"
               :max-height="500"
@@ -183,14 +183,14 @@ const deviceList = ref([
   { device_id: '9A0D1958', device_name: '安楼外幕墙2E' }, // 更新自332F78D
   { device_id: '1A193E69', device_name: '安楼外幕墙1B' }, // 更新自E43AC643
   { device_id: 'F853ED49', device_name: '安楼外幕墙2F' }, // 保持不变
-  
+
   // 综合楼(衷和楼)设备 - 使用最新设备ID
   { device_id: '4787BE3A', device_name: '衷和楼测点7' }, // 保持不变
   { device_id: '612B04ED', device_name: '衷和楼#1H' },   // 更新自7749E4D9
   { device_id: '8361D7CD', device_name: '衷和楼#2I' },   // 更新自7A6BA8C9
   { device_id: '8850A7D7', device_name: '衷和楼#2J' },   // 保持不变
   { device_id: 'E884C99D', device_name: '衷和楼#1G' },   // 保持不变
-  
+
   // 应力计设备
   { device_id: '0002', device_name: '安楼外幕墙2Y' },
   { device_id: '0020', device_name: '衷和楼#2Y' }
@@ -225,7 +225,7 @@ const cascaderProps = {
 const cascaderDevices = computed(() => {
   // 辨识应力计设备ID
   const strainDeviceIds = ['0002', '0020'];
-  
+
   // 按建筑物类型分组设备
   const anlouDevices = deviceList.value
     .filter(d => d.device_name.includes('安楼') && !strainDeviceIds.includes(d.device_id))
@@ -340,13 +340,13 @@ const params = reactive({
 const filteredDirectionOptions = computed(() => {
   // 获取当前选择的设备ID
   const deviceId = getDeviceId(params.device);
-  
+
   // 如果未选择设备，返回所有方向
   if (!deviceId) return directionOptions;
-  
+
   // 判断设备类型
   const isStrainDevice = deviceId === '0002' || deviceId === '0020';
-  
+
   // 根据设备类型返回不同的方向选项
   if (isStrainDevice) {
     // 应力计设备只显示CH1和CH2
@@ -361,20 +361,20 @@ const filteredDirectionOptions = computed(() => {
 watch(() => params.device, (newDevice) => {
   // 获取当前选择的设备ID
   const deviceId = getDeviceId(newDevice);
-  
+
   // 如果未选择设备，不做任何操作
   if (!deviceId) return;
-  
+
   // 判断设备类型
   const isStrainDevice = deviceId === '0002' || deviceId === '0020';
-  
+
   // 获取当前选择的方向值
   const directionValue = getDirectionValue(params.direction);
-  
+
   // 检查当前方向是否适用于当前设备类型
   if (directionValue) {
     const isStrainDirection = directionValue.startsWith('ch');
-    
+
     // 如果设备类型和方向类型不匹配，重置方向选择
     if ((isStrainDevice && !isStrainDirection) || (!isStrainDevice && isStrainDirection)) {
       // 重置为对应设备类型的默认方向
@@ -407,12 +407,12 @@ const getDirectionLabel = (direction: string): string => {
 // 获取设备ID的辅助函数
 const getDeviceId = (deviceValue: any): string => {
   if (!deviceValue) return '';
-  
+
   // 如果是数组，取第二个元素（实际的设备ID）
   if (Array.isArray(deviceValue) && deviceValue.length > 1) {
     return deviceValue[1];
   }
-  
+
   // 如果不是数组或是单元素数组，直接返回
   return Array.isArray(deviceValue) ? deviceValue[0] : deviceValue;
 }
@@ -420,12 +420,12 @@ const getDeviceId = (deviceValue: any): string => {
 // 获取方向值的辅助函数
 const getDirectionValue = (directionValue: any): string => {
   if (!directionValue) return '';
-  
+
   // 如果是数组，取最后一个元素
   if (Array.isArray(directionValue)) {
     return directionValue[directionValue.length - 1];
   }
-  
+
   // 如果不是数组，直接返回
   return directionValue;
 }
@@ -434,63 +434,63 @@ const getDirectionValue = (directionValue: any): string => {
 const fetchData = async () => {
   loading.value = true;
   chartData.value = []; // 清空之前的数据
-  
+
   try {
     // 从级联选择器获取设备ID和方向
     const deviceId = getDeviceId(params.device);
     const directionValue = getDirectionValue(params.direction);
-    
+
     if (!deviceId) {
       throw new Error('无效的设备ID');
     }
-    
+
     if (!directionValue) {
       throw new Error('无效的方向值');
     }
-    
+
     console.log('使用设备ID:', deviceId);
     console.log('使用方向:', directionValue);
-    
+
     // 使用设备名称而不是设备ID
     const deviceName = deviceList.value.find(device => device.device_id === deviceId)?.device_name;
-    
+
     if (!deviceName) {
       throw new Error('未找到设备名称');
     }
-    
+
     const queryParams = {
       device: deviceName, // 使用设备名称
       direction: directionValue,
       start_time: params.start_time,
       end_time: params.end_time
     };
-    
+
     // 使用远程服务器地址
     const baseUrl = getApiBaseUrl();
     console.log('使用API服务器:', baseUrl);
-    
+
     // 使用正确的URL路径 - 优先使用/data前缀
     const apiUrl = `${baseUrl}/data/get_abnormal_data`;
     console.log('请求URL:', apiUrl);
     console.log('请求参数:', queryParams);
-    
+
     const url = `${apiUrl}?${new URLSearchParams(queryParams).toString()}`;
-    
+
     const response = await fetch(url);
-    
+
     if (!response.ok) {
       throw new Error(`请求失败: ${response.status} ${response.statusText}`);
     }
-    
+
     const result = await response.json();
     console.log('响应结果:', result);
-    
+
     if (result.status === 'success' && Array.isArray(result.data)) {
       if (result.data.length > 0) {
         // 确保每条记录都有device_id和device_name字段
         chartData.value = result.data.map(item => {
           const record = { ...item };
-          
+
           // 如果后端返回的数据没有device_id，但有device_name
           if (!record.device_id && record.device_name) {
             // 尝试根据device_name找到对应的device_id
@@ -502,7 +502,7 @@ const fetchData = async () => {
               record.device_id = record.device_name;
             }
           }
-          
+
           return record;
         });
         console.log('获取到数据:', chartData.value);
@@ -532,7 +532,7 @@ const handleSearch = async () => {
     else if (!params.direction) message = '请选择异常方向';
     else if (!params.start_time) message = '请选择开始时间';
     else if (!params.end_time) message = '请选择结束时间';
-    
+
     ElMessage.warning(message);
     return;
   }
@@ -577,7 +577,7 @@ const downloadData = async () => {
     else if (!params.direction) message = '请选择异常方向';
     else if (!params.start_time) message = '请选择开始时间';
     else if (!params.end_time) message = '请选择结束时间';
-    
+
     ElMessage.warning(message);
     return;
   }
@@ -586,39 +586,39 @@ const downloadData = async () => {
     ElMessage.warning('开始时间不能晚于结束时间');
     return;
   }
-  
+
   loading.value = true;
   try {
     // 从级联选择器获取设备ID和方向
     const deviceId = getDeviceId(params.device);
     const directionValue = getDirectionValue(params.direction);
-    
+
     if (!deviceId) {
       throw new Error('无效的设备ID');
     }
-    
+
     if (!directionValue) {
       throw new Error('无效的方向值');
     }
-    
+
     console.log('下载数据 - 使用设备ID:', deviceId);
     console.log('下载数据 - 使用方向:', directionValue);
-    
+
     const queryParams = {
       device: deviceId,
       direction: directionValue,
       start_time: params.start_time,
       end_time: params.end_time
     };
-    
+
     // 使用远程服务器地址
     const baseUrl = getApiBaseUrl();
     console.log('使用API服务器(下载):', baseUrl);
-    
+
     // 使用正确的URL路径
     const downloadUrl = `${baseUrl}/data/download_abnormal_data?${new URLSearchParams(queryParams).toString()}`;
     console.log('下载URL:', downloadUrl);
-    
+
     // 创建下载链接
     const a = document.createElement('a');
     a.href = downloadUrl;
@@ -626,7 +626,7 @@ const downloadData = async () => {
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
-    
+
     ElMessage.success('下载请求已发送，请检查您的下载内容');
   } catch (err) {
     console.error('下载失败:', err);
@@ -658,7 +658,7 @@ const updateDeviceOnlineStatus = () => {
   deviceList.value.forEach(device => {
     deviceOnlineStatus.value[device.device_id] = true
   })
-  
+
   // 可以在这里添加实际的设备状态检查逻辑
   // 例如通过API获取设备在线状态
 }
@@ -669,7 +669,7 @@ onMounted(() => {
   // 初始选择安楼外幕墙2D (原A77C5238，现在是55DA00B5)
   const defaultDeviceId = '55DA00B5';
   const defaultDevice = deviceList.value.find(d => d.device_id === defaultDeviceId);
-  
+
   if (defaultDevice) {
     // 根据设备名称确定所属分组
     if (defaultDevice.device_name.includes('安楼')) {
@@ -688,22 +688,22 @@ onMounted(() => {
       params.device = ['安楼设备', deviceList.value[0].device_id];
     }
   }
-  
+
   // 设置默认方向 - 使用y_above_max作为默认方向
   params.direction = ['y', 'y_above_max'];
-  
+
   // 设置默认时间范围 - 过去7天到现在
   const end = new Date();
   const start = sub(end, { days: 7 });
-  
+
   params.start_time = start.toISOString().slice(0, 19).replace('T', ' ');
   params.end_time = end.toISOString().slice(0, 19).replace('T', ' ');
-  
+
   console.log('初始化完成:', params);
-  
+
   // 添加窗口大小变化监听
   window.addEventListener('resize', handleResize);
-  
+
   // 初始化设备在线状态
   updateDeviceOnlineStatus()
 })
@@ -782,11 +782,11 @@ const endDateShortcuts = [
 const disabledStartDate = (time: Date) => {
   // 设置最早可选时间为2023年1月1日
   const earliestDate = new Date('2023-01-01T00:00:00');
-  
+
   // 最晚不能超过当前时间减去1小时
   const latestDate = new Date();
   latestDate.setHours(latestDate.getHours() - 1);
-  
+
   // 验证时间是否在允许范围内
   return time.getTime() < earliestDate.getTime() || time.getTime() > latestDate.getTime();
 };
@@ -798,11 +798,11 @@ const disabledEndDate = (time: Date) => {
   if (params.start_time) {
     earliestDate = new Date(params.start_time);
   }
-  
+
   // 最晚不能超过当前时间减去1小时
   const latestDate = new Date();
   latestDate.setHours(latestDate.getHours() - 1);
-  
+
   // 验证时间是否在允许范围内
   return time.getTime() < earliestDate.getTime() || time.getTime() > latestDate.getTime();
 };
@@ -863,4 +863,4 @@ const disabledEndDate = (time: Date) => {
 :deep(.el-table .cell) {
   text-align: center;
 }
-</style> 
+</style>

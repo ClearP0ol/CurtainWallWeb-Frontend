@@ -1,4 +1,4 @@
-<template> 
+<template>
   <div id="app" class="app-container">
     <div style="position: fixed; right: 10px; top: 15px; z-index: 1000;">
       <el-button type="primary" @click="backToMain">返回主页</el-button>
@@ -9,39 +9,39 @@
       <!-- 参数面板 -->
       <div class="parameter-panel">
         <UForm class="parameter-form">
-        
+
           <div class="parameter-group">
             <h2 class="green-underline-title">台阵选择</h2>
             <hr class="divider" />
-            
+
             <!-- 建筑物选择网格 -->
             <div class="building-grid">
               <div class="building-group">
                 <h3>衷和楼</h3>
                 <div class="device-grid">
-                  <div 
-                    v-for="device in filteredDevices('衷和楼')" 
+                  <div
+                    v-for="device in filteredDevices('衷和楼')"
                     :key="device.value"
                     class="device-item"
                     :class="{ 'active': selectedDevice.value === device.value,
                       'strain-gauge': device.type === 'strainGauge'
                     }"
-                    
+
                     @click="selectDevice(device)"
                   >
                     {{ device.label }}
                   </div>
                 </div>
               </div>
-              
+
               <div class="building-group">
                 <h3>安楼</h3>
                 <div class="device-grid">
-                  <div 
-                    v-for="device in filteredDevices('安楼')" 
+                  <div
+                    v-for="device in filteredDevices('安楼')"
                     :key="device.value"
                     class="device-item"
-                    :class="{ 
+                    :class="{
                       'active': selectedDevice.value === device.value,
                       'strain-gauge': device.type === 'strainGauge'
                     }"
@@ -162,7 +162,7 @@
         </UForm>
       </div>
     </div>
-    
+
     <!-- 消息提示 -->
     <el-message
       v-if="message.show"
@@ -182,14 +182,14 @@ import axios from 'axios';
 
 const API_BASE_URL = 'http://110.42.214.164:8009';
 const backToMain = () => {
-  router.push("/subindex");
+  router.push("/");
 };
 export default {
   name: 'DeviceControlApp',
   setup() {
     const router = useRouter();
     const backToMain = () => {
-      router.push("/subindex");
+      router.push("/");
     };
 
     return {
@@ -213,7 +213,7 @@ export default {
         { value: '衷和楼测点7', label: '衷和楼测点7', building: '衷和楼', type: 'accelerometer' },
         { value: '衷和楼#2Y', label: '衷和楼2Y', building: '衷和楼', type: 'strainGauge' }
       ],
- 
+
       selectedDevice: { value: '安楼外幕墙1A', label: '安楼外幕墙1A', type: 'accelerometer'},
       upperBound: 10,
       lowerBound: 10,
@@ -223,11 +223,11 @@ export default {
       xOffset: 0,  // X偏移
       yOffset: 0,  // Y偏移
       zOffset: 0,   // Z偏移
-      
+
       // 加载状态
       loadingCalibration: false,
       loadingLimits: false,
-      
+
       // 消息提示
       message: {
         show: false,
@@ -251,7 +251,7 @@ export default {
   computed: {
 
   },
-  methods: { 
+  methods: {
     // 显示消息提示
     showMessage(type, content, duration = 3000) {
       ElMessage({
@@ -260,17 +260,17 @@ export default {
         duration: duration
       });
     },
-    
+
     // 筛选指定建筑物的设备
     filteredDevices(buildingName) {
       return this.deviceOptions.filter(device => device.building === buildingName);
     },
-    
+
     // 选择设备
     selectDevice(device) {
       this.selectedDevice = device;
       this.showMessage('info', `已选择: ${device.label}`, 2000);
-      
+
       // 查询阈值
       this.fetchThresholds();
 
@@ -283,7 +283,7 @@ export default {
         }
       });
     },
-    
+
       // 台阵设置应用
     async updateSingle(item) {
       try {
@@ -291,11 +291,11 @@ export default {
         const encodedDeviceName = encodeURIComponent(item.device_name);
         const encodedType = encodeURIComponent(item.type);
         const encodedValue = encodeURIComponent(item.value);
-        
+
         const url = `${API_BASE_URL}/data/update_threshold_or_offset?device_name=${encodedDeviceName}&type=${encodedType}&value=${encodedValue}`;
-        
+
         console.log('请求URL:', url);
-        
+
         // 添加请求超时和错误处理
         const response = await fetch(url, {
           method: 'GET',
@@ -305,13 +305,13 @@ export default {
           },
           timeout: 10000 // 10秒超时
         })
-        
+
         // 检查响应状态
         if (!response.ok) {
           console.warn(`请求失败: ${response.status} ${response.statusText}`);
           return { success: false, error: `状态码 ${response.status}` };
         }
-        
+
         // 安全地解析JSON响应
         try {
           const text = await response.text();
@@ -319,7 +319,7 @@ export default {
           if (!text || text.trim() === '') {
             return { success: true, data: {} };
           }
-          
+
           // 尝试解析JSON
           const data = JSON.parse(text);
           return { success: true, data };
@@ -383,7 +383,7 @@ export default {
         this.loadingCalibration = false;
       }
     },
-    
+
     async applyLimits() {
       this.loadingLimits = true;
       try {
@@ -391,15 +391,15 @@ export default {
           { device_name: this.selectedDevice.value, type: 'email_limit', value: this.emailLimitSetting },
           { device_name: this.selectedDevice.value, type: 'message_limit', value: this.messageLimitSetting },
         ]
-        
+
         const results = await Promise.all(
           updates.map(item => this.updateSingle(item))
         )
-        
+
         // 检查是否所有请求都成功
         const allSuccessful = results.every(result => result && result.success);
         const hasParseWarnings = results.some(result => result && result.parseWarning);
-        
+
         if (allSuccessful) {
           if (hasParseWarnings) {
             this.showMessage('success', `${this.selectedDevice.label} 限值参数已更新，但服务器响应格式异常。`);
@@ -409,7 +409,7 @@ export default {
         } else {
           this.showMessage('warning', `部分限值参数更新可能未成功，请检查网络连接。`);
         }
-        
+
         console.log('批量更新结果:', results);
       } catch (error) {
         this.showMessage('error', `更新失败: ${error.message || '网络错误'}`);
@@ -427,7 +427,7 @@ export default {
             device_type: this.selectedDevice.type
           }
         });
-        
+
         if (response.data.status === 'success') {
           const data = response.data.data;
           this.xOffset = data.x_offset || 0;
@@ -479,7 +479,7 @@ export default {
             device_type: this.selectedDevice.type
           }
         });
-        
+
         if (response.data.status === 'success') {
           return response.data.data;
         } else {
@@ -938,19 +938,19 @@ export default {
     flex-direction: column;
     align-items: flex-start;
   }
-  
+
   .device-grid {
     grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
   }
-  
+
   .parameter-icon {
     margin-right: 5px;
   }
-  
+
   .parameter-row h1 {
     margin-bottom: 5px;
   }
-  
+
   .parameter-group {
     padding: 0.4rem;
   }
@@ -960,12 +960,12 @@ export default {
   .device-grid {
     grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
   }
-  
+
   .device-item {
     padding: 4px 6px;
     font-size: 0.8rem;
   }
-  
+
   .building-group h3 {
     font-size: 0.9rem;
   }
