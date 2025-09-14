@@ -174,10 +174,33 @@ const links = reactive([
       // shortcuts: ["G", "H"],
     },
   },
+  {
+    id: "stoneCrack",
+    label: "石材裂缝检测",
+    icon: "i-simple-icons-affinitypublisher",
+    to: "/crackdetect",
+    //to: "http://1.92.72.113:5050",
+    defaultOpen: false,
+    children: [
+      {
+        label: "检测中心",
+        to : "/crackdetect",
+        exact: true,
+      },
+      {
+        label:"历史记录",
+        to : "/crackdetect/history",
+      },
+      {
+        label: "数据集一览",
+        to: "/crackdetect/datasets",
+      }
+    ]
+  },
 
   {
     id: "resilienceAssessment",
-    label: "幕墙韧性评估",
+    label: "幕墙性能评估",
     icon: "i-simple-icons-testcafe",
     to: "/resilience",
     defaultOpen: false,
@@ -283,29 +306,7 @@ const links = reactive([
   //   //click: goto3DModel,
   // },
 
-  {
-    id: "stoneCrack",
-    label: "石材裂缝检测",
-    icon: "i-simple-icons-affinitypublisher",
-    to: "/crackdetect",
-    //to: "http://1.92.72.113:5050",
-    defaultOpen: false,
-    children: [
-      {
-        label: "检测中心",
-        to : "/crackdetect",
-        exact: true,
-      },
-      {
-        label:"历史记录",
-        to : "/crackdetect/history",
-      },
-      {
-        label: "数据集一览",
-        to: "/crackdetect/datasets",
-      }
-    ]
-  },
+
   {
     id: "stoneDirty",
     label: "石材污渍检测",
