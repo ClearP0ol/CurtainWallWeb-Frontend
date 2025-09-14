@@ -89,12 +89,13 @@ const modulesLine1 = reactive([
     icon: "i-simple-icons-tailwindcss",
   },
   {
-    title: "幕墙韧性评估",
-    description: "用于幕墙韧性多维数据分析评估和预警",
-    target_address: "/resilience/views/DataSetsView",
-    permissionKey: "access_system_a",
-    icon: "i-simple-icons-testcafe",
+    title: "石材裂缝检测",
+    description: "用于识别建筑石材幕墙表面裂缝",
+    target_address: "/crackdetect",
+    permissionKey: "access_system_c",
+    icon: "i-simple-icons-affinitypublisher",
   },
+
   // {
   //   title: "3D建筑模型",
   //   description: "用于查看3D建筑模型，可视化反映建筑问题",
@@ -116,11 +117,11 @@ const modulesLine2 = reactive([
   //   icon: "i-simple-icons-homeassistantcommunitystore",
   // },
   {
-    title: "石材裂缝检测",
-    description: "用于识别建筑石材幕墙表面裂缝",
-    target_address: "/crackdetect",
-    permissionKey: "access_system_c",
-    icon: "i-simple-icons-affinitypublisher",
+    title: "幕墙性能评估",
+    description: "用于幕墙韧性多维数据分析评估和预警",
+    target_address: "/resilience/views/DataSetsView",
+    permissionKey: "access_system_a",
+    icon: "i-simple-icons-testcafe",
   },
   {
     title: "石材污渍检测",
