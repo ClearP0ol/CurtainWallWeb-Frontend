@@ -349,17 +349,40 @@ const sendVerificationCode = async (method = "register") => {
   disableButton.value = true;
   startCountdown();
 
+  console.log('🔍 [DEBUG] 开始发送验证码请求');
+  console.log('📧 [DEBUG] 邮箱:', email);
+  console.log('🏷️ [DEBUG] 方法:', method);
+  console.log('🌐 [DEBUG] 请求 URL: /api/account/sendCode');
+  console.log('📦 [DEBUG] 请求 Body:', { email, method });
+
   try {
-    await $fetch("/api/account/sendCode", {
+    const response = await $fetch("/api/account/sendCode", {
       method: "POST",
       body: {
         email,
         method, // "register" or "reset"
       },
     });
+
+    console.log('✅ [DEBUG] 请求成功，响应:', response);
+    console.log('📊 [DEBUG] 响应状态: 成功 (假设 200)');
+
     ElMessage.success('验证码发送成功');
   } catch (error) {
-    console.error('验证码发送失败:', error);
+    console.error('❌ [DEBUG] 验证码发送失败，详细错误信息:');
+    console.error('🔍 [DEBUG] 错误对象:', error);
+    console.error('📊 [DEBUG] 错误状态码:', error?.status || '未知');
+    console.error('🌐 [DEBUG] 错误响应:', error?.response || '无响应对象');
+    console.error('📝 [DEBUG] 错误消息:', error?.message || '无消息');
+    console.error('📦 [DEBUG] 响应数据:', error?.response?._data || error?.data || '无数据');
+    console.error('🔗 [DEBUG] 请求 URL (可能被代理):', 'http://1.117.69.116/api/account/sendCode (前端) -> http://110.42.214.164:8008/api/account/sendCode (代理目标)');
+
+    // 检查是否是 502
+    if (error?.status === 502) {
+      console.error('🚨 [DEBUG] 检测到 502 Bad Gateway！这表示代理从上游服务器收到无效响应。');
+      console.error('🔍 [DEBUG] 可能原因: 上游服务器 (110.42.214.164:8008) 不可达、宕机或返回错误。');
+    }
+
     ElMessage.error(error?.response?._data?.message || '验证码发送失败');
   }
 };
