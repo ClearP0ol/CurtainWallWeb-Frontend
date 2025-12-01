@@ -60,14 +60,14 @@
             ></el-switch>
           </template>
         </el-table-column> -->
-        <el-table-column label="震动数据检测权限" prop="access_system_v">
+        <!-- <el-table-column label="震动数据检测权限" prop="access_system_v">
           <template #default="{ row }">
             <el-switch
               v-model="row.access_system_v"
               @change="() => handleSwitchChange(row, 'access_system_v','table')"
             ></el-switch>
           </template>
-        </el-table-column>
+        </el-table-column> -->
 <!--        <el-table-column label="幕墙材质分割权限" prop="access_system_f">-->
 <!--          <template #default="{ row }">-->
 <!--            <el-switch-->

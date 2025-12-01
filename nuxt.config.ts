@@ -1,7 +1,7 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
   extends: [process.env.NUXT_UI_PRO_PATH || '@nuxt/ui-pro'],
-  modules: ['@nuxt/ui', '@nuxt/fonts', '@vueuse/nuxt', "@nuxt/image", '@element-plus/nuxt','@pinia/nuxt'],
+  modules: ['@nuxt/ui', '@vueuse/nuxt', "@nuxt/image", '@element-plus/nuxt','@pinia/nuxt'],
 
   // plugins: [
   //   '~/plugins/cleanup.js'
@@ -9,7 +9,7 @@ export default defineNuxtConfig({
   ui: {
     global: true,
     icons: {
-      dynamic: true,
+      dynamic: false, // 关闭动态下载，使用本地图标库，防止网络问题导致崩溃
       families: {
         heroicons: true,
         'simple-icons': true,
@@ -19,17 +19,17 @@ export default defineNuxtConfig({
     colors: ['primary', 'red', 'orange', 'green']
   },
 
-  devtools: { enabled: true },
+  devtools: { enabled: false }, // 关闭 DevTools 以提高稳定性
 
   // 不开启服务端渲染
   ssr: false,
 
+  routeRules: {
+    '/api/**': { proxy: 'http://localhost:8000/**' },
+  },
+
   nitro: {
     devProxy: {
-      '/api': {
-        target: 'http://110.42.214.164:8008',
-        changeOrigin: true,
-      },
       '/predict': {
         target: 'http://110.42.214.164:8007',
         changeOrigin: true

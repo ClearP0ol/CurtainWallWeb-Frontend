@@ -510,41 +510,58 @@ const getUserAuth = async () => {
       },
     });
     userAuth.value = response.data.data;
+    console.log("✅ 侧边栏权限信息:", userAuth.value);
+    
+    // 管理员可以看到所有菜单
     if (userAuth.value.is_superuser) {
+      console.log("✅ 管理员身份，显示所有侧边栏菜单");
       return;
     }
+    
+    // 根据权限移除对应的侧边栏菜单项
     if (!userAuth.value.access_system_a) {
       removeLinkById("3DBuildingModel");
+      removeLinkById("resilienceAssessment"); // 幕墙性能评估
+      console.log("❌ 无 access_system_a 权限，移除 3D模型 和 幕墙性能评估");
     }
     if (!userAuth.value.access_system_b) {
       removeLinkById("stoneDirty");
+      console.log("❌ 无 access_system_b 权限，移除石材污渍检测");
     }
     if (!userAuth.value.access_system_c) {
       removeLinkById("stoneCrack");
+      console.log("❌ 无 access_system_c 权限，移除石材裂缝检测");
     }
     if (!userAuth.value.access_system_d) {
       removeLinkById("explosion");
+      console.log("❌ 无 access_system_d 权限，移除玻璃自爆检测");
     }
     if (!userAuth.value.access_system_v) {
       removeLinkById("wind");
+      console.log("❌ 无 access_system_v 权限，移除幕墙振动监测");
     }
     if (!userAuth.value.access_system_f) {
       removeLinkById("segment");
+      console.log("❌ 无 access_system_f 权限，移除幕墙材质分割");
     }
     if (!userAuth.value.access_system_g) {
       removeLinkById("glassFlatness");
+      console.log("❌ 无 access_system_g 权限，移除玻璃平整度检测");
     }
     if (!userAuth.value.access_system_h) {
       removeLinkById("glassToughnessJudge");
+      console.log("❌ 无 access_system_h 权限，移除幕墙韧性评估");
     }
     if (!userAuth.value.access_system_z) {
       removeLinkById("corrosiondetection");
+      console.log("❌ 无 access_system_z 权限，移除金属锈蚀检测");
     }
     if (!userAuth.value.is_superuser) {
       removeLinkById("userManage");
+      console.log("❌ 非管理员，移除用户管理");
     }
   } catch (error) {
-    console.error("Failed to fetch permissions");
+    console.error("❌ 获取用户权限失败:", error);
     ElMessage.error("获取用户权限失败");
   }
 };

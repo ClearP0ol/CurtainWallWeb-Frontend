@@ -3,7 +3,7 @@ import { ElMessage } from 'element-plus'
 
 // 创建 axios 实例
 const request = axios.create({
-  baseURL: 'http://110.42.214.164:8007', // 直接使用服务器地址
+  baseURL: 'http://localhost:8000', // 使用本地 Spring Boot 后端
   timeout: 300000,
   headers: {
     'Content-Type': 'application/json'
