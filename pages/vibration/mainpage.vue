@@ -212,8 +212,8 @@
 </template>
 
 <style scoped>
-/* 页面布局 */
 @import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css');
+/* 页面布局 */
 .app-container {
   display: flex;
   flex-direction: column;

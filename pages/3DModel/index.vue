@@ -821,7 +821,12 @@ onMounted(() => {
   // 初始化Three.js场景
   scene = new THREE.Scene()
   camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000)
-  renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true })
+  renderer = new THREE.WebGLRenderer({ 
+    antialias: true, 
+    alpha: true,
+    powerPreference: 'high-performance',
+    precision: 'highp'
+  })
   
   const container = document.getElementById('threejs-container')
   if (!container) {
@@ -830,6 +835,7 @@ onMounted(() => {
   }
   
   renderer.setSize(container.clientWidth, container.clientHeight)
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
   container.appendChild(renderer.domElement)
 
   // 添加光照

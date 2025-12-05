@@ -35,6 +35,12 @@ request.interceptors.response.use(
   },
   error => {
     console.error('响应错误:', error)
+    
+    // 如果配置了跳过错误处理，直接返回 reject
+    if (error.config && error.config.skipErrorHandler) {
+      return Promise.reject(error)
+    }
+
     // 更详细的错误提示
     if (error.response) {
       // 服务器返回了错误状态码

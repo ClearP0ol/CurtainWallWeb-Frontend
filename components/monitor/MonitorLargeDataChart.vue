@@ -1,15 +1,16 @@
 <template>
   <div class="flex flex-col justify-center items-center overflow-y-auto">
-    <div id="main" class="rounded-lg border border-gray-300"></div>
+    <div ref="chartRef" class="rounded-lg border border-gray-300" style="width: 100%; height: 400px;"></div>
   </div>
 </template>
 
 <script setup lang="ts">
-import {onMounted, defineProps} from 'vue';
+import {onMounted, onUnmounted, defineProps, ref} from 'vue';
 
 import * as echarts from 'echarts';
 
 let timeChart: any;
+const chartRef = ref(null);
 
 type EChartsOption = echarts.EChartsOption;
 
@@ -24,14 +25,25 @@ const props = defineProps({
 
 //初始化echarts
 onMounted(() => {
-  timeChart = echarts.init(document.getElementById('main'));
-  drawTimeChart(props.chartData);
+  if (chartRef.value) {
+    timeChart = echarts.init(chartRef.value);
+    drawTimeChart(props.chartData);
+    window.addEventListener('resize', handleResize);
+  }
 });
 
-//随窗口响应式变化
-window.addEventListener('resize', function () {
-  timeChart.resize();
+onUnmounted(() => {
+  window.removeEventListener('resize', handleResize);
+  if (timeChart) {
+    timeChart.dispose();
+  }
 });
+
+const handleResize = () => {
+  if (timeChart) {
+    timeChart.resize();
+  }
+};
 
 //绘制时程曲线
 const drawTimeChart = (chartData: any) => {

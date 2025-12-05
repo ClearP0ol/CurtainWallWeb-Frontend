@@ -26,8 +26,8 @@
   </UDashboardToolbar>
 
   <UDashboardCard class="overflow-y-auto">
-    <div id="main" style="height: 400px;" class="rounded-lg border border-gray-300"></div>
-    <div id="main2" style="height: 400px;" class="rounded-lg border border-gray-300"></div>
+    <div ref="chartRef1" style="height: 400px;" class="rounded-lg border border-gray-300"></div>
+    <div ref="chartRef2" style="height: 400px;" class="rounded-lg border border-gray-300"></div>
   </UDashboardCard>
 
   <el-select v-model="dataSource" placeholder="请选择数据粒度">
@@ -43,10 +43,13 @@
 </template>
 
 <script setup lang="ts">
-import {onMounted, ref, watch} from 'vue';
+import {onMounted, onUnmounted, ref, watch} from 'vue';
 import * as echarts from 'echarts';
 import {useRouter} from "vue-router";
 import axios from 'axios';
+
+const chartRef1 = ref(null);
+const chartRef2 = ref(null);
 
 const API_BASE_URL = 'http://110.42.214.164:8009';
 const dataSource = ref<'websocket' | 'api_minute' | 'api_hour' | 'api_day' | 'api_month' | 'api_year'>('websocket'); // 默认使用 WebSocket
@@ -113,6 +116,7 @@ const drawTimeChart1 = (chartData: any) => {
     data: yData[name as keyof typeof yData],
     smooth: false,
     symbol: 'none',
+    sampling: 'lttb', // 开启降采样
     markLine: {
       symbol: ['none', 'none'],  // 设置两端都不显示箭头
       data: [
@@ -498,8 +502,12 @@ const deviceList = ref<Device[]>([
 ]);
 
 onMounted(async() => {
-  timeChart = echarts.init(document.getElementById('main'));
-  amplitudeChart = echarts.init(document.getElementById('main2'));
+  if (chartRef1.value) {
+    timeChart = echarts.init(chartRef1.value);
+  }
+  if (chartRef2.value) {
+    amplitudeChart = echarts.init(chartRef2.value);
+  }
   await getThresholds('up'); // 添加上阈值
   await getThresholds('down'); // 添加下阈值
   await getThresholds('x_offset'); // 添加偏移量
@@ -509,7 +517,22 @@ onMounted(async() => {
   await getThresholds('email_limit'); // 添加偏移量
   console.log("devices",devices);
   console.log("selectedDevice",selectedDevice);
+  
+  window.addEventListener('resize', handleResize);
 })
+
+onUnmounted(() => {
+  window.removeEventListener('resize', handleResize);
+  if (timeChart) timeChart.dispose();
+  if (amplitudeChart) amplitudeChart.dispose();
+  if (socket1) socket1.close();
+  if (fetchInterval) clearInterval(fetchInterval);
+});
+
+const handleResize = () => {
+  if (timeChart) timeChart.resize();
+  if (amplitudeChart) amplitudeChart.resize();
+};
 
 let timeChart: any;
 let amplitudeChart: any;
@@ -521,10 +544,10 @@ type EChartsOption = echarts.EChartsOption;
 
 
 //随窗响应式变化
-window.addEventListener('resize', function () {
-  timeChart.resize();
-  amplitudeChart.resize();
-});
+// window.addEventListener('resize', function () {
+//   timeChart.resize();
+//   amplitudeChart.resize();
+// });
 
 //绘制时程曲线
 const drawTimeChart = (chartData: any) => {
@@ -813,7 +836,7 @@ socket1.onopen = () => {
 //接收到socket消息
 socket1.onmessage = (event) => {
   const message = JSON.parse(event.data);
-  if (message.code = 20001) {
+  if (message.code === 20001) {
     if (message.message == '基础数据') {
       // console.log(message.data);
       timeCurveData = message.data[0];
@@ -894,10 +917,10 @@ watch([selectedDevice, dataSource], async ([newDevice, newDataSource]) => {
     }
     // 使用 API 获取年级别数据
     await loadData('yearly', 5);
-  }
+  } else if (newDataSource === 'websocket') {
     // 使用 WebSocket 获取数据
     request2.data = newDevice.deviceId;
-    socket1.close();
+    if (socket1) socket1.close();
     socket1 = new WebSocket(websocketUrl);
     socket1.onopen = () => {
       console.log('WebSocket connection1 reopened');
@@ -905,44 +928,44 @@ watch([selectedDevice, dataSource], async ([newDevice, newDataSource]) => {
       socket1.send(JSON.stringify(request1));
       socket1.send(JSON.stringify(request2));
     };
-  //接收到socket消息
-      socket1.onmessage = (event) => {
-        const message = JSON.parse(event.data);
-        if (message.code = 20001) {
-          if (message.message == '基础数据') {
-            // console.log(message.data);
-            timeCurveData = message.data[0];
-            AmplitudeCurveData = message.data[1];
-            //drawTimeChart(message.data[0]);
-            drawAmplitudeChart(message.data[1]);
-          } else if (message.message == '设备状态') {
-            console.log("message.data",message.data);
-            devices.value = Object.entries(message.data).map(([key, value]) => ({
-              deviceId: key,
-              disabled: value === 1 ? false : true,
-              online: value === 1 ? true : false
-            }))
-            devices.value.forEach((device: { deviceId: string; deviceName: string; }) => {
-              // 假设 deviceList 已经填充了设备名
-              const deviceInfo = deviceList.value.find((d) => d.deviceId === device.deviceId);
-              if (deviceInfo) {
-                device.deviceName = deviceInfo.deviceName;
-          }
-        });
+    //接收到socket消息
+    socket1.onmessage = (event) => {
+      const message = JSON.parse(event.data);
+      if (message.code = 20001) {
+        if (message.message == '基础数据') {
+          // console.log(message.data);
+          timeCurveData = message.data[0];
+          AmplitudeCurveData = message.data[1];
+          //drawTimeChart(message.data[0]);
+          drawAmplitudeChart(message.data[1]);
+        } else if (message.message == '设备状态') {
+          console.log("message.data",message.data);
+          devices.value = Object.entries(message.data).map(([key, value]) => ({
+            deviceId: key,
+            disabled: value === 1 ? false : true,
+            online: value === 1 ? true : false
+          }))
+          devices.value.forEach((device: { deviceId: string; deviceName: string; }) => {
+            // 假设 deviceList 已经填充了设备名
+            const deviceInfo = deviceList.value.find((d) => d.deviceId === device.deviceId);
+            if (deviceInfo) {
+              device.deviceName = deviceInfo.deviceName;
+            }
+          });
+        }
       }
+    };
 
-    }
-  };
+    //socket错误
+    socket1.onerror = (error) => {
+      console.error('WebSocket error:', error);
+    };
 
-  //socket错误
-  socket1.onerror = (error) => {
-    console.error('WebSocket error:', error);
-  };
-
-  //socket关闭
-  socket1.onclose = () => {
-    console.log('WebSocket connection closed');
-  };
+    //socket关闭
+    socket1.onclose = () => {
+      console.log('WebSocket connection closed');
+    };
+  }
 });
 
 </script>
