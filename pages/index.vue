@@ -132,6 +132,10 @@ const modulesLine3 = reactive([
   },
 
 ]);
+
+const modulesLine4 = reactive([]);
+const modulesLine5 = reactive([]);
+
 const loadingAuth = ref(true); // 新增loading状态
 
 onMounted(async () => {
@@ -143,38 +147,82 @@ const getUserAuth = async () => {
   try {
     const authToken = localStorage.getItem("authToken");
     if (!authToken) {
-      console.warn("authToken不存在");
-      userAuth.value = {};
+      console.warn("❌ authToken 不存在，跳转登录");
+      router.push('/login');
       return;
     }
+
+    // 先尝试从本地获取权限
+    const cachedAuth = localStorage.getItem("userAuth");
+    if (cachedAuth) {
+      try {
+        userAuth.value = JSON.parse(cachedAuth);
+        console.log("✅ 使用缓存的权限信息:", userAuth.value);
+      } catch (e) {
+        console.error("❌ 权限缓存解析失败:", e);
+      }
+    }
+
+    // 从服务器刷新权限信息
     const response = await axios.get("/api/account/custom/getPermissions", {
       headers: { Authorization: `Bearer ${authToken}` },
     });
-    userAuth.value = response.data.data || {};
-    console.log("userAuth:", userAuth.value);
+    
+    if (response.data && response.data.data) {
+      userAuth.value = response.data.data;
+      localStorage.setItem("userAuth", JSON.stringify(userAuth.value));
+      console.log("✅ 权限信息已更新:", userAuth.value);
+    } else {
+      throw new Error('权限数据格式错误');
+    }
   } catch (error) {
-    console.error("获取权限失败:", error);
-    userAuth.value = {};
+    console.error("❌ 获取权限失败:", error);
+    // 如果是401错误，说明token过期
+    if (error.response?.status === 401) {
+      ElMessage.error("登录已过期，请重新登录");
+      localStorage.removeItem("authToken");
+      localStorage.removeItem("userAuth");
+      localStorage.removeItem("email");
+      router.push('/login');
+    } else {
+      userAuth.value = {};
+      ElMessage.error("权限获取失败，部分功能可能无法使用");
+    }
   }
 };
 
 const checkPermissionAndRedirect = (module) => {
   if (loadingAuth.value) {
     ElMessage.warning("权限信息加载中，请稍后...");
-    return; // 权限没加载完，阻止操作
+    return;
   }
+  
+  // 检查是否有权限信息
+  if (!userAuth.value || Object.keys(userAuth.value).length === 0) {
+    ElMessage.error("权限信息丢失，请重新登录");
+    router.push('/login');
+    return;
+  }
+
+  // 无需权限的模块
   if (module.permissionKey == "") {
     router.push({ path: module.target_address });
     return;
   }
+  
+  // 管理员权限
   if (module.permissionKey == "manage" && userAuth.value.is_superuser) {
     router.push({ path: module.target_address });
     return;
   }
+  
+  // 检查具体权限
   if (userAuth.value.is_superuser || userAuth.value[module.permissionKey]) {
+    console.log(`✅ 允许访问 ${module.title}`);
     router.push({ path: module.target_address });
   } else {
-    ElMessage.error("您没有权限访问此模块");
+    console.log(`❌ 无权限访问 ${module.title}，需要: ${module.permissionKey}`);
+    ElMessage.error(`您没有权限访问"${module.title}"模块`);
   }
 };
 </script>

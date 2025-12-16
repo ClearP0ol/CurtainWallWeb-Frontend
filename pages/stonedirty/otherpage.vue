@@ -346,20 +346,28 @@ const fetchHistory = async () => {
       return;
     }
 
+    let username;
     try {
       const { jwtDecode } = await import('jwt-decode');
       const decode = jwtDecode(token);
 
-      const username = decode.username;
+      username = decode.username;
       if (!username) {
         console.error('Token 中未找到用户名:', decode);
         ElMessage.warning('未获取到用户信息，请重新登录');
         router.push('/login');
         return;
       }
+    } catch (decodeError) {
+      console.error('Token 解析失败:', decodeError);
+      ElMessage.error('登录信息已过期，请重新登录');
+      localStorage.removeItem('authToken');
+      router.push('/login');
+      return;
+    }
 
-      const params: any = { username };
-      const response = await getHistory(params);
+    const params: any = { username };
+    const response = await getHistory(params);
       console.log('历史记录响应:', response);
 
       if (response.status === 'success' && response.data?.length > 0) {
@@ -418,16 +426,16 @@ const fetchHistory = async () => {
       } else {
         ElMessage.info('暂无历史记录');
       }
-    } catch (decodeError) {
-      console.error('Token 解析失败:', decodeError);
-      ElMessage.error('登录信息已过期，请重新登录');
-      localStorage.removeItem('authToken');
-      router.push('/login');
-      return;
-    }
-  } catch (error) {
+  } catch (error: any) {
     console.error('获取历史记录失败:', error);
-    ElMessage.error('获取历史记录失败，请稍后重试');
+    // 兼容后端：如果返回500或404错误，通常表示没有找到记录或服务暂时不可用
+    // 这种情况下提示暂无记录，而不是报错
+    if (error.response && (error.response.status === 500 || error.response.status === 404)) {
+      ElMessage.info('暂无历史记录');
+    } else {
+      // 其他错误才显示错误提示
+      ElMessage.error('获取历史记录失败，请稍后重试');
+    }
   } finally {
     loading.value = false;
   }

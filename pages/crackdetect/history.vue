@@ -201,7 +201,11 @@ const fetchProjects = async () => {
     projects.value = [...projects.value, ...response.data.projects]
     hasMore.value = response.data.projects.length === pageSize
   } catch (error) {
-    ElMessage.error('获取项目列表失败：' + error.message)
+    if (error.response && (error.response.status === 500 || error.response.status === 404)) {
+      ElMessage.info('暂无历史数据')
+    } else {
+      ElMessage.error('获取项目列表失败：' + error.message)
+    }
   } finally {
     loading.value = false
   }

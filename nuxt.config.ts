@@ -1,7 +1,7 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
   extends: [process.env.NUXT_UI_PRO_PATH || '@nuxt/ui-pro'],
-  modules: ['@nuxt/ui', '@nuxt/fonts', '@vueuse/nuxt', "@nuxt/image", '@element-plus/nuxt','@pinia/nuxt'],
+  modules: ['@nuxt/ui', '@vueuse/nuxt', "@nuxt/image", '@element-plus/nuxt','@pinia/nuxt'],
 
   // plugins: [
   //   '~/plugins/cleanup.js'
@@ -9,7 +9,7 @@ export default defineNuxtConfig({
   ui: {
     global: true,
     icons: {
-      dynamic: true,
+      dynamic: false, // 关闭动态下载，使用本地图标库，防止网络问题导致崩溃
       families: {
         heroicons: true,
         'simple-icons': true,
@@ -19,53 +19,53 @@ export default defineNuxtConfig({
     colors: ['primary', 'red', 'orange', 'green']
   },
 
-  devtools: { enabled: true },
+  devtools: { enabled: false }, // 关闭 DevTools 以提高稳定性
 
   // 不开启服务端渲染
   ssr: false,
 
-  // routeRules: {
-  //   '/api/**': {
-  //     proxy: 'http://8.153.161.229:8008/api/**'
-  //   },
-  //   '/predict/**': {
-  //     proxy: 'http://8.153.161.229:8007/predict/**'
-  //   },
-  //   '/history/**': {
-  //     proxy: 'http://8.153.161.229:8007/history/**'
-  //   },
-  //   '/oss/**': {
-  //     proxy: 'http://8.153.161.229:9000/oss/**'
-  //   },
-  //   '/crackdetection/**': {
-  //     proxy: 'http://8.153.161.229:8001/crackdetection/**'
-  //   }
-  // },
-  // nitro: {
-  //   devProxy: {
-  //     '/api': {
-  //       target: 'http://8.153.161.229:8008',
-  //       changeOrigin: true,
-  //     },
-  //     '/predict': {
-  //       target: 'http://8.153.161.229:8007',
-  //       changeOrigin: true
-  //     },
-  //     '/history': {
-  //       target: 'http://8.153.161.229:8007',
-  //       changeOrigin: true
-  //     },
-  //     '/oss': {
-  //       target: 'http://8.153.161.229:9000',
-  //       changeOrigin: true,
-  //     },
-  //     '/crackdetection': {
-  //       target: 'http://8.153.161.229:8001',
-  //       //target: 'http://127.0.0.1:8080',
-  //       changeOrigin: true,
-  //     }
-  //   }
-  // },
+  routeRules: {
+    '/api/**': {
+      proxy: 'http://8.153.161.229:8008/api/**'
+    },
+    '/predict/**': {
+      proxy: 'http://8.153.161.229:8007/predict/**'
+    },
+    '/history/**': {
+      proxy: 'http://8.153.161.229:8007/history/**'
+    },
+    '/oss/**': {
+      proxy: 'http://8.153.161.229:9000/oss/**'
+    },
+    '/crackdetection/**': {
+      proxy: 'http://8.153.161.229:8001/crackdetection/**'
+    }
+  },
+  nitro: {
+    devProxy: {
+      '/api': {
+        target: 'http://8.153.161.229:8008',
+        changeOrigin: true,
+      },
+      '/predict': {
+        target: 'http://8.153.161.229:8007',
+        changeOrigin: true
+      },
+      '/history': {
+        target: 'http://8.153.161.229:8007',
+        changeOrigin: true
+      },
+      '/oss': {
+        target: 'http://8.153.161.229:9000',
+        changeOrigin: true,
+      },
+      '/crackdetection': {
+        target: 'http://8.153.161.229:8001',
+        //target: 'http://127.0.0.1:8080',
+        changeOrigin: true,
+      }
+    }
+  },
 
   // 添加路由配置
   app: {

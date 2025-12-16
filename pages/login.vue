@@ -229,53 +229,72 @@ const login = async () => {
         password: loginForm.value.password,
       },
     });
-    console.log('登录响应:', response); // 添加日志
+    console.log('登录响应:', response);
 
     if (loadingInstance) loadingInstance.close();
 
+    // 检查登录是否成功
+    if (!response.authentication) {
+      ElMessage.error("用户名或密码错误");
+      return;
+    }
+
     // 检查响应结构
     const token = response.token || response.data?.token;
-    if (token) {
-      localStorage.setItem("authToken", token);
-      localStorage.setItem("email", loginForm.value.email);
-
-      // 验证 token 是否正确存储
-      const storedToken = localStorage.getItem("authToken");
-      console.log("存储的 token:", storedToken);
-
-      // 尝试解析 token
-      try {
-        const decoded = jwtDecode(storedToken);
-        console.log("解析后的 token:", decoded);
-      } catch (e) {
-        console.error("Token 解析失败:", e);
-      }
-      //  立即获取用户权限并保存
-      try {
-        const permissionRes = await axios.get("/api/account/custom/getPermissions", {
-          headers: {
-            Authorization: `Bearer ${storedToken}`,
-          },
-        });
-        //保存权限结构
-        localStorage.setItem("userAuth", JSON.stringify(permissionRes.data.data));
-        //验证权限是否正确存储
-        console.log("已保存权限结构:", permissionRes.data.data);
-      } catch (err) {
-        console.error("权限获取失败:", err);
-        ElMessage.error("权限获取失败，请联系管理员");
-        return;
-      }
-
-      // //  权限写入成功，再跳转首页
-
-      router.push({path: "/"});
-    } else {
-      console.error("登录响应中没有 token:", response);
+    if (!token) {
+      console.error('登录响应中没有 token:', response);
       ElMessage.error("登录失败，未获取到认证信息");
+      return;
+    }
+
+    // 保存 token
+    localStorage.setItem("authToken", token);
+    localStorage.setItem("email", loginForm.value.email);
+    console.log("✅ Token 已保存");
+
+    // 验证 token
+    try {
+      const decoded = jwtDecode.jwtDecode(token);
+      console.log("✅ Token 解析成功:", decoded);
+    } catch (e) {
+      console.error("❌ Token 解析失败:", e);
+      ElMessage.error("登录凭证格式错误");
+      return;
+    }
+
+    // 立即获取用户权限并保存
+    try {
+      console.log("🔄 正在获取用户权限...");
+      const permissionRes = await axios.get("/api/account/custom/getPermissions", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      
+      if (permissionRes.data && permissionRes.data.data) {
+        const permissions = permissionRes.data.data;
+        localStorage.setItem("userAuth", JSON.stringify(permissions));
+        console.log("✅ 权限信息已保存:", permissions);
+        
+        // 短暂延迟确保 localStorage 写入完成
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
+        // 跳转到首页
+        ElMessage.success("登录成功");
+        router.push({ path: "/" });
+      } else {
+        throw new Error('权限信息格式错误');
+      }
+    } catch (err) {
+      console.error("❌ 权限获取失败:", err);
+      ElMessage.error("权限获取失败，请重新登录");
+      // 清除已保存的 token
+      localStorage.removeItem("authToken");
+      localStorage.removeItem("email");
+      return;
     }
   } catch (error) {
-    console.error('登录错误:', error);
+    console.error('❌ 登录错误:', error);
     ElMessage.error(error.data?.message || "登录失败，请检查用户名和密码");
   } finally {
     if (loadingInstance) loadingInstance.close();

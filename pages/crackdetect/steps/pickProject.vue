@@ -132,7 +132,14 @@ const fetchProjects = async () => {
       id: item.project_id
     }))
   } catch (error) {
-    ElMessage.error('获取项目列表失败：' + error.message)
+    // 如果是 404 错误，说明用户还没有项目，不显示错误提示
+    if (error.response?.status === 404) {
+      console.log('暂无项目数据')
+      historyItems.value = []
+    } else {
+      // 其他错误才显示错误提示
+      ElMessage.error('获取项目列表失败：' + error.message)
+    }
   }
 }
 
