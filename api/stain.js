@@ -14,7 +14,10 @@ export const detectStain = async (imageUrl, username) => {
       data: {
         image_url: imageUrl,
         username: username
-      }
+      },
+      // --- 关键修改：增加前端超时限制为 10 分钟 ---
+      timeout: 600000 
+      // ---------------------------------------
     });
     
     console.log('检测响应:', response);

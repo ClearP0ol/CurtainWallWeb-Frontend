@@ -1,7 +1,8 @@
 1.在Nuxt项目中安装Nuxt Ui和NuxtUiPro
 
 ```bash
-pnpm install @nuxt/uipnpm install @nuxt/ui-pro
+npm install @nuxt/ui
+npm install @nuxt/ui-pro
 ```
 
 2.打开node_modules/@nuxt/ui-pro/modules/pro/index.ts将全部代码替换为如下代码
