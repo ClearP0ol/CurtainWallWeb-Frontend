@@ -502,8 +502,15 @@ function removeLinkById(linkId: any) {
 }
 
 const getUserAuth = async () => {
+  if (!process.client) {
+    return;
+  }
+
   try {
     const authToken = localStorage.getItem("authToken");
+    if (!authToken) {
+      return;
+    }
     const response = await axios.get("/api/account/custom/getPermissions", {
       headers: {
         Authorization: `Bearer ${authToken}`,
@@ -548,7 +555,6 @@ const getUserAuth = async () => {
     ElMessage.error("获取用户权限失败");
   }
 };
-getUserAuth();
 
 onMounted(() => {
   getUserAuth();
@@ -561,6 +567,50 @@ const footerLinks = [
     click: () => (isHelpSlideoverOpen.value = true),
   },
 ];
+
+const homeLink = links.find((link) => link.id === "home");
+if (homeLink) {
+  homeLink.label = "首页";
+  if (homeLink.tooltip) {
+    homeLink.tooltip.text = "首页";
+  }
+}
+
+const vibrationLink = links.find((link) => link.id === "wind");
+if (vibrationLink) {
+  vibrationLink.label = "幕墙振动监测";
+  if (vibrationLink.tooltip) {
+    vibrationLink.tooltip.text = "模型基线与三级预警";
+  }
+
+  const monitorLink = vibrationLink.children?.find((child) => child.id === "monitor");
+  if (monitorLink) {
+    monitorLink.label = "振动监测中心";
+    if (monitorLink.tooltip) {
+      monitorLink.tooltip.text = "振动监测中心";
+    }
+
+    const dashboardLink = monitorLink.children?.find((child) => child.to === "/vibration/dashboard");
+    if (dashboardLink) {
+      dashboardLink.label = "监测总览";
+    }
+
+    const realtimeLink = monitorLink.children?.find((child) => child.to === "/vibration");
+    if (realtimeLink) {
+      realtimeLink.label = "实时监测";
+    }
+
+    const rulesLink = monitorLink.children?.find((child) => child.to === "/vibration/parameter");
+    if (rulesLink) {
+      rulesLink.label = "预警规则";
+    }
+
+    const abnormalLink = monitorLink.children?.find((child) => child.to === "/vibration/abnormal");
+    if (abnormalLink) {
+      abnormalLink.label = "预警记录";
+    }
+  }
+}
 
 const groups = computed(() => [
   {

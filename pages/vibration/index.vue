@@ -38,6 +38,10 @@
   </UDashboardToolbar>
 
   <!-- 多图表卡片容器 -->
+  <div class="mx-4 mb-3 rounded-lg border border-blue-100 bg-blue-50 px-4 py-3 text-sm text-slate-700">
+    当前页面用于查看实时振动曲线。预警判断已切换为“模型基线 + 绝对差三级预警”，图表展示的是传感器实时变化趋势。
+  </div>
+
   <UDashboardCard class="overflow-y-auto">
     <div class="chart-tabs">
       <!-- 标签页导航 -->
@@ -96,7 +100,7 @@ import axios from 'axios';
 import type { CascaderValue } from 'element-plus';
 import { ElMessage } from 'element-plus';
 
-const API_BASE_URL = 'http://110.42.214.164:8009';
+const API_BASE_URL = 'http://127.0.0.1:8009';
 const dataSource = ref<'api_second' | 'api_minute' | 'api_hour' | 'api_day'| 'api_week' | 'api_month' | 'api_year'>('api_minute');
 const selectedDataSource = ref('minute');
 
@@ -118,10 +122,55 @@ const strainGaugeTabs = [
 ];
 
 // 存储多个图表实例
+accelerometerTabs[0] = { key: 'all', label: '全部 (XYZ)' };
+accelerometerTabs[1] = { key: 'x', label: 'X 轴' };
+accelerometerTabs[2] = { key: 'y', label: 'Y 轴' };
+accelerometerTabs[3] = { key: 'z', label: 'Z 轴' };
+
+strainGaugeTabs[0] = { key: 'all', label: '全部 (Ch1 + Ch2)' };
+strainGaugeTabs[1] = { key: 'ch1', label: 'Channel 1' };
+strainGaugeTabs[2] = { key: 'ch2', label: 'Channel 2' };
+
 const charts = ref<{ [key: string]: echarts.ECharts | null }>({});
 
 // 存储预处理的图表配置
 const chartOptions = ref<{ [key: string]: any }>({});
+
+type ChartKey = 'x' | 'y' | 'z' | 'all' | 'ch1' | 'ch2' | 'strain-all';
+
+const chartDomIds: Record<ChartKey, string> = {
+  x: 'chart-x',
+  y: 'chart-y',
+  z: 'chart-z',
+  all: 'chart-all',
+  ch1: 'chart-ch1',
+  ch2: 'chart-ch2',
+  'strain-all': 'chart-strain-all',
+};
+
+const getActiveChartKey = (tabKey = activeTab.value): ChartKey =>
+  (tabKey === 'all' && selectedDeviceType.value === 'strainGauge' ? 'strain-all' : tabKey) as ChartKey;
+
+const getChartContainer = (chartKey: ChartKey) =>
+  document.getElementById(chartDomIds[chartKey]);
+
+const ensureChart = (chartKey: ChartKey) => {
+  if (charts.value[chartKey]) {
+    return charts.value[chartKey];
+  }
+
+  const container = getChartContainer(chartKey);
+  if (!container) {
+    return null;
+  }
+
+  if (container.clientWidth === 0 || container.clientHeight === 0) {
+    return null;
+  }
+
+  charts.value[chartKey] = echarts.init(container);
+  return charts.value[chartKey];
+};
 
 const devices = ref<{ device_name: string; category: string }[]>([]);
 const selectedCategory = ref('');
@@ -155,24 +204,9 @@ const initializeCharts = () => {
       charts.value = {};
 
       // 加速度计图表
-      const chartX = document.getElementById('chart-x');
-      const chartY = document.getElementById('chart-y');
-      const chartZ = document.getElementById('chart-z');
-      const chartAll = document.getElementById('chart-all');
-      
-      if (chartX) charts.value['x'] = echarts.init(chartX);
-      if (chartY) charts.value['y'] = echarts.init(chartY);
-      if (chartZ) charts.value['z'] = echarts.init(chartZ);
-      if (chartAll) charts.value['all'] = echarts.init(chartAll);
+      ensureChart(getActiveChartKey());
       
       // 应变计图表
-      const chartCh1 = document.getElementById('chart-ch1');
-      const chartCh2 = document.getElementById('chart-ch2');
-      const chartStrainAll = document.getElementById('chart-strain-all');
-      
-      if (chartCh1) charts.value['ch1'] = echarts.init(chartCh1);
-      if (chartCh2) charts.value['ch2'] = echarts.init(chartCh2);
-      if (chartStrainAll) charts.value['strain-all'] = echarts.init(chartStrainAll);
 
       console.log('图表初始化完成:', Object.keys(charts.value));
     } catch (error) {
@@ -186,8 +220,8 @@ const switchTab = (tabKey: string) => {
   activeTab.value = tabKey;
   
   nextTick(() => {
-    const chartKey = tabKey === 'all' && selectedDeviceType.value === 'strainGauge' ? 'strain-all' : tabKey;
-    const chart = charts.value[chartKey];
+    const chartKey = getActiveChartKey(tabKey);
+    const chart = ensureChart(chartKey);
     
     if (chart) {
       // 确保图表实例存在且已初始化
@@ -198,6 +232,7 @@ const switchTab = (tabKey: string) => {
         const cachedOption = chartOptions.value[chartKey];
         if (cachedOption && isValidChartOption(cachedOption)) {
           console.log(`使用缓存配置: ${chartKey}`);
+          chart.clear();
           chart.setOption(cachedOption, true); // 使用 notMerge: true 确保完全替换
         } else {
           console.log(`重新生成配置: ${chartKey}`);
@@ -221,7 +256,7 @@ const isValidChartOption = (option: any): boolean => {
   
   // 检查系列数据是否有效
   for (const series of option.series) {
-    if (!series.data || !Array.isArray(series.data) || series.data.length === 0) {
+    if (!series || !series.type || !series.data || !Array.isArray(series.data) || series.data.length === 0) {
       return false;
     }
   }
@@ -245,10 +280,13 @@ const generateAndSetOption = (chartKey: string, tabKey: string) => {
     option = generateStrainGaugeOption(accumulatedData.value, tabKey, accumulatedData.value.ch1?.times || []);
   }
   
-  if (option && charts.value[chartKey]) {
+  const chart = ensureChart(chartKey as ChartKey);
+  if (option && isValidChartOption(option) && chart) {
     // 缓存生成的配置
     chartOptions.value[chartKey] = option;
-    charts.value[chartKey]?.setOption(option, true);
+    chart.clear();
+    chart.setOption(option, true);
+    chart.resize();
   }
 };
 
@@ -692,21 +730,29 @@ const drawSpecificChart = (chartType: string) => {
 
 // 绘制加速度计图表（保留原逻辑，但仅作为备用）
 const drawAccelerometerChart = (chartType: string) => {
-  const chart = charts.value[chartType];
+  const chart = ensureChart(chartType as ChartKey);
   if (!chart || !accumulatedData.value) return;
   
   const option = generateAccelerometerOption(accumulatedData.value, chartType, accumulatedData.value.x?.times || []);
-  chart.setOption(option);
+  if (option && isValidChartOption(option)) {
+    chart.clear();
+    chart.setOption(option, true);
+    chart.resize();
+  }
 };
 
 // 绘制应变计图表（保留原逻辑，但仅作为备用）
 const drawStrainGaugeChart = (chartType: string) => {
   const chartKey = chartType === 'all' ? 'strain-all' : chartType;
-  const chart = charts.value[chartKey];
+  const chart = ensureChart(chartKey as ChartKey);
   if (!chart || !accumulatedData.value) return;
   
   const option = generateStrainGaugeOption(accumulatedData.value, chartType, accumulatedData.value.ch1?.times || []);
-  chart.setOption(option);
+  if (option && isValidChartOption(option)) {
+    chart.clear();
+    chart.setOption(option, true);
+    chart.resize();
+  }
 };
 
 // 优化的绘制所有图表函数
@@ -741,17 +787,25 @@ const drawAllCharts = () => {
   
   // 等待DOM更新后再绘制图表
   nextTick(() => {
-    const activeChartKey = activeTab.value === 'all' && selectedDeviceType.value === 'strainGauge' ? 'strain-all' : activeTab.value;
+    const activeChartKey = getActiveChartKey();
+    const chart = ensureChart(activeChartKey);
+    const option = chartOptions.value[activeChartKey];
     
     console.log(`尝试绘制图表: ${activeChartKey}`);
     console.log('图表实例存在:', !!charts.value[activeChartKey]);
     console.log('配置存在:', !!chartOptions.value[activeChartKey]);
     
-    if (charts.value[activeChartKey] && chartOptions.value[activeChartKey]) {
+    if (chart && option && isValidChartOption(option)) {
       console.log(`绘制图表: ${activeChartKey}`);
-      charts.value[activeChartKey]?.setOption(chartOptions.value[activeChartKey], true);
+      try {
+        chart.clear();
+        chart.setOption(option, true);
       // 确保图表正确调整大小
-      charts.value[activeChartKey]?.resize();
+        chart.resize();
+      } catch (error) {
+        console.warn(`缂撳瓨閰嶇疆缁樺埗澶辫触: ${activeChartKey}`, error);
+        generateAndSetOption(activeChartKey, activeTab.value);
+      }
     } else {
       console.warn(`图表或配置不存在: ${activeChartKey}`);
       // 如果预处理的配置不存在，直接生成并绘制
@@ -1117,11 +1171,20 @@ const getTimeRangeForThresholdCheck = () => {
 };
 
 const handleResize = () => {
-  Object.values(charts.value).forEach(chart => {
-    if (chart) {
-      chart.resize();
-    }
-  });
+  const activeChartKey = getActiveChartKey();
+  const chart = charts.value[activeChartKey];
+
+  if (!chart) {
+    return;
+  }
+
+  try {
+    chart.resize();
+  } catch (error) {
+    console.warn(`resize 澶辫触: ${activeChartKey}`, error);
+    chart.dispose();
+    charts.value[activeChartKey] = null;
+  }
 };
 
 // 监听设备类型变化，重置标签页
@@ -1161,7 +1224,13 @@ watch([selectedDevice, dataSource], async ([newDevice, newDataSource], [oldDevic
     设备: ${oldDevice} -> ${newDevice}`
   );
 
+  if (!newDevice) {
+    stopAllPolling();
+    return;
+  }
+
   if (newDevice) {
+    selectedDeviceType.value = newDevice.includes('Y') ? 'strainGauge' : 'accelerometer';
     chartOptions.value = {}; // 清空预处理配置
     // 确保激活all标签页
     activeTab.value = 'all';

@@ -1,0 +1,1218 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>幕墙振动监测演示页</title>
+  <style>
+    :root {
+      --bg: #f3f7f5;
+      --panel: rgba(255, 255, 255, 0.94);
+      --panel-strong: #ffffff;
+      --line: #dfe7e2;
+      --text: #16211b;
+      --muted: #5f7267;
+      --green: #18794e;
+      --green-strong: #0f5f3c;
+      --green-soft: #e7f7ef;
+      --blue: #1e5eff;
+      --blue-soft: #ecf3ff;
+      --amber: #c87500;
+      --amber-soft: #fff3df;
+      --red: #c83b2a;
+      --red-soft: #ffebe7;
+      --shadow: 0 20px 48px rgba(22, 33, 27, 0.08);
+      --radius: 22px;
+      --mono: "Consolas", "SFMono-Regular", monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at top right, rgba(24, 121, 78, 0.08), transparent 24%),
+        linear-gradient(180deg, #f7fbf8 0%, #edf4f0 100%);
+    }
+
+    .shell {
+      min-height: 100vh;
+      width: 100%;
+    }
+
+    .hero {
+      padding: 32px 28px 22px;
+    }
+
+    .hero-inner {
+      max-width: 1380px;
+      margin: 0 auto;
+      padding: 28px 30px;
+      border-radius: 28px;
+      background:
+        linear-gradient(135deg, rgba(24, 121, 78, 0.95) 0%, rgba(15, 95, 60, 0.94) 60%, rgba(18, 89, 118, 0.92) 100%);
+      box-shadow: 0 26px 60px rgba(16, 61, 40, 0.18);
+      color: #fff;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero-inner::after {
+      content: "";
+      position: absolute;
+      inset: auto -100px -120px auto;
+      width: 340px;
+      height: 340px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.08);
+      filter: blur(8px);
+    }
+
+    .hero-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 24px;
+      align-items: flex-start;
+      position: relative;
+      z-index: 1;
+    }
+
+    .hero h1 {
+      margin: 0;
+      font-size: 34px;
+      line-height: 1.2;
+      letter-spacing: 0.02em;
+    }
+
+    .hero p {
+      max-width: 900px;
+      margin: 12px 0 0;
+      color: rgba(255, 255, 255, 0.86);
+      line-height: 1.7;
+    }
+
+    .hero-badges {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 18px;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 8px 14px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.14);
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      font-size: 13px;
+      white-space: nowrap;
+    }
+
+    .toolbar {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      padding: 0 28px 16px;
+      backdrop-filter: blur(14px);
+      background: linear-gradient(180deg, rgba(243, 247, 245, 0.92), rgba(243, 247, 245, 0.72));
+    }
+
+    .toolbar-inner {
+      max-width: 1380px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+      padding: 14px 18px;
+      border-radius: 20px;
+      background: rgba(255, 255, 255, 0.78);
+      border: 1px solid rgba(223, 231, 226, 0.9);
+      box-shadow: 0 14px 34px rgba(22, 33, 27, 0.06);
+    }
+
+    .nav-tabs,
+    .mode-tabs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .tab-btn {
+      appearance: none;
+      border: 1px solid var(--line);
+      background: #fff;
+      color: var(--muted);
+      border-radius: 999px;
+      padding: 10px 16px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+      transition: all 0.18s ease;
+    }
+
+    .tab-btn:hover {
+      border-color: #b7cdbf;
+      color: var(--green-strong);
+      transform: translateY(-1px);
+    }
+
+    .tab-btn.active {
+      background: var(--green);
+      color: #fff;
+      border-color: var(--green);
+      box-shadow: 0 10px 18px rgba(24, 121, 78, 0.18);
+    }
+
+    .main {
+      max-width: 1380px;
+      margin: 0 auto;
+      padding: 0 28px 40px;
+    }
+
+    .page {
+      display: none;
+      margin-bottom: 28px;
+      padding: 24px;
+      border-radius: 26px;
+      background: var(--panel);
+      border: 1px solid rgba(223, 231, 226, 0.96);
+      box-shadow: var(--shadow);
+    }
+
+    .page.visible {
+      display: block;
+    }
+
+    .page-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 18px;
+      margin-bottom: 20px;
+    }
+
+    .page-title {
+      margin: 0;
+      font-size: 28px;
+    }
+
+    .page-subtitle {
+      margin: 8px 0 0;
+      color: var(--muted);
+      line-height: 1.7;
+      max-width: 960px;
+    }
+
+    .page-flag {
+      flex-shrink: 0;
+      display: inline-flex;
+      align-items: center;
+      padding: 10px 14px;
+      border-radius: 14px;
+      background: var(--green-soft);
+      color: var(--green-strong);
+      font-weight: 700;
+      font-size: 13px;
+    }
+
+    .soft-note {
+      margin-bottom: 18px;
+      padding: 14px 16px;
+      border-radius: 16px;
+      background: var(--blue-soft);
+      color: #24418d;
+      line-height: 1.7;
+      border: 1px solid #d8e5ff;
+    }
+
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 16px;
+      margin-bottom: 18px;
+    }
+
+    .grid-4 {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 16px;
+      margin-bottom: 18px;
+    }
+
+    .grid-2-1 {
+      display: grid;
+      grid-template-columns: 1.7fr 1fr;
+      gap: 18px;
+    }
+
+    .card {
+      padding: 18px;
+      border-radius: 20px;
+      background: var(--panel-strong);
+      border: 1px solid var(--line);
+    }
+
+    .card h3,
+    .card h4 {
+      margin: 0 0 12px;
+    }
+
+    .stat-card {
+      position: relative;
+      overflow: hidden;
+    }
+
+    .stat-card::after {
+      content: "";
+      position: absolute;
+      right: -30px;
+      bottom: -30px;
+      width: 100px;
+      height: 100px;
+      border-radius: 50%;
+      background: rgba(24, 121, 78, 0.07);
+    }
+
+    .stat-label {
+      color: var(--muted);
+      font-size: 13px;
+      margin-bottom: 10px;
+    }
+
+    .stat-value {
+      font-size: 28px;
+      font-weight: 800;
+      letter-spacing: 0.02em;
+    }
+
+    .stat-meta {
+      margin-top: 10px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .filters {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 14px;
+      margin-bottom: 18px;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .field label {
+      font-size: 13px;
+      color: var(--muted);
+      font-weight: 600;
+    }
+
+    .field .fake-input,
+    .mini-input {
+      height: 42px;
+      border-radius: 14px;
+      border: 1px solid var(--line);
+      background: #f9fbfa;
+      padding: 0 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      color: var(--text);
+      font-size: 14px;
+    }
+
+    .chart {
+      height: 320px;
+      border-radius: 18px;
+      padding: 16px;
+      border: 1px solid var(--line);
+      background:
+        linear-gradient(180deg, rgba(231, 247, 239, 0.46), rgba(255, 255, 255, 0.96)),
+        linear-gradient(90deg, rgba(217, 226, 222, 0.36) 1px, transparent 1px),
+        linear-gradient(rgba(217, 226, 222, 0.36) 1px, transparent 1px);
+      background-size: auto, 52px 100%, 100% 52px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .chart.dark-accent::before,
+    .chart.dual-accent::before,
+    .chart.dual-accent::after,
+    .chart.wave-accent::before {
+      content: "";
+      position: absolute;
+      left: 18px;
+      right: 18px;
+      bottom: 48px;
+      height: 180px;
+      border-radius: 18px;
+    }
+
+    .chart.dark-accent::before {
+      background:
+        linear-gradient(180deg, rgba(30, 94, 255, 0.05), rgba(30, 94, 255, 0)),
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 800 220' preserveAspectRatio='none'%3E%3Cpath d='M0 158 C48 144 84 84 128 92 C167 100 199 181 246 172 C291 164 318 43 361 49 C404 55 447 197 500 184 C555 170 576 71 627 77 C676 83 716 161 800 126' fill='none' stroke='%2318794e' stroke-width='5' stroke-linecap='round'/%3E%3Cpath d='M0 184 C52 190 86 120 126 126 C171 133 196 213 250 203 C299 194 339 98 389 107 C437 116 478 192 530 184 C580 176 627 113 677 119 C723 124 756 161 800 151' fill='none' stroke='%231e5eff' stroke-width='4' stroke-linecap='round'/%3E%3C/svg%3E") center/100% 100% no-repeat;
+    }
+
+    .chart.dual-accent::before {
+      background:
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 800 220' preserveAspectRatio='none'%3E%3Cpath d='M0 170 C53 183 86 110 138 120 C180 129 214 189 258 177 C297 165 335 68 374 80 C416 93 451 181 500 170 C549 159 577 90 632 98 C687 106 718 158 800 138' fill='none' stroke='%2318794e' stroke-width='4.5' stroke-linecap='round'/%3E%3C/svg%3E") center/100% 100% no-repeat;
+    }
+
+    .chart.dual-accent::after {
+      content: "";
+      position: absolute;
+      left: 18px;
+      right: 18px;
+      bottom: 48px;
+      height: 180px;
+      border-radius: 18px;
+      background:
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 800 220' preserveAspectRatio='none'%3E%3Cpath d='M0 150 C43 95 86 90 128 123 C173 159 208 201 252 178 C301 153 331 44 390 52 C444 61 483 173 528 165 C572 157 607 75 658 84 C712 94 739 159 800 126' fill='none' stroke='%23c87500' stroke-width='4' stroke-linecap='round'/%3E%3C/svg%3E") center/100% 100% no-repeat;
+    }
+
+    .chart.wave-accent::before {
+      background:
+        linear-gradient(180deg, rgba(24, 121, 78, 0.08), rgba(24, 121, 78, 0)),
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 800 220' preserveAspectRatio='none'%3E%3Cpath d='M0 141 C58 141 88 55 144 56 C197 56 228 156 274 156 C326 156 355 84 408 85 C461 86 492 168 548 167 C602 166 634 43 689 43 C738 43 764 111 800 111' fill='none' stroke='%231e5eff' stroke-width='5' stroke-linecap='round'/%3E%3Cpath d='M0 173 C60 173 87 121 140 121 C196 121 219 183 277 183 C331 183 357 136 408 136 C467 136 490 198 545 198 C601 198 632 85 693 85 C743 85 767 162 800 162' fill='none' stroke='%2318794e' stroke-width='4' stroke-linecap='round'/%3E%3C/svg%3E") center/100% 100% no-repeat;
+    }
+
+    .chart-caption {
+      position: absolute;
+      left: 16px;
+      top: 14px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 12px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.9);
+      border: 1px solid rgba(223, 231, 226, 0.88);
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .tab-strip {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin: 0 0 14px;
+    }
+
+    .mini-pill {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 8px 12px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: #fff;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--muted);
+    }
+
+    .mini-pill.active {
+      background: var(--green);
+      border-color: var(--green);
+      color: #fff;
+    }
+
+    .info-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .info-item {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: flex-start;
+      padding: 12px 0;
+      border-bottom: 1px solid #eef3ef;
+      font-size: 14px;
+    }
+
+    .info-item:last-child {
+      border-bottom: 0;
+      padding-bottom: 0;
+    }
+
+    .info-item span:first-child {
+      color: var(--muted);
+    }
+
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .tag.green {
+      background: var(--green-soft);
+      color: var(--green-strong);
+    }
+
+    .tag.blue {
+      background: var(--blue-soft);
+      color: #24418d;
+    }
+
+    .tag.amber {
+      background: var(--amber-soft);
+      color: #965700;
+    }
+
+    .tag.red {
+      background: var(--red-soft);
+      color: var(--red);
+    }
+
+    .alert-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .alert-item {
+      padding: 14px;
+      border-radius: 18px;
+      border-left: 4px solid var(--green);
+      background: #f8fafc;
+      border: 1px solid #ebf0ec;
+    }
+
+    .alert-item.level-1 {
+      background: var(--red-soft);
+      border-left-color: var(--red);
+    }
+
+    .alert-item.level-2 {
+      background: var(--amber-soft);
+      border-left-color: var(--amber);
+    }
+
+    .alert-item.level-3 {
+      background: var(--blue-soft);
+      border-left-color: var(--blue);
+    }
+
+    .alert-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .alert-time {
+      font-family: var(--mono);
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .metrics {
+      display: grid;
+      gap: 8px;
+    }
+
+    .metric-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      font-size: 14px;
+    }
+
+    .metric-row span:first-child {
+      color: var(--muted);
+    }
+
+    .section-title {
+      margin: 0 0 14px;
+      font-size: 20px;
+    }
+
+    .compare-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+      margin-bottom: 18px;
+    }
+
+    .limit-panel {
+      border-radius: 20px;
+      padding: 18px;
+      background: #fff;
+      border: 1px solid var(--line);
+    }
+
+    .limit-panel h4 {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .limit-line {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 10px 0;
+      font-size: 14px;
+    }
+
+    .limit-line strong {
+      font-size: 18px;
+    }
+
+    .divider {
+      height: 1px;
+      background: #edf2ef;
+      margin: 10px 0;
+    }
+
+    .tiny-note {
+      margin-top: 12px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.7;
+    }
+
+    .input-grid {
+      display: grid;
+      gap: 10px;
+    }
+
+    .table-wrap {
+      overflow: auto;
+      border-radius: 18px;
+      border: 1px solid var(--line);
+      background: #fff;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 960px;
+    }
+
+    th,
+    td {
+      padding: 14px 16px;
+      border-bottom: 1px solid #edf2ef;
+      text-align: left;
+      font-size: 14px;
+    }
+
+    th {
+      background: #f8fafc;
+      color: var(--muted);
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    tbody tr:hover {
+      background: #fbfdfb;
+    }
+
+    .actions {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-top: 18px;
+    }
+
+    .primary-btn,
+    .ghost-btn,
+    .disabled-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 12px 16px;
+      border-radius: 14px;
+      border: 1px solid transparent;
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .primary-btn {
+      background: var(--green);
+      color: #fff;
+      box-shadow: 0 12px 18px rgba(24, 121, 78, 0.14);
+    }
+
+    .ghost-btn {
+      background: #fff;
+      border-color: var(--line);
+      color: var(--muted);
+    }
+
+    .disabled-btn {
+      background: #f3f4f6;
+      color: #9aa7a0;
+      border-color: #e6ebe8;
+    }
+
+    .footer-tip {
+      margin-top: 12px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.7;
+    }
+
+    @media (max-width: 1180px) {
+      .grid-3,
+      .grid-4,
+      .filters,
+      .grid-2-1,
+      .compare-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .hero-top,
+      .page-header,
+      .toolbar-inner {
+        flex-direction: column;
+        align-items: stretch;
+      }
+    }
+
+    @media (max-width: 720px) {
+      .hero,
+      .toolbar,
+      .main {
+        padding-left: 16px;
+        padding-right: 16px;
+      }
+
+      .hero-inner,
+      .page {
+        padding: 18px;
+      }
+
+      .hero h1,
+      .page-title {
+        font-size: 26px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <header class="hero">
+      <div class="hero-inner">
+        <div class="hero-top">
+          <div>
+            <h1>幕墙振动监测中心静态演示页</h1>
+            <p>
+              这个文件不依赖登录、不依赖 Nuxt、不依赖后端，专门用于展示震动模块当前设计后的四个小页：
+              监测总览、实时监测、预警规则、预警记录。你可以直接双击打开，也可以拖进浏览器看。
+            </p>
+            <div class="hero-badges">
+              <span class="badge">可直接滚轮上下滑动</span>
+              <span class="badge">支持四页纵向全展示</span>
+              <span class="badge">支持单页切换演示</span>
+              <span class="badge">高保真静态答辩展示</span>
+            </div>
+          </div>
+          <div class="badge">文件名：<span style="margin-left:8px;font-family:var(--mono)">vibration-demo.html</span></div>
+        </div>
+      </div>
+    </header>
+
+    <div class="toolbar">
+      <div class="toolbar-inner">
+        <div class="nav-tabs">
+          <button class="tab-btn active" data-page-btn="all">展示全部</button>
+          <button class="tab-btn" data-page-btn="dashboard">监测总览</button>
+          <button class="tab-btn" data-page-btn="realtime">实时监测</button>
+          <button class="tab-btn" data-page-btn="parameter">预警规则</button>
+          <button class="tab-btn" data-page-btn="abnormal">预警记录</button>
+        </div>
+        <div class="mode-tabs">
+          <a class="tab-btn" href="#page-dashboard">跳到总览</a>
+          <a class="tab-btn" href="#page-realtime">跳到实时</a>
+          <a class="tab-btn" href="#page-parameter">跳到规则</a>
+          <a class="tab-btn" href="#page-abnormal">跳到记录</a>
+        </div>
+      </div>
+    </div>
+
+    <main class="main">
+      <section id="page-dashboard" class="page visible" data-page="dashboard">
+        <div class="page-header">
+          <div>
+            <h2 class="page-title">监测总览</h2>
+            <p class="page-subtitle">
+              仪表盘页用于展示当前设备状态、实时振动趋势、历史趋势和三级预警记录，是答辩时最适合先展示的一页。
+            </p>
+          </div>
+          <div class="page-flag">仪表盘 / 总览视角</div>
+        </div>
+
+        <div class="grid-4">
+          <div class="card stat-card">
+            <div class="stat-label">当前设备</div>
+            <div class="stat-value">安楼外幕墙 2D</div>
+            <div class="stat-meta">加速度计 / 在线</div>
+          </div>
+          <div class="card stat-card">
+            <div class="stat-label">当前预警等级</div>
+            <div class="stat-value">二级预警</div>
+            <div class="stat-meta">绝对差：0.213400</div>
+          </div>
+          <div class="card stat-card">
+            <div class="stat-label">模型标准值</div>
+            <div class="stat-value">0.182600</div>
+            <div class="stat-meta">输入：天气 + 风速 + 历史正常数据</div>
+          </div>
+          <div class="card stat-card">
+            <div class="stat-label">通知规则</div>
+            <div class="stat-value">邮箱 / 30 分钟</div>
+            <div class="stat-meta">防重复发送已启用</div>
+          </div>
+        </div>
+
+        <div class="grid-2-1">
+          <div class="card">
+            <h3 class="section-title">实时振动数据（一小时内）</h3>
+            <div class="tab-strip">
+              <span class="mini-pill active">全部 (XYZ)</span>
+              <span class="mini-pill">X 轴</span>
+              <span class="mini-pill">Y 轴</span>
+              <span class="mini-pill">Z 轴</span>
+            </div>
+            <div class="chart dark-accent">
+              <div class="chart-caption">实时曲线 / 实际值 vs 基线参考</div>
+            </div>
+          </div>
+
+          <div class="card">
+            <h3 class="section-title">设备信息与预警规则</h3>
+            <div class="info-list">
+              <div class="info-item"><span>设备名称</span><strong>安楼外幕墙 2D</strong></div>
+              <div class="info-item"><span>传感器类型</span><span class="tag blue">加速度计</span></div>
+              <div class="info-item"><span>设备状态</span><span class="tag green">在线</span></div>
+              <div class="info-item"><span>最后更新</span><strong>2026-04-22 14:36:08</strong></div>
+              <div class="info-item"><span>一级预警</span><strong>0.300000</strong></div>
+              <div class="info-item"><span>二级预警</span><strong>0.200000</strong></div>
+              <div class="info-item"><span>三级预警</span><strong>0.100000</strong></div>
+              <div class="info-item"><span>通知方式</span><strong>邮箱</strong></div>
+              <div class="info-item"><span>发送间隔</span><strong>30 分钟</strong></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid-2-1" style="margin-top:18px;">
+          <div class="card">
+            <h3 class="section-title">历史趋势数据（月级）</h3>
+            <div class="tab-strip">
+              <span class="mini-pill active">全部 (XYZ)</span>
+              <span class="mini-pill">X 轴</span>
+              <span class="mini-pill">Y 轴</span>
+              <span class="mini-pill">Z 轴</span>
+            </div>
+            <div class="chart dual-accent">
+              <div class="chart-caption">月级趋势 / 历史窗口 2026-01 至 2026-04</div>
+            </div>
+          </div>
+
+          <div class="card">
+            <h3 class="section-title">三级预警记录</h3>
+            <div class="alert-list">
+              <div class="alert-item level-1">
+                <div class="alert-top">
+                  <span class="alert-time">2026-04-22 14:21:16</span>
+                  <span class="tag red">一级预警</span>
+                </div>
+                <div class="metrics">
+                  <div class="metric-row"><span>偏离方向</span><strong>Y 轴超过最大值</strong></div>
+                  <div class="metric-row"><span>实际值</span><strong>0.498200</strong></div>
+                  <div class="metric-row"><span>标准值</span><strong>0.162400</strong></div>
+                  <div class="metric-row"><span>绝对差</span><strong>0.335800</strong></div>
+                </div>
+              </div>
+              <div class="alert-item level-2">
+                <div class="alert-top">
+                  <span class="alert-time">2026-04-22 13:58:31</span>
+                  <span class="tag amber">二级预警</span>
+                </div>
+                <div class="metrics">
+                  <div class="metric-row"><span>偏离方向</span><strong>X 轴超过最大值</strong></div>
+                  <div class="metric-row"><span>实际值</span><strong>0.396000</strong></div>
+                  <div class="metric-row"><span>标准值</span><strong>0.182600</strong></div>
+                  <div class="metric-row"><span>绝对差</span><strong>0.213400</strong></div>
+                </div>
+              </div>
+              <div class="alert-item level-3">
+                <div class="alert-top">
+                  <span class="alert-time">2026-04-22 13:17:54</span>
+                  <span class="tag blue">三级预警</span>
+                </div>
+                <div class="metrics">
+                  <div class="metric-row"><span>偏离方向</span><strong>Z 轴低于最小值</strong></div>
+                  <div class="metric-row"><span>实际值</span><strong>-0.091400</strong></div>
+                  <div class="metric-row"><span>标准值</span><strong>0.022300</strong></div>
+                  <div class="metric-row"><span>绝对差</span><strong>0.113700</strong></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="page-realtime" class="page visible" data-page="realtime">
+        <div class="page-header">
+          <div>
+            <h2 class="page-title">实时监测</h2>
+            <p class="page-subtitle">
+              实时监测页强调设备选择、数据级别选择和图表查看。界面说明已同步为“模型基线 + 绝对差三级预警”。
+            </p>
+          </div>
+          <div class="page-flag">实时页 / 曲线查看</div>
+        </div>
+
+        <div class="soft-note">
+          当前页面用于查看实时振动曲线。预警判断已切换为“模型基线 + 绝对差三级预警”，图表展示的是传感器实时变化趋势。
+        </div>
+
+        <div class="card" style="margin-bottom:18px;">
+          <div class="filters">
+            <div class="field">
+              <label>设备地点</label>
+              <div class="fake-input"><span>安楼外幕墙 2</span><span>▾</span></div>
+            </div>
+            <div class="field">
+              <label>设备类型</label>
+              <div class="fake-input"><span>加速度计</span><span>▾</span></div>
+            </div>
+            <div class="field">
+              <label>设备名称</label>
+              <div class="fake-input"><span>安楼外幕墙 2D</span><span>▾</span></div>
+            </div>
+            <div class="field">
+              <label>数据级别</label>
+              <div class="fake-input"><span>分钟级数据</span><span>▾</span></div>
+            </div>
+          </div>
+          <div class="actions" style="margin-top:0;">
+            <span class="primary-btn">确定</span>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="tab-strip">
+            <span class="mini-pill active">全部 (XYZ)</span>
+            <span class="mini-pill">X 轴</span>
+            <span class="mini-pill">Y 轴</span>
+            <span class="mini-pill">Z 轴</span>
+          </div>
+          <div class="chart wave-accent">
+            <div class="chart-caption">分钟级实时曲线 / 选中设备：安楼外幕墙 2D</div>
+          </div>
+          <div class="footer-tip">
+            页面右侧原本会根据后端返回实时刷新。这个静态演示文件只保留界面样式和结构，不做真实请求。
+          </div>
+        </div>
+      </section>
+
+      <section id="page-parameter" class="page visible" data-page="parameter">
+        <div class="page-header">
+          <div>
+            <h2 class="page-title">预警规则与上下限设置</h2>
+            <p class="page-subtitle">
+              这一页按老师要求重新设计成三层信息结构：查询当前上下限、手动设置上下限、Agent 推荐上下限预留。
+            </p>
+          </div>
+          <div class="page-flag">参数页 / 高质量答辩版</div>
+        </div>
+
+        <div class="grid-3" style="margin-bottom:18px;">
+          <div class="card">
+            <div class="stat-label">当前设备</div>
+            <div class="stat-value" style="font-size:24px;">安楼外幕墙 2D</div>
+            <div class="stat-meta">加速度计</div>
+          </div>
+          <div class="card">
+            <div class="stat-label">当前数据来源</div>
+            <div class="stat-value" style="font-size:24px;">接口返回</div>
+            <div class="stat-meta">/data/get_threshold_or_offset</div>
+          </div>
+          <div class="card">
+            <div class="stat-label">Agent 推荐预留</div>
+            <div class="stat-value" style="font-size:24px;">待接 API</div>
+            <div class="stat-meta">界面已准备</div>
+          </div>
+        </div>
+
+        <div class="soft-note">
+          当前页同时展示“当前上下限”“手动设置上下限”和“Agent 推荐上下限预留位”。展示层直接显示上限与下限，保存层仍兼容现有偏移/阈值接口。
+        </div>
+
+        <div class="card" style="margin-bottom:18px;">
+          <h3 class="section-title">X 轴通道</h3>
+          <div class="compare-grid">
+            <div class="limit-panel">
+              <h4>当前上下限 <span class="tag blue">接口返回</span></h4>
+              <div class="limit-line"><span>上限</span><strong>0.412000</strong></div>
+              <div class="limit-line"><span>下限</span><strong>-0.312000</strong></div>
+              <div class="divider"></div>
+              <div class="limit-line"><span>偏移</span><span>0.050000</span></div>
+              <div class="limit-line"><span>阈值</span><span>0.362000</span></div>
+              <div class="tiny-note">最后同步：2026-04-22 14:36:08</div>
+            </div>
+            <div class="limit-panel">
+              <h4>手动设置 <span class="tag green">可保存</span></h4>
+              <div class="input-grid">
+                <div class="field"><label>上限</label><div class="mini-input"><span>0.450000</span></div></div>
+                <div class="field"><label>下限</label><div class="mini-input"><span>-0.280000</span></div></div>
+              </div>
+              <div class="divider"></div>
+              <div class="limit-line"><span>换算偏移</span><span>0.085000</span></div>
+              <div class="limit-line"><span>换算阈值</span><span>0.365000</span></div>
+            </div>
+            <div class="limit-panel" style="background:linear-gradient(180deg,#fff7ed 0%,#fffbeb 100%);border-style:dashed;border-color:#f0b87d;">
+              <h4>Agent 推荐 <span class="tag amber">待接 API</span></h4>
+              <div class="limit-line"><span>推荐上限</span><strong style="color:#c87500;">待接 API</strong></div>
+              <div class="limit-line"><span>推荐下限</span><strong style="color:#c87500;">待接 API</strong></div>
+              <div class="divider"></div>
+              <div class="limit-line"><span>推荐来源</span><span>天气 + 风速 + 模型推理</span></div>
+              <div class="limit-line"><span>接入状态</span><span>前端已预留</span></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" style="margin-bottom:18px;">
+          <h3 class="section-title">Y / Z 轴通道</h3>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>通道</th>
+                  <th>当前上限</th>
+                  <th>当前下限</th>
+                  <th>手动上限</th>
+                  <th>手动下限</th>
+                  <th>Agent 推荐</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Y 轴</td>
+                  <td>0.368000</td>
+                  <td>-0.268000</td>
+                  <td>0.390000</td>
+                  <td>-0.250000</td>
+                  <td><span class="tag amber">待接 API</span></td>
+                </tr>
+                <tr>
+                  <td>Z 轴</td>
+                  <td>0.295000</td>
+                  <td>-0.205000</td>
+                  <td>0.320000</td>
+                  <td>-0.190000</td>
+                  <td><span class="tag amber">待接 API</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="grid-2-1">
+          <div class="card">
+            <h3 class="section-title">预警规则设置</h3>
+            <div class="filters" style="grid-template-columns:repeat(2,minmax(0,1fr));">
+              <div class="field">
+                <label>一级预警阈值</label>
+                <div class="fake-input"><span>0.300000</span></div>
+              </div>
+              <div class="field">
+                <label>二级预警阈值</label>
+                <div class="fake-input"><span>0.200000</span></div>
+              </div>
+              <div class="field">
+                <label>三级预警阈值</label>
+                <div class="fake-input"><span>0.100000</span></div>
+              </div>
+              <div class="field">
+                <label>邮件发送间隔（分钟）</label>
+                <div class="fake-input"><span>30</span></div>
+              </div>
+            </div>
+            <div class="soft-note" style="margin:0;">
+              一级阈值应大于等于二级阈值，二级阈值应大于等于三级阈值。通知方式统一为邮箱。
+            </div>
+          </div>
+          <div class="card">
+            <h3 class="section-title">操作区</h3>
+            <div class="actions" style="margin-top:0;">
+              <span class="ghost-btn">重新查询当前上下限</span>
+              <span class="primary-btn">保存手动上下限</span>
+              <span class="disabled-btn">应用 Agent 推荐</span>
+              <span class="primary-btn">保存预警规则</span>
+            </div>
+            <div class="footer-tip">
+              这里刻意把老师关心的三件事放到一个界面里：查当前值、手动设置值、预留 Agent 推荐值。
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="page-abnormal" class="page visible" data-page="abnormal">
+        <div class="page-header">
+          <div>
+            <h2 class="page-title">预警记录查询</h2>
+            <p class="page-subtitle">
+              预警记录页支持按设备、偏离方向、预警等级和时间范围筛选，重点展示标准值、实际值与绝对差。
+            </p>
+          </div>
+          <div class="page-flag">记录页 / 查询与导出</div>
+        </div>
+
+        <div class="soft-note">
+          这里展示的是“实际值相对模型标准值的绝对差”所触发的三级预警记录。为了兼容旧接口，仍保留兼容下限与兼容上限字段。
+        </div>
+
+        <div class="card" style="margin-bottom:18px;">
+          <div class="filters" style="grid-template-columns:repeat(5,minmax(0,1fr));">
+            <div class="field">
+              <label>设备选择</label>
+              <div class="fake-input"><span>安楼外幕墙 2D</span><span>▾</span></div>
+            </div>
+            <div class="field">
+              <label>偏离方向</label>
+              <div class="fake-input"><span>Y 轴超过最大值</span><span>▾</span></div>
+            </div>
+            <div class="field">
+              <label>预警等级</label>
+              <div class="fake-input"><span>全部等级</span><span>▾</span></div>
+            </div>
+            <div class="field">
+              <label>开始时间</label>
+              <div class="fake-input"><span>2026-04-15 00:00:00</span></div>
+            </div>
+            <div class="field">
+              <label>结束时间</label>
+              <div class="fake-input"><span>2026-04-22 14:36:08</span></div>
+            </div>
+          </div>
+          <div class="actions" style="margin-top:0;">
+            <span class="primary-btn">查询</span>
+            <span class="ghost-btn">导出数据</span>
+          </div>
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>设备 ID</th>
+                <th>设备名称</th>
+                <th>时间</th>
+                <th>方向</th>
+                <th>预警等级</th>
+                <th>实际值</th>
+                <th>标准值</th>
+                <th>绝对差</th>
+                <th>兼容下限</th>
+                <th>兼容上限</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>55DA00B5</td>
+                <td>安楼外幕墙 2D</td>
+                <td>2026-04-22 14:21:16</td>
+                <td>Y 轴超过最大值</td>
+                <td><span class="tag red">一级预警</span></td>
+                <td>0.498200</td>
+                <td>0.162400</td>
+                <td>0.335800</td>
+                <td>-0.268000</td>
+                <td>0.368000</td>
+              </tr>
+              <tr>
+                <td>55DA00B5</td>
+                <td>安楼外幕墙 2D</td>
+                <td>2026-04-22 13:58:31</td>
+                <td>X 轴超过最大值</td>
+                <td><span class="tag amber">二级预警</span></td>
+                <td>0.396000</td>
+                <td>0.182600</td>
+                <td>0.213400</td>
+                <td>-0.312000</td>
+                <td>0.412000</td>
+              </tr>
+              <tr>
+                <td>55DA00B5</td>
+                <td>安楼外幕墙 2D</td>
+                <td>2026-04-22 13:17:54</td>
+                <td>Z 轴低于最小值</td>
+                <td><span class="tag blue">三级预警</span></td>
+                <td>-0.091400</td>
+                <td>0.022300</td>
+                <td>0.113700</td>
+                <td>-0.205000</td>
+                <td>0.295000</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    const buttons = Array.from(document.querySelectorAll("[data-page-btn]"));
+    const pages = Array.from(document.querySelectorAll("[data-page]"));
+
+    function showPages(target) {
+      buttons.forEach((button) => {
+        button.classList.toggle("active", button.dataset.pageBtn === target);
+      });
+
+      pages.forEach((page) => {
+        if (target === "all") {
+          page.classList.add("visible");
+        } else {
+          page.classList.toggle("visible", page.dataset.page === target);
+        }
+      });
+
+      if (target !== "all") {
+        const section = document.querySelector(`[data-page="${target}"]`);
+        if (section) {
+          setTimeout(() => {
+            section.scrollIntoView({ behavior: "smooth", block: "start" });
+          }, 30);
+        }
+      } else {
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
+    }
+
+    buttons.forEach((button) => {
+      button.addEventListener("click", () => showPages(button.dataset.pageBtn));
+    });
+
+    showPages("all");
+  </script>
+</body>
+</html>

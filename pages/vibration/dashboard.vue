@@ -2,7 +2,7 @@
   <div class="dashboard-container">
     <!-- 顶部导航 -->
     <div class="header-nav">
-      <h1 class="page-title">设备监控仪表盘</h1>
+      <h1 class="page-title">振动监测总览</h1>
       <el-button type="primary" @click="backToMain" class="back-btn">返回主页</el-button>
     </div>
 
@@ -11,7 +11,7 @@
       <!-- 左侧：秒级数据图表 (占3/4) -->
       <div class="chart-section">
         <div class="section-header">
-          <h2>实时监控数据（一小时内）</h2>
+          <h2>实时振动数据（一小时内）</h2>
           <div class="device-selector">
             <el-select v-model="selectedCategory" placeholder="选择设备地点" @change="fetchDevices">
               <el-option label="安楼外幕墙1" value="安楼外幕墙1"></el-option>
@@ -114,7 +114,7 @@
           </div>
           
           <!-- 阈值信息 -->
-          <h3 class="mt-4">阈值信息</h3>
+          <h3 class="mt-4">预警规则</h3>
           <div class="threshold-info">
             <!-- 加速度计阈值显示 -->
             <div v-if="currentDeviceInfo.type === 'accelerometer'">
@@ -150,16 +150,39 @@
               </div>
             </div>
             
-            <!-- 通用告警阈值 -->
             <div class="threshold-group">
-              <h4>告警阈值</h4>
+              <h4>预警派生规则</h4>
               <div class="threshold-item">
-                <span class="threshold-label">邮件告警：</span>
-                <span class="threshold-value">{{ thresholds.email_limit }}</span>
+                <span class="threshold-label">生效来源：</span>
+                <span class="threshold-value">人工设置</span>
               </div>
               <div class="threshold-item">
-                <span class="threshold-label">短信告警：</span>
-                <span class="threshold-value">{{ thresholds.message_limit }}</span>
+                <span class="threshold-label">一级预警：</span>
+                <span class="threshold-value">生效阈值的 {{ Math.round(alertConfig.level1Ratio * 100) }}%</span>
+              </div>
+              <div class="threshold-item">
+                <span class="threshold-label">二级预警：</span>
+                <span class="threshold-value">生效阈值的 {{ Math.round(alertConfig.level2Ratio * 100) }}%</span>
+              </div>
+              <div class="threshold-item">
+                <span class="threshold-label">三级预警：</span>
+                <span class="threshold-value">生效阈值的 {{ Math.round(alertConfig.level3Ratio * 100) }}%</span>
+              </div>
+            </div>
+
+            <div class="threshold-group">
+              <h4>邮件通知规则</h4>
+              <div class="threshold-item">
+                <span class="threshold-label">通知方式：</span>
+                <span class="threshold-value">邮箱</span>
+              </div>
+              <div class="threshold-item">
+                <span class="threshold-label">频率策略：</span>
+                <span class="threshold-value">后端统一硬编码</span>
+              </div>
+              <div class="threshold-item">
+                <span class="threshold-label">前端状态：</span>
+                <span class="threshold-value">不单独配置邮件间隔</span>
               </div>
             </div>
           </div>
@@ -235,9 +258,9 @@
       <!-- 右侧：异常数据记录 -->
       <div class="abnormal-section">
         <div class="abnormal-card">
-          <h3>异常数据记录</h3>
+          <h3>三级预警记录</h3>
           <div class="abnormal-filter">
-            <el-select v-model="abnormalFilter.direction" placeholder="选择方向" size="small" @change="fetchAbnormalData">
+            <el-select v-model="abnormalFilter.direction" placeholder="选择偏离方向" size="small" @change="fetchAbnormalData">
               <el-option label="全部" value="all" />
               <!-- 动态显示选项根据传感器类型 -->
               <template v-if="currentDeviceInfo.type === 'accelerometer'">
@@ -260,7 +283,7 @@
           <div class="abnormal-list" v-loading="abnormalLoading">
             <el-scrollbar height="300px">
               <div v-if="abnormalData.length === 0" class="no-data">
-                <el-empty description="暂无异常数据" />
+                <el-empty description="暂无预警记录" />
               </div>
               <div v-else>
                 <div 
@@ -286,10 +309,24 @@
                     </div>
                   </div>
                   <div class="abnormal-content">
-                    <span class="data-value">{{ item.data.toFixed(6) }}</span>
-                    <span class="threshold-range">
-                      (阈值: {{ item.min }} ~ {{ item.max }})
-                    </span>
+                    <div class="abnormal-metric-row">
+                      <span class="metric-label">实际值</span>
+                      <span class="data-value">{{ formatMetricValue(getAbnormalMetrics(item).actualValue) }}</span>
+                    </div>
+                    <div class="abnormal-metric-row">
+                      <span class="metric-label">标准值</span>
+                      <span class="threshold-range">{{ formatMetricValue(getAbnormalMetrics(item).standardValue) }}</span>
+                    </div>
+                    <div class="abnormal-metric-row">
+                      <span class="metric-label">绝对差</span>
+                      <span class="threshold-range">{{ formatMetricValue(getAbnormalMetrics(item).deviation) }}</span>
+                    </div>
+                    <div class="abnormal-metric-row">
+                      <span class="metric-label">兼容阈值</span>
+                      <span class="threshold-range">
+                        {{ formatMetricValue(item.min) }} ~ {{ formatMetricValue(item.max) }}
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -314,9 +351,16 @@ import * as echarts from 'echarts'
 import { ElMessage } from 'element-plus'
 import { ArrowRight } from '@element-plus/icons-vue'
 import axios from 'axios'
+import {
+  defaultVibrationAlertConfig,
+  deriveAlertMetrics,
+  getAlertLevelClass,
+  getAlertLevelLabel as getAlertLevelText,
+  getAlertLevelTagType as getAlertTagType
+} from '~/composables/useVibrationAlertConfig'
 
 const router = useRouter()
-const API_BASE_URL = 'http://110.42.214.164:8009'
+const API_BASE_URL = 'http://127.0.0.1:8009'
 
 // 标签页相关
 const activeRealtimeTab = ref('all') // 实时数据标签页
@@ -392,10 +436,7 @@ const thresholds = reactive({
   z_limit: 0,
   // 应变计阈值
   ch1_limit: 0,
-  ch2_limit: 0,
-  // 通用告警阈值
-  email_limit: 0,
-  message_limit: 0
+  ch2_limit: 0
 })
 
 // 月份范围选择
@@ -411,7 +452,11 @@ const abnormalData = ref<Array<{
   data: number;
   min: number;
   max: number;
-  type?: string; // 添加type字段
+  type?: string;
+  standard_value?: number;
+  actual_value?: number;
+  deviation?: number;
+  alert_level?: string;
 }>>([])
 const abnormalLoading = ref(false)
 const abnormalFilter = reactive({
@@ -440,42 +485,26 @@ const currentMonthlyData = ref<{
 // 存储预处理的图表配置
 const chartOptions = ref<{ [key: string]: any }>({})
 
-// 获取异常级别类型
-const getAlarmType = (item: any): 'alarm' | 'warning' => {
-  // 优先使用API返回的type字段
-  if (item.type) {
-    return item.type === 'alarm' ? 'alarm' : 'warning'
-  }
-  
-  // 兼容旧逻辑：如果没有type字段，根据数值判断
-  const dataValue = Math.abs(item.data)
-  const messageLimit = thresholds.message_limit
-  
-  return dataValue >= messageLimit ? 'alarm' : 'warning'
+const alertConfig = ref(defaultVibrationAlertConfig)
+
+const refreshAlertConfig = () => {
+  alertConfig.value = defaultVibrationAlertConfig
 }
 
-// 判断是否为警告级别（alarm）
-const isAlarmLevel = (item: any): boolean => {
-  return getAlarmType(item) === 'alarm'
-}
+const getAbnormalMetrics = (item: Record<string, unknown>) =>
+  deriveAlertMetrics(item, alertConfig.value)
 
-// 获取警告级别标签
-const getAlarmLevelLabel = (item: any): string => {
-  const type = getAlarmType(item)
-  return type === 'alarm' ? '警告' : '预警'
-}
+const getAlarmLevelLabel = (item: Record<string, unknown>) =>
+  getAlertLevelText(getAbnormalMetrics(item).level)
 
-// 获取警告级别标签类型
-const getAlarmLevelTagType = (item: any): "success" | "warning" | "info" | "primary" | "danger" => {
-  const type = getAlarmType(item)
-  return type === 'alarm' ? 'danger' : 'warning'
-}
+const getAlarmLevelTagType = (item: Record<string, unknown>) =>
+  getAlertTagType(getAbnormalMetrics(item).level)
 
-// 获取异常项的CSS类
-const getAbnormalItemClass = (item: any): string => {
-  const type = getAlarmType(item)
-  return type === 'alarm' ? 'abnormal-item alarm-level' : 'abnormal-item warning-level'
-}
+const getAbnormalItemClass = (item: Record<string, unknown>) =>
+  `abnormal-item ${getAlertLevelClass(getAbnormalMetrics(item).level)}`
+
+const formatMetricValue = (value: number | null | undefined, digits = 6) =>
+  typeof value === 'number' && Number.isFinite(value) ? value.toFixed(digits) : '--'
 
 // 初始化实时图表
 const initializeRealtimeCharts = () => {
@@ -1417,7 +1446,7 @@ const backToMain = () => {
 
 // 跳转到异常数据页面
 const goToAbnormalPage = () => {
-  router.push('/abnormal')
+  router.push('/vibration/abnormal')
 }
 
 // 格式化时间
@@ -1503,12 +1532,11 @@ const fetchThresholds = async () => {
         thresholds.ch2_limit = data.ch2_limit || 0
       }
       
-      // 设置通用告警阈值
-      thresholds.email_limit = data.email_limit || 25
-      thresholds.message_limit = data.message_limit || 35
+      refreshAlertConfig()
     }
   } catch (error) {
     console.error('获取阈值失败:', error)
+    refreshAlertConfig()
   }
 }
 
@@ -2040,6 +2068,25 @@ watch(selectedDevice, (newDevice) => {
   font-weight: 700;
 }
 
+.abnormal-item.notice-level {
+  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+  border-left: 4px solid #3b82f6;
+}
+
+.abnormal-item.notice-level:hover {
+  background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+}
+
+.abnormal-item.notice-level .data-value {
+  color: #1d4ed8;
+  font-weight: 700;
+}
+
+.abnormal-item.normal-level {
+  background: #f8fafc;
+  border-left: 4px solid #94a3b8;
+}
+
 .abnormal-header {
   display: flex;
   justify-content: space-between;
@@ -2064,13 +2111,29 @@ watch(selectedDevice, (newDevice) => {
 
 .abnormal-content {
   display: flex;
-  align-items: baseline;
-  gap: 8px;
+  flex-direction: column;
+  gap: 6px;
 }
 
 .threshold-range {
   font-size: 12px;
   color: #909399;
+}
+
+.data-value {
+  font-size: 15px;
+}
+
+.abnormal-metric-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.metric-label {
+  font-size: 12px;
+  color: #64748b;
 }
 
 .abnormal-footer {

@@ -25,9 +25,13 @@ export default defineEventHandler(async (event: any) => {
     console.log("Received:", body);
 
     // 发起请求
+    const email = body.email || body.username;
+
     const response = await axios.post(`${BASE_URL}/login`, {
-      username: body.email,
+      username: email,
       password: body.password,
+    }, {
+      timeout: 8000,
     });
 
     if (response.status === 200) {
@@ -35,7 +39,8 @@ export default defineEventHandler(async (event: any) => {
       console.log("Login successful, token:", response.data.token);
       return {
         authToken: response.data.token,
-        email: body.email,
+        token: response.data.token,
+        email,
       };
     } else {
       console.error("Login failed:", response);
