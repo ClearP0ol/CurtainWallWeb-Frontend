@@ -6,17 +6,15 @@
       <el-button type="primary" @click="backToMain" class="back-btn">返回主页</el-button>
     </div>
 
-    <!-- 上半部分：秒级数据展示 -->
-    <div class="top-section">
-      <!-- 左侧：秒级数据图表 (占3/4) -->
-      <div class="chart-section">
+    <div class="dashboard-row">
+      <section class="panel-card">
         <div class="section-header">
           <h2>实时振动数据（一小时内）</h2>
           <div class="device-selector">
             <el-select v-model="selectedCategory" placeholder="选择设备地点" @change="fetchDevices">
-              <el-option label="安楼外幕墙1" value="安楼外幕墙1"></el-option>
-              <el-option label="安楼外幕墙2" value="安楼外幕墙2"></el-option>
-              <el-option label="衷和楼" value="衷和楼"></el-option>
+              <el-option label="安楼外幕墙1" value="安楼外幕墙1" />
+              <el-option label="安楼外幕墙2" value="安楼外幕墙2" />
+              <el-option label="衷和楼" value="衷和楼" />
             </el-select>
             <el-select v-model="selectedDevice" placeholder="选择设备" class="ml-4" @change="onDeviceChange">
               <el-option
@@ -28,15 +26,12 @@
             </el-select>
           </div>
         </div>
-        
-        <!-- 实时数据多图表卡片 -->
+
         <div class="chart-tabs">
-          <!-- 标签页导航 -->
           <div class="tab-nav">
-            <!-- 加速度计标签页 -->
             <template v-if="currentDeviceInfo.type === 'accelerometer'">
-              <button 
-                v-for="tab in accelerometerTabs" 
+              <button
+                v-for="tab in accelerometerTabs"
                 :key="tab.key"
                 :class="['tab-button', { active: activeRealtimeTab === tab.key }]"
                 @click="switchRealtimeTab(tab.key)"
@@ -44,11 +39,10 @@
                 {{ tab.label }}
               </button>
             </template>
-            
-            <!-- 应变计标签页 -->
+
             <template v-if="currentDeviceInfo.type === 'strainGauge'">
-              <button 
-                v-for="tab in strainGaugeTabs" 
+              <button
+                v-for="tab in strainGaugeTabs"
                 :key="tab.key"
                 :class="['tab-button', { active: activeRealtimeTab === tab.key }]"
                 @click="switchRealtimeTab(tab.key)"
@@ -57,18 +51,15 @@
               </button>
             </template>
           </div>
-          
-          <!-- 图表容器 -->
+
           <div class="tab-content">
-            <!-- 加速度计图表 -->
             <template v-if="currentDeviceInfo.type === 'accelerometer'">
               <div v-show="activeRealtimeTab === 'x'" id="realtime-chart-x" class="chart-container"></div>
               <div v-show="activeRealtimeTab === 'y'" id="realtime-chart-y" class="chart-container"></div>
               <div v-show="activeRealtimeTab === 'z'" id="realtime-chart-z" class="chart-container"></div>
               <div v-show="activeRealtimeTab === 'all'" id="realtime-chart-all" class="chart-container"></div>
             </template>
-            
-            <!-- 应变计图表 -->
+
             <template v-if="currentDeviceInfo.type === 'strainGauge'">
               <div v-show="activeRealtimeTab === 'ch1'" id="realtime-chart-ch1" class="chart-container"></div>
               <div v-show="activeRealtimeTab === 'ch2'" id="realtime-chart-ch2" class="chart-container"></div>
@@ -76,7 +67,7 @@
             </template>
           </div>
         </div>
-      </div>
+      </section>
 
       <!-- 右侧：设备详细信息 (占1/4) -->
       <div class="info-section">
@@ -190,10 +181,8 @@
       </div>
     </div>
 
-    <!-- 下半部分：月级数据和异常记录 -->
-    <div class="bottom-section">
-      <!-- 左侧：月级数据图表 -->
-      <div class="chart-section">
+    <div class="dashboard-row">
+      <section class="panel-card">
         <div class="section-header">
           <h2>历史趋势数据（月级）</h2>
           <el-date-picker
@@ -205,15 +194,12 @@
             @change="onMonthRangeChange"
           />
         </div>
-        
-        <!-- 月级数据多图表卡片 -->
+
         <div class="chart-tabs">
-          <!-- 标签页导航 -->
           <div class="tab-nav">
-            <!-- 加速度计标签页 -->
             <template v-if="currentDeviceInfo.type === 'accelerometer'">
-              <button 
-                v-for="tab in accelerometerTabs" 
+              <button
+                v-for="tab in accelerometerTabs"
                 :key="tab.key"
                 :class="['tab-button', { active: activeMonthlyTab === tab.key }]"
                 @click="switchMonthlyTab(tab.key)"
@@ -221,11 +207,10 @@
                 {{ tab.label }}
               </button>
             </template>
-            
-            <!-- 应变计标签页 -->
+
             <template v-if="currentDeviceInfo.type === 'strainGauge'">
-              <button 
-                v-for="tab in strainGaugeTabs" 
+              <button
+                v-for="tab in strainGaugeTabs"
                 :key="tab.key"
                 :class="['tab-button', { active: activeMonthlyTab === tab.key }]"
                 @click="switchMonthlyTab(tab.key)"
@@ -234,18 +219,15 @@
               </button>
             </template>
           </div>
-          
-          <!-- 图表容器 -->
+
           <div class="tab-content">
-            <!-- 加速度计图表 -->
             <template v-if="currentDeviceInfo.type === 'accelerometer'">
               <div v-show="activeMonthlyTab === 'x'" id="monthly-chart-x" class="chart-container"></div>
               <div v-show="activeMonthlyTab === 'y'" id="monthly-chart-y" class="chart-container"></div>
               <div v-show="activeMonthlyTab === 'z'" id="monthly-chart-z" class="chart-container"></div>
               <div v-show="activeMonthlyTab === 'all'" id="monthly-chart-all" class="chart-container"></div>
             </template>
-            
-            <!-- 应变计图表 -->
+
             <template v-if="currentDeviceInfo.type === 'strainGauge'">
               <div v-show="activeMonthlyTab === 'ch1'" id="monthly-chart-ch1" class="chart-container"></div>
               <div v-show="activeMonthlyTab === 'ch2'" id="monthly-chart-ch2" class="chart-container"></div>
@@ -253,7 +235,7 @@
             </template>
           </div>
         </div>
-      </div>
+      </section>
 
       <!-- 右侧：异常数据记录 -->
       <div class="abnormal-section">
@@ -361,12 +343,11 @@ import {
 
 const router = useRouter()
 const API_BASE_URL = 'http://8.153.161.229:8009'
+const API_BASE_URL = 'http://8.153.161.229:8009'
 
-// 标签页相关
-const activeRealtimeTab = ref('all') // 实时数据标签页
-const activeMonthlyTab = ref('all')  // 月级数据标签页
+const activeRealtimeTab = ref('all')
+const activeMonthlyTab = ref('all')
 
-// 定义标签页配置
 const accelerometerTabs = [
   { key: 'all', label: '全部(XYZ)' },
   { key: 'x', label: 'X轴' },
@@ -380,15 +361,13 @@ const strainGaugeTabs = [
   { key: 'ch2', label: 'Channel 2' }
 ]
 
-// 存储多个图表实例
 const realtimeCharts = ref<{ [key: string]: echarts.ECharts | null }>({})
 const monthlyCharts = ref<{ [key: string]: echarts.ECharts | null }>({})
 
-// 设备列表和选择
-const devices = ref<{ device_name: string; category: string }[]>([])
 const selectedCategory = ref('安楼外幕墙1')
 const selectedDevice = ref('')
 
+const devices = ref<{ device_name: string; category: string }[]>([])
 // 当前设备信息
 const currentDeviceInfo = computed(() => {
   if (!selectedDevice.value) {
@@ -416,11 +395,22 @@ const currentDeviceInfo = computed(() => {
 
 // 筛选符合条件的设备
 const filteredDevices = computed(() => {
-  return devices.value.filter(device => 
+  return devices.value.filter((device: { device_name: string; category: string }) => 
     device.category === selectedCategory.value && 
     device.device_name.includes(selectedCategory.value)
   )
 })
+
+// 观察设备与筛选结果，输出诊断日志
+watch([devices, selectedCategory], () => {
+  try {
+    console.log('[诊断] 设备原始数量:', devices.value.length, '当前地点:', selectedCategory.value)
+    const sample = filteredDevices.value.slice(0, 5).map((d: { device_name: string }) => d.device_name)
+    console.log('[诊断] 过滤后设备数量:', filteredDevices.value.length, '示例:', sample)
+  } catch (e) {
+    console.warn('[诊断] 统计过滤设备时出错:', e)
+  }
+}, { immediate: true })
 
 // 设备状态
 const deviceStatus = reactive({
@@ -463,8 +453,14 @@ const abnormalFilter = reactive({
   direction: 'all'
 })
 
+// 异常数据日期范围
+const abnormalDateRange = ref<[Date, Date]>([
+  new Date(new Date().getTime() - 7 * 24 * 60 * 60 * 1000),
+  new Date()
+])
+
 // 实时数据轮询
-let realtimeInterval: NodeJS.Timeout | null = null
+let realtimeInterval: any = null
 
 // 存储当前数据
 const currentRealtimeData = ref<{
@@ -513,7 +509,7 @@ const initializeRealtimeCharts = () => {
       // 销毁现有图表
       Object.values(realtimeCharts.value).forEach(chart => {
         if (chart) {
-          chart.dispose()
+          (chart as any).dispose()
         }
       })
       realtimeCharts.value = {}
@@ -523,6 +519,9 @@ const initializeRealtimeCharts = () => {
       const chartY = document.getElementById('realtime-chart-y')
       const chartZ = document.getElementById('realtime-chart-z')
       const chartAll = document.getElementById('realtime-chart-all')
+      console.log('[诊断] 实时容器存在性(accelerometer):', {
+        x: !!chartX, y: !!chartY, z: !!chartZ, all: !!chartAll
+      })
       
       if (chartX) realtimeCharts.value['x'] = echarts.init(chartX)
       if (chartY) realtimeCharts.value['y'] = echarts.init(chartY)
@@ -533,6 +532,9 @@ const initializeRealtimeCharts = () => {
       const chartCh1 = document.getElementById('realtime-chart-ch1')
       const chartCh2 = document.getElementById('realtime-chart-ch2')
       const chartStrainAll = document.getElementById('realtime-chart-strain-all')
+      console.log('[诊断] 实时容器存在性(strainGauge):', {
+        ch1: !!chartCh1, ch2: !!chartCh2, all: !!chartStrainAll
+      })
       
       if (chartCh1) realtimeCharts.value['ch1'] = echarts.init(chartCh1)
       if (chartCh2) realtimeCharts.value['ch2'] = echarts.init(chartCh2)
@@ -552,7 +554,7 @@ const initializeMonthlyCharts = () => {
       // 销毁现有图表
       Object.values(monthlyCharts.value).forEach(chart => {
         if (chart) {
-          chart.dispose()
+          (chart as any).dispose()
         }
       })
       monthlyCharts.value = {}
@@ -562,6 +564,9 @@ const initializeMonthlyCharts = () => {
       const chartY = document.getElementById('monthly-chart-y')
       const chartZ = document.getElementById('monthly-chart-z')
       const chartAll = document.getElementById('monthly-chart-all')
+      console.log('[诊断] 月级容器存在性(accelerometer):', {
+        x: !!chartX, y: !!chartY, z: !!chartZ, all: !!chartAll
+      })
       
       if (chartX) monthlyCharts.value['x'] = echarts.init(chartX)
       if (chartY) monthlyCharts.value['y'] = echarts.init(chartY)
@@ -572,6 +577,9 @@ const initializeMonthlyCharts = () => {
       const chartCh1 = document.getElementById('monthly-chart-ch1')
       const chartCh2 = document.getElementById('monthly-chart-ch2')
       const chartStrainAll = document.getElementById('monthly-chart-strain-all')
+      console.log('[诊断] 月级容器存在性(strainGauge):', {
+        ch1: !!chartCh1, ch2: !!chartCh2, all: !!chartStrainAll
+      })
       
       if (chartCh1) monthlyCharts.value['ch1'] = echarts.init(chartCh1)
       if (chartCh2) monthlyCharts.value['ch2'] = echarts.init(chartCh2)
@@ -624,7 +632,10 @@ const switchMonthlyTab = (tabKey: string) => {
 
 // 绘制特定实时图表
 const drawSpecificRealtimeChart = (chartType: string) => {
-  if (!currentRealtimeData.value) return
+  if (!currentRealtimeData.value) {
+    console.warn('[诊断] 绘制实时图表早退: currentRealtimeData 为空, chartType=', chartType)
+    return
+  }
   
   if (currentDeviceInfo.value.type === 'accelerometer') {
     drawRealtimeAccelerometerChart(chartType)
@@ -635,7 +646,10 @@ const drawSpecificRealtimeChart = (chartType: string) => {
 
 // 绘制特定月级图表
 const drawSpecificMonthlyChart = (chartType: string) => {
-  if (!currentMonthlyData.value) return
+  if (!currentMonthlyData.value) {
+    console.warn('[诊断] 绘制月级图表早退: currentMonthlyData 为空, chartType=', chartType)
+    return
+  }
   
   if (currentDeviceInfo.value.type === 'accelerometer') {
     drawMonthlyAccelerometerChart(chartType)
@@ -1154,12 +1168,17 @@ const preprocessChartOptions = (data: any, isRealtime: boolean = true) => {
   
   const deviceType = currentDeviceInfo.value.type
   const prefix = isRealtime ? 'realtime' : 'monthly'
+  try {
+    const keys = Object.keys(data)
+    console.log('[诊断] 预处理图表配置: deviceType=', deviceType, 'isRealtime=', isRealtime, 'data keys=', keys)
+  } catch {}
   
   if (deviceType === 'accelerometer') {
     const xAxisData = data.x?.map((item: [string, number]) => item[0]) || []
     
     // 预处理各个轴的配置
-    ['x', 'y', 'z', 'all'].forEach(chartType => {
+    // @ts-ignore
+    ['x', 'y', 'z', 'all'].forEach((chartType: string) => {
       const option = generateAccelerometerOption(data, chartType, xAxisData, isRealtime)
       chartOptions.value[`${prefix}-${chartType}`] = option
     })
@@ -1167,7 +1186,8 @@ const preprocessChartOptions = (data: any, isRealtime: boolean = true) => {
     const xAxisData = data.ch1?.map((item: [string, number]) => item[0]) || []
     
     // 预处理各个通道的配置
-    ['ch1', 'ch2', 'all'].forEach(chartType => {
+    // @ts-ignore
+    ['ch1', 'ch2', 'all'].forEach((chartType: string) => {
       const option = generateStrainGaugeOption(data, chartType, xAxisData, isRealtime)
       const key = chartType === 'all' ? 'strain-all' : chartType
       chartOptions.value[`${prefix}-${key}`] = option
@@ -1487,10 +1507,16 @@ const fetchDevices = async () => {
   try {
     const response = await axios.get(`${API_BASE_URL}/data/get_new_device`)
     if (response.data.status === 'success') {
+      console.log('[诊断] 获取设备列表成功, 原始条数:', Array.isArray(response.data.data) ? response.data.data.length : 'N/A')
+      try {
+        const names = (response.data.data || []).slice(0, 10).map((d: any) => d.device_name)
+        console.log('[诊断] 设备名称样本(前10):', names)
+      } catch {}
       devices.value = response.data.data.map((device: { device_name: string }) => ({
         device_name: device.device_name,
         category: selectedCategory.value
       }))
+      console.log('[诊断] 设备入库后条数:', devices.value.length)
     } else {
       ElMessage.error('获取设备列表失败')
     }
@@ -1513,6 +1539,7 @@ const fetchThresholds = async () => {
         device_type: deviceType
       }
     })
+    console.log('[诊断] 获取阈值 /data/get_threshold_or_offset response=', response.data)
     
     if (response.data.status === 'success') {
       const data = response.data.data
@@ -1521,6 +1548,7 @@ const fetchThresholds = async () => {
       Object.keys(thresholds).forEach(key => {
         thresholds[key as keyof typeof thresholds] = 0
       })
+      console.log('[诊断] 重置阈值:', JSON.stringify(thresholds))
       
       // 根据设备类型设置对应阈值
       if (deviceType === 'accelerometer') {
@@ -1545,12 +1573,12 @@ const fetchRealtimeData = async () => {
   if (!selectedDevice.value) return
   
   try {
-    const response = await axios.get(`${API_BASE_URL}/data/get_second_data`, {
-      params: {
-        device_name: selectedDevice.value,
-        num: 60000*12 // 获取最近5分钟的秒级数据
-      }
-    })
+    const params = {
+      device_name: selectedDevice.value,
+      num: 60000*12 // 获取最近5分钟的秒级数据(当前表达式值为: ' + (60000*12) + ')
+    }
+    console.log('[诊断] 请求秒级数据 /data/get_second_data params=', params)
+    const response = await axios.get(`${API_BASE_URL}/data/get_second_data`, { params })
     
     if (response.data.status === 'success' && response.data.data) {
       currentRealtimeData.value = response.data.data
@@ -1558,6 +1586,16 @@ const fetchRealtimeData = async () => {
       deviceStatus.online = true
       
       console.log('获取实时数据成功:', currentRealtimeData.value)
+      try {
+        const keys = Object.keys(currentRealtimeData.value || {})
+        console.log('[诊断] 实时数据包含键:', keys)
+        keys.forEach(k => {
+          const arr = (currentRealtimeData.value as any)[k]
+          if (Array.isArray(arr)) {
+            console.log(`[诊断] ${k} 点数:`, arr.length)
+          }
+        })
+      } catch {}
       
       // 预处理实时图表配置
       preprocessChartOptions(response.data.data, true)
@@ -1580,17 +1618,27 @@ const fetchMonthlyData = async () => {
   if (!selectedDevice.value) return
   
   try {
-    const response = await axios.get(`${API_BASE_URL}/data/get_monthly_data`, {
-      params: {
-        device_name: selectedDevice.value,
-        num: 12 // 获取12个月的数据
-      }
-    })
+    const params = {
+      device_name: selectedDevice.value,
+      num: 12 // 获取12个月的数据
+    }
+    console.log('[诊断] 请求月级数据 /data/get_monthly_data params=', params)
+    const response = await axios.get(`${API_BASE_URL}/data/get_monthly_data`, { params })
     
     if (response.data.status === 'success' && response.data.data) {
       currentMonthlyData.value = response.data.data
       
       console.log('获取月级数据成功:', currentMonthlyData.value)
+      try {
+        const keys = Object.keys(currentMonthlyData.value || {})
+        console.log('[诊断] 月级数据包含键:', keys)
+        keys.forEach(k => {
+          const arr = (currentMonthlyData.value as any)[k]
+          if (Array.isArray(arr)) {
+            console.log(`[诊断] 月级 ${k} 点数:`, arr.length)
+          }
+        })
+      } catch {}
       
       // 预处理月级图表配置
       preprocessChartOptions(response.data.data, false)
@@ -1609,14 +1657,10 @@ const fetchMonthlyData = async () => {
 
 // 获取异常数据
 const fetchAbnormalData = async () => {
-  if (!selectedDevice.value) return
+  if (!selectedDevice.value || !abnormalDateRange.value) return
   
   abnormalLoading.value = true
   try {
-    // 设置查询时间范围为最近7天
-    const endTime = new Date()
-    const startTime = new Date(endTime.getTime() - 7 * 24 * 60 * 60 * 1000)
-    
     const formatDate = (date: Date) => {
       const pad = (num: number) => String(num).padStart(2, '0')
       const year = date.getFullYear()
@@ -1628,24 +1672,79 @@ const fetchAbnormalData = async () => {
       return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`
     }
     
-    const params: Record<string, string> = {
-      device: selectedDevice.value,
-      start_time: formatDate(startTime),
-      end_time: formatDate(endTime)
-    }
+    const startTimeStr = formatDate(abnormalDateRange.value[0])
+    const endTimeStr = formatDate(abnormalDateRange.value[1])
     
-    if (abnormalFilter.direction !== 'all') {
-      params.direction = abnormalFilter.direction
-    }
-    
-    const response = await axios.get(`${API_BASE_URL}/data/get_abnormal_data_with_type`, {
-      params
-    })
-    
-    if (response.data.status === 'success' && Array.isArray(response.data.data)) {
-      abnormalData.value = response.data.data.slice(0, 20) // 只显示最近20条
+    // 当选择"全部"方向时，需要对每个方向分别查询
+    if (abnormalFilter.direction === 'all') {
+      // 根据设备类型确定要查询的方向
+      let directionsToQuery: string[] = []
+      
+      if (currentDeviceInfo.value.type === 'accelerometer') {
+        directionsToQuery = ['x_above_max', 'x_below_min', 'y_above_max', 'y_below_min', 'z_above_max', 'z_below_min']
+      } else if (currentDeviceInfo.value.type === 'strainGauge') {
+        directionsToQuery = ['ch1_above_max', 'ch1_below_min', 'ch2_above_max', 'ch2_below_min']
+      }
+      
+      const allResults: any[] = []
+      
+      // 并行查询所有方向的数据
+      const queryPromises = directionsToQuery.map(direction => {
+        const params: Record<string, string> = {
+          device: selectedDevice.value,
+          start_time: startTimeStr,
+          end_time: endTimeStr,
+          direction: direction
+        }
+        
+        console.log('[诊断] 请求异常数据 (全部方向) /data/get_abnormal_data_with_type params=', params)
+        return axios.get(`${API_BASE_URL}/data/get_abnormal_data_with_type`, { params })
+          .then((response: any) => {
+            if (response.data.status === 'success' && Array.isArray(response.data.data)) {
+              return response.data.data
+            }
+            return []
+          })
+          .catch((error: any) => {
+            console.error(`获取 ${direction} 异常数据失败:`, error)
+            return []
+          })
+      })
+      
+      // 等待所有查询完成并合并结果
+      const results = await Promise.all(queryPromises)
+      results.forEach(result => {
+        allResults.push(...result)
+      })
+      
+      // 按时间排序（最新的在前）
+      allResults.sort((a, b) => {
+        const timeA = new Date(a.time).getTime()
+        const timeB = new Date(b.time).getTime()
+        return timeB - timeA
+      })
+      
+      abnormalData.value = allResults.slice(0, 20) // 只显示最近20条
+      console.log('[诊断] 异常数据 (全部方向) 总返回条数:', allResults.length, '展示条数:', abnormalData.value.length)
     } else {
-      abnormalData.value = []
+      // 查询特定方向的数据
+      const params: Record<string, string> = {
+        device: selectedDevice.value,
+        start_time: startTimeStr,
+        end_time: endTimeStr,
+        direction: abnormalFilter.direction
+      }
+      
+      console.log('[诊断] 请求异常数据 /data/get_abnormal_data_with_type params=', params)
+      const response = await axios.get(`${API_BASE_URL}/data/get_abnormal_data_with_type`, { params })
+      
+      if (response.data.status === 'success' && Array.isArray(response.data.data)) {
+        abnormalData.value = response.data.data.slice(0, 20) // 只显示最近20条
+        console.log('[诊断] 异常数据返回条数:', response.data.data.length, '展示条数:', abnormalData.value.length)
+      } else {
+        abnormalData.value = []
+        console.log('[诊断] 异常数据为空或格式不符')
+      }
     }
   } catch (error) {
     console.error('获取异常数据失败:', error)
@@ -1669,14 +1768,17 @@ const onDeviceChange = async () => {
   // 重置标签页为all
   activeRealtimeTab.value = 'all'
   activeMonthlyTab.value = 'all'
+  console.log('[诊断] 已重置标签页为 all, all')
   
   // 清空图表配置缓存
   chartOptions.value = {}
+  console.log('[诊断] 已清空 chartOptions 缓存')
   
   // 等待设备类型计算完成后重新初始化图表
   await nextTick()
   initializeRealtimeCharts()
   initializeMonthlyCharts()
+  console.log('[诊断] 重新初始化图表完成, 当前设备类型:', currentDeviceInfo.value.type)
   
   // 重新获取数据
   await fetchThresholds()
@@ -1686,6 +1788,7 @@ const onDeviceChange = async () => {
   
   // 重新开始轮询
   startRealtimePolling()
+  console.log('[诊断] 已重新开始实时轮询')
 }
 
 // 月份范围改变处理
@@ -1705,18 +1808,18 @@ const startRealtimePolling = () => {
 const handleResize = () => {
   Object.values(realtimeCharts.value).forEach(chart => {
     if (chart) {
-      chart.resize()
+      (chart as any).resize()
     }
   })
   Object.values(monthlyCharts.value).forEach(chart => {
     if (chart) {
-      chart.resize()
+      (chart as any).resize()
     }
   })
 }
 
 // 监听设备类型变化
-watch(() => currentDeviceInfo.value.type, (newType) => {
+watch(() => currentDeviceInfo.value.type, (newType: string) => {
   console.log('设备类型变化:', newType)
   
   // 重置标签页
@@ -1741,6 +1844,7 @@ onMounted(() => {
   
   // 监听窗口大小变化
   window.addEventListener('resize', handleResize)
+  console.log('[诊断] 挂载完成: 初始选中地点=', selectedCategory.value, '初始设备=', selectedDevice.value, '初始设备类型=', currentDeviceInfo.value.type)
 })
 
 // 组件卸载
@@ -1753,12 +1857,12 @@ onUnmounted(() => {
   // 销毁图表
   Object.values(realtimeCharts.value).forEach(chart => {
     if (chart) {
-      chart.dispose()
+      (chart as any).dispose()
     }
   })
   Object.values(monthlyCharts.value).forEach(chart => {
     if (chart) {
-      chart.dispose()
+      (chart as any).dispose()
     }
   })
   
@@ -1767,7 +1871,7 @@ onUnmounted(() => {
 })
 
 // 监听设备选择变化
-watch(selectedDevice, (newDevice) => {
+watch(selectedDevice, (newDevice: string) => {
   if (newDevice) {
     onDeviceChange()
   }
@@ -1775,147 +1879,135 @@ watch(selectedDevice, (newDevice) => {
 </script>
 
 <style scoped>
-.dashboard-container {
-  height: 100vh;
+.dashboard-page {
   display: flex;
   flex-direction: column;
+  gap: 20px;
+  padding: 0 20px 32px;
   background-color: #f5f7fa;
-  overflow: hidden;
+  min-height: 100%;
 }
 
-/* 顶部导航 */
-.header-nav {
+.page-header {
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  justify-content: space-between;
   padding: 16px 24px;
-  background-color: #fff;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.08);
 }
 
 .page-title {
   font-size: 20px;
   font-weight: 600;
   margin: 0;
+  color: #1f2937;
 }
 
-.back-btn {
-  margin-left: auto;
+.dashboard-row {
+  display: grid;
+  gap: 20px;
+  grid-template-columns: minmax(0, 2.4fr) minmax(0, 1.1fr);
+  align-items: stretch;
 }
 
-/* 上半部分 */
-.top-section {
-  display: flex;
-  height: 50%;
-  padding: 16px;
-  gap: 16px;
-}
-
-/* 下半部分 */
-.bottom-section {
-  display: flex;
-  height: 50%;
-  padding: 0 16px 16px;
-  gap: 16px;
-}
-
-/* 图表区域 */
-.chart-section {
-  flex: 3;
-  background-color: #fff;
-  border-radius: 8px;
-  padding: 16px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+.panel-card,
+.info-panel,
+.abnormal-panel {
+  background: #fff;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.08);
   display: flex;
   flex-direction: column;
+  min-height: 0;
+}
+
+.panel-card {
+  gap: 16px;
+}
+
+.info-panel {
+  gap: 16px;
+}
+
+.abnormal-panel {
+  gap: 16px;
 }
 
 .section-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 16px;
+  flex-wrap: wrap;
+  gap: 12px;
 }
 
 .section-header h2 {
-  font-size: 18px;
-  font-weight: 500;
   margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #1f2937;
 }
 
 .device-selector {
   display: flex;
   gap: 12px;
+  flex-wrap: wrap;
 }
 
-/* 多图表卡片样式 */
 .chart-tabs {
   flex: 1;
   display: flex;
   flex-direction: column;
+  gap: 12px;
+  min-height: 0;
 }
 
 .tab-nav {
   display: flex;
-  border-bottom: 2px solid #e2e8f0;
-  margin-bottom: 16px;
-  background-color: #f8fafc;
-  border-radius: 8px 8px 0 0;
-  padding: 4px;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 6px;
+  background: #f8fafc;
+  border-radius: 10px;
 }
 
 .tab-button {
   padding: 8px 16px;
   border: none;
-  background-color: transparent;
+  background: transparent;
   color: #64748b;
   cursor: pointer;
-  transition: all 0.3s ease;
   font-weight: 500;
-  border-radius: 6px;
-  margin-right: 4px;
-  font-size: 12px;
+  border-radius: 8px;
+  transition: all 0.25s ease;
 }
 
 .tab-button:hover {
-  background-color: #e2e8f0;
-  color: #374151;
+  background: rgba(59, 130, 246, 0.12);
+  color: #2563eb;
 }
 
 .tab-button.active {
-  background-color: #3b82f6;
-  color: white;
-  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3);
+  background: linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%);
+  color: #fff;
+  box-shadow: 0 8px 16px rgba(59, 130, 246, 0.25);
 }
 
 .tab-content {
   flex: 1;
-  position: relative;
+  min-height: 0;
 }
 
 .chart-container {
   width: 100%;
   height: 100%;
-  border-radius: 8px;
+  min-height: 360px;
+  border-radius: 12px;
   border: 1px solid #e2e8f0;
-  background-color: #fff;
-}
-
-/* 设备信息区域 */
-.info-section {
-  flex: 1;
-  background-color: #fff;
-  border-radius: 8px;
-  padding: 16px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-  overflow-y: auto;
-}
-
-.info-card h3 {
-  font-size: 16px;
-  font-weight: 500;
-  margin: 0 0 12px 0;
-  color: #303133;
+  background: #fff;
 }
 
 .info-content {
@@ -1927,90 +2019,70 @@ watch(selectedDevice, (newDevice) => {
 .info-item {
   display: flex;
   align-items: center;
+  gap: 12px;
   font-size: 14px;
+  color: #4b5563;
 }
 
 .info-label {
-  color: #606266;
-  min-width: 80px;
+  min-width: 88px;
+  color: #6b7280;
 }
 
 .info-value {
-  color: #303133;
-  font-weight: 500;
+  font-weight: 600;
+  color: #1f2937;
 }
 
-/* 阈值信息 */
 .threshold-info {
-  display: flex;
-  flex-direction: column;
+  display: grid;
   gap: 12px;
-  padding: 12px;
-  background-color: #f5f7fa;
-  border-radius: 4px;
+  padding: 16px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.08) 0%, rgba(99, 102, 241, 0.08) 100%);
 }
 
 .threshold-group {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  padding: 8px 0;
 }
 
 .threshold-group:not(:last-child) {
-  border-bottom: 1px solid #e4e7ed;
   padding-bottom: 12px;
+  border-bottom: 1px dashed rgba(148, 163, 184, 0.5);
 }
 
 .threshold-group h4 {
+  margin: 0;
   font-size: 14px;
   font-weight: 600;
-  margin: 0 0 8px 0;
-  color: #409eff;
+  color: #1d4ed8;
 }
 
 .threshold-item {
   display: flex;
   align-items: center;
   font-size: 13px;
+  color: #334155;
+  gap: 8px;
 }
 
 .threshold-label {
-  color: #606266;
-  min-width: 80px;
+  min-width: 86px;
+  color: #64748b;
 }
 
 .threshold-value {
-  color: #409eff;
-  font-weight: 500;
-}
-
-/* 异常数据区域 */
-.abnormal-section {
-  flex: 1;
-  background-color: #fff;
-  border-radius: 8px;
-  padding: 16px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-  display: flex;
-  flex-direction: column;
-}
-
-.abnormal-card {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-}
-
-.abnormal-card h3 {
-  font-size: 16px;
-  font-weight: 500;
-  margin: 0 0 12px 0;
-  color: #303133;
+  font-weight: 600;
+  color: #1d4ed8;
 }
 
 .abnormal-filter {
-  margin-bottom: 12px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
 }
 
 .abnormal-list {
@@ -2020,25 +2092,25 @@ watch(selectedDevice, (newDevice) => {
 
 .no-data {
   display: flex;
-  align-items: center;
   justify-content: center;
+  align-items: center;
   height: 100%;
 }
 
 .abnormal-item {
-  padding: 12px;
-  border-bottom: 1px solid #ebeef5;
-  transition: all 0.3s ease;
-  border-radius: 4px;
-  margin-bottom: 8px;
+  padding: 14px 16px;
+  border-radius: 12px;
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  margin-bottom: 12px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  background: #fff;
 }
 
 .abnormal-item:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
+  box-shadow: 0 12px 24px rgba(15, 23, 42, 0.12);
 }
 
-/* 警告级别样式 - 红色 */
 .abnormal-item.alarm-level {
   background: linear-gradient(135deg, #fef2f2 0%, #fef5f5 100%);
   border-left: 4px solid #f56565;
@@ -2091,22 +2163,20 @@ watch(selectedDevice, (newDevice) => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 8px;
+  gap: 12px;
+  margin-bottom: 10px;
 }
 
 .abnormal-time {
   font-size: 13px;
-  color: #606266;
-  font-weight: 500;
+  color: #475569;
+  font-weight: 600;
 }
 
 .abnormal-tags {
   display: flex;
-  gap: 4px;
-}
-
-.alarm-level-tag {
-  font-weight: 600;
+  gap: 6px;
+  flex-wrap: wrap;
 }
 
 .abnormal-content {
@@ -2137,9 +2207,10 @@ watch(selectedDevice, (newDevice) => {
 }
 
 .abnormal-footer {
-  padding: 12px 0 0;
-  border-top: 1px solid #ebeef5;
+  margin-top: auto;
   text-align: center;
+  padding-top: 12px;
+  border-top: 1px solid rgba(148, 163, 184, 0.2);
 }
 
 .ml-4 {
@@ -2149,4 +2220,36 @@ watch(selectedDevice, (newDevice) => {
 .mt-4 {
   margin-top: 16px;
 }
+
+@media (max-width: 1280px) {
+  .dashboard-row {
+    grid-template-columns: 1fr;
+  }
+
+  .chart-container {
+    min-height: 320px;
+  }
+}
+
+@media (max-width: 768px) {
+  .dashboard-page {
+    padding: 0 12px 24px;
+  }
+
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .device-selector {
+    width: 100%;
+  }
+
+  .abnormal-filter {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
 </style>
+

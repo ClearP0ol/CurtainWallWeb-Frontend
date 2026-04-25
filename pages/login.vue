@@ -179,16 +179,6 @@ import {ElMessage, ElLoading} from "element-plus";
 import * as jwtDecode from 'jwt-decode';
 import axios from "axios";
 
-// import store from '@/store/index.js'
-
-// const GoToLayout = () => {
-//   router.push({
-//     name: 'layout',
-//     params: {
-//       choice: 'dashboard'
-//     }
-//   })
-// }
 
 const router = useRouter();
 const showLoginForm = ref(true);
@@ -296,41 +286,6 @@ const disableButton = ref(false);
 const buttonText = ref("发送验证码");
 const countdown = ref(60);
 
-// const sendVerificationCode = async () => {
-//   if (disableButton.value) {
-//     return;
-//   }
-
-//   // 2. 验证邮箱格式
-//   const email = registerForm.value.email;
-//   if (!email) {
-//     ElMessage.error('请输入邮箱地址');
-//     return;
-//   }
-
-//   // 邮箱正则表达式
-//   const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-//   if (!emailRegex.test(email)) {
-//     ElMessage.error('请输入有效的邮箱地址');
-//     return;
-//   }
-
-//   disableButton.value = true;
-//   startCountdown();
-//   try {
-//     const response = await $fetch("/api/account/sendCode", {
-//       method: "POST",
-//       // body: {email: registerForm.value.email},
-//       body: {
-//         email,
-//         method: type, // 使用 "register" 或 "reset"
-//       },
-//     });
-//   } catch (error) {
-//     console.error('Error response:', error.response);
-//     ElMessage.error(error.response._data.message);
-//   }
-// };
 
 const sendVerificationCode = async (method = "register") => {
   const email = method === 'reset' ? resetForm.value.email : registerForm.value.email;
@@ -464,16 +419,6 @@ const register = async () => {
     // ElMessage.error(response.message || "注册错误");
   }
 
-  // 实现注册逻辑
-  // const success = await userStore.register(
-  //   registerForm.value.email,
-  //   registerForm.value.code,
-  //   registerForm.value.password
-  // );
-
-  // if (success) {
-  //   toggleForm;
-  // }
 };
 
 const logout = () => {
