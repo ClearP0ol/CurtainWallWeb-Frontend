@@ -68,7 +68,7 @@ const imageUrl = ref(null);
 
 const store = useStore()
 
-const serverURL = 'http://111.231.168.12:8021'
+const serverURL = 'http://8.159.143.133:8021'
 
 const showProgress = ref(false);
 

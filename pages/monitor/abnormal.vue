@@ -198,7 +198,7 @@ const getDirectionLabel = (direction) => {
 const fetchData = async () => {
   loading.value = true
   try {
-    const response = await fetch(`http://110.42.214.164:8009/data/get_abnormal_data?${new URLSearchParams(params)}`)
+    const response = await fetch(`http://8.153.161.229:8009/data/get_abnormal_data?${new URLSearchParams(params)}`)
     const result = await response.json()
     
     if (result.status === 'success' && Array.isArray(result.data)) {
@@ -246,7 +246,7 @@ const handleDirectionChange = (val) => {
 const downloadData = async () => {
   try {
     const response = await fetch(
-      'http://110.42.214.164:8009/data/download_abnormal_data?' + 
+      'http://8.153.161.229:8009/data/download_abnormal_data?' + 
       new URLSearchParams(params)
     )
     const blob = await response.blob()

@@ -4,7 +4,7 @@ import store from "~/store/index.js"
 
 import axios from 'axios';
 
-const BASE_URL = 'http://110.42.214.164:8005';
+const BASE_URL = 'http://8.153.161.229:8005';
 
 export const fetchBatchData = async (batch) => {
   try {
@@ -32,7 +32,7 @@ export const fetchBatchData = async (batch) => {
  */
 export function UploadImg(FormData, successCallback, errorCallback) {
   return Request({  // 发送请求
-    baseURL: "http://111.231.168.12:8021",
+    baseURL: "http://8.159.143.133:8021",
     method: 'POST',
     headers: {
       'Content-Type': 'application/form-data', // 设置请求头
@@ -68,7 +68,7 @@ export function UploadImg(FormData, successCallback, errorCallback) {
  */
 export function getEntropyResult(successCallback) {
   return Request({  // 发送请求
-    baseURL: "http://111.231.168.12:8021",
+    baseURL: "http://8.159.143.133:8021",
     method: 'GET',
     url: '/yolo',  // 与后端接口对应！！！
   }).then(function (response) {  // then 表示成功接收到响应后的操作

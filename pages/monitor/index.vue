@@ -48,7 +48,7 @@ import * as echarts from 'echarts';
 import {useRouter} from "vue-router";
 import axios from 'axios';
 
-const API_BASE_URL = 'http://110.42.214.164:8009';
+const API_BASE_URL = 'http://8.153.161.229:8009';
 const dataSource = ref<'websocket' | 'api_minute' | 'api_hour' | 'api_day' | 'api_month' | 'api_year'>('websocket'); // 默认使用 WebSocket
 // 定义响应式变量存储阈值
 const upperThreshold = ref(0.0);

@@ -107,13 +107,13 @@ const goto3DModel = () => {
 const gotoGlassFlatness = () => {
   // router.push("http://localhost:5173")
   // window.open("http://localhost:5173", "_blank");
-  window.location.href = "http://111.231.168.12:3000";
+  window.location.href = "http://8.159.143.133:3000";
 };
 
 const gotoGlassToughness = () => {
   // router.push("http://localhost:5173")
   // window.open("http://localhost:5173", "_blank");
-  window.location.href = "http://111.231.168.12:8999";
+  window.location.href = "http://8.159.143.133:8999";
 };
 const gotoGlassShock = () => {
   window.location.href = "/vibration/mainpage";
@@ -165,7 +165,10 @@ const links = reactive([
             label: "异常数据",
             to: "/vibration/abnormal",
           },
-
+          {
+            label: "服务器监控",
+            to: "/vibration/server-monitor",
+          },
         ],
       },
     ],
@@ -608,6 +611,13 @@ if (vibrationLink) {
     const abnormalLink = monitorLink.children?.find((child) => child.to === "/vibration/abnormal");
     if (abnormalLink) {
       abnormalLink.label = "预警记录";
+    }
+
+    const serverMonLink = monitorLink.children?.find(
+      (child) => child.to === "/vibration/server-monitor"
+    );
+    if (serverMonLink) {
+      serverMonLink.label = "服务器监控";
     }
   }
 }

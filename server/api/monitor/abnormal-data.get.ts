@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { defineEventHandler } from 'h3';
 
-const BASE_URL = 'http://111.231.168.12:8180/api/monitor';
+const BASE_URL = 'http://8.159.143.133:8180/api/monitor';
 /**
  * 接口名称：获取异常数据接口
  * 接口定义：此接口用于处理获取异常数据的请求。

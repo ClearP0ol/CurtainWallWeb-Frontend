@@ -1,13 +1,16 @@
 <template>
   <UDashboardPage>
-    <UDashboardPanel grow>
+    <!-- min-h-0 + flex 使子页面区域可纵向滚动（预警规则、服务器监控等长内容） -->
+    <UDashboardPanel grow class="!flex !min-h-0 !flex-col">
       <UDashboardNavbar title="振动监测中心" />
 
-      <UDashboardToolbar class="overflow-x-auto">
+      <UDashboardToolbar class="shrink-0 overflow-x-auto">
         <UHorizontalNavigation :links="links" />
       </UDashboardToolbar>
 
-      <NuxtPage />
+      <div class="min-h-0 flex-1 overflow-y-auto overflow-x-hidden">
+        <NuxtPage />
+      </div>
     </UDashboardPanel>
   </UDashboardPage>
 </template>
@@ -38,6 +41,12 @@ const links = [[
     label: '预警记录',
     icon: 'i-heroicons-exclamation-triangle',
     to: '/vibration/abnormal'
+  },
+  {
+    id: 'server-monitor',
+    label: '服务器监控',
+    icon: 'i-heroicons-server-stack',
+    to: '/vibration/server-monitor'
   }
 ]]
 </script>

@@ -62,7 +62,7 @@ const total = ref(0);
 // 获取报警记录
 const getAlarmRecords = async (deviceId: string, startTime: string, endTime: string) => {
   try {
-    const response = await axios.get('http://110.42.214.164:8009/data/get_message_data', {
+    const response = await axios.get('http://8.153.161.229:8009/data/get_message_data', {
       params: {
         device: deviceId,
         startTime: startTime,

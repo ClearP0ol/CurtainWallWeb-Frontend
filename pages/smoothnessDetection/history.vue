@@ -55,7 +55,7 @@
     // console.log("user name:",decoded.username);
 
     try {
-      const response = await axios.get(`http://110.42.214.164:8002/flatness/history?username=zwj`);
+      const response = await axios.get(`http://8.153.161.229:8002/flatness/history?username=zwj`);
 
       // 使用 Promise.all 来并发处理所有数据
       const processedTableData = await Promise.all(

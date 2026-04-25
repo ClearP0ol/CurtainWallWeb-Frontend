@@ -1,7 +1,8 @@
 import axios from "axios";
 import { defineEventHandler, readBody } from "h3";
 
-const BASE_URL = "http://111.231.168.12:8000/account";
+/** 与 nuxt devProxy /api 目标、11 工程一致（账号服务） */
+const BASE_URL = "http://8.159.143.133:8000/account";
 /**
  * 接口名称：用户登录接口
  * 接口定义：此接口用于处理用户的登录请求，通过验证提供的电子邮件地址和密码来生成访问令牌。

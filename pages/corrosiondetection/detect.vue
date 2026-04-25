@@ -11,7 +11,7 @@
           :before-upload="beforeUpload"
           @change="handleChange"
           drag
-          action="http://111.231.168.12:8090/upload"
+          action="http://8.159.143.133:8090/upload"
       >
         <el-icon class="el-icon--upload">
           <upload-filled />
@@ -89,7 +89,7 @@ export default defineComponent({
       formData.append('filename', imageFile.value.name);
 
       try {
-        const response = await axios.post('http://110.42.214.164:8000/detect', formData, {
+        const response = await axios.post('http://8.159.143.133:8000/detect', formData, {
           headers: {
             'Content-Type': 'multipart/form-data' // 保持 Content-Type 为 multipart/form-data
           }

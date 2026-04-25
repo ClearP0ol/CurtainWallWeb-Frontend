@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div class="dashboard-container">
     <!-- 顶部导航 -->
     <div class="header-nav">
@@ -360,7 +360,7 @@ import {
 } from '~/composables/useVibrationAlertConfig'
 
 const router = useRouter()
-const API_BASE_URL = 'http://127.0.0.1:8009'
+const API_BASE_URL = 'http://8.153.161.229:8009'
 
 // 标签页相关
 const activeRealtimeTab = ref('all') // 实时数据标签页

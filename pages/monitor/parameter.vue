@@ -127,7 +127,8 @@
 import MarkdownIt from 'markdown-it';
 const md = new MarkdownIt();
 
-const API_BASE_URL = 'http://localhost:8080';
+/** 与 11 工程振动 /data 接口同一后端 */
+const API_BASE_URL = 'http://8.153.161.229:8009';
 
 export default {
   name: 'DeviceControlApp',

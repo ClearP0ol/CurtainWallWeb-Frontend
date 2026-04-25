@@ -75,7 +75,7 @@
   const ImgResult = ref(null); // 爆裂结果
   const imagePreviewUrl = ref(null); // 存储图片预览的 URL
   const processedImageUrl = ref(null); // 存储处理图片预览的 URL
-  const uploadUrl = ref('http://110.42.214.164:9000/oss/upload/user/upload/'); // 文件上传的 URL
+  const uploadUrl = ref('http://8.159.143.133:9000/oss/upload/user/upload/'); // 文件上传的 URL
   const filename = ref('');
 
   const backToMain = () => {
@@ -164,7 +164,7 @@
     console.log("下载原图的url：", downloadImageUrl.value);
 
     axios
-        .post('http://110.42.214.164:8006/defect/classify', formData)
+        .post('http://8.153.161.229:8006/defect/classify', formData)
         .then((response) => {
         console.log('检测结果：', response.data);
         ImgResult.value = response.data.result=='defect'?"爆裂":"未爆裂"; // 只提取结果部分
@@ -176,7 +176,7 @@
             form.append('username', 'zwj');
             form.append('url', downloadImageUrl.value);
             axios
-            .post('http://110.42.214.164:8006/defect/showDefect', form)
+            .post('http://8.153.161.229:8006/defect/showDefect', form)
             .then((processResponse) => {
                 console.log("处理后的图片url：", processResponse.data.downloadUrl); // 后端返回处理后图片的可下载url
                 try {

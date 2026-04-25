@@ -168,7 +168,7 @@ import {
 } from "~/composables/useVibrationAlertConfig";
 
 const router = useRouter();
-const apiServerUrl = "http://127.0.0.1:8009";
+const apiServerUrl = "http://8.153.161.229:8009";
 
 interface DeviceInfo {
   device_id: string;

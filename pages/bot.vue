@@ -272,7 +272,7 @@ export default {
 
     async fetchData(device, num) {
       try {
-        const response = await axios.get('http://110.42.214.164:8009/data/get_minute_data', {
+        const response = await axios.get('http://8.153.161.229:8009/data/get_minute_data', {
           params: { 
             device,
             num

@@ -61,7 +61,7 @@
     // console.log("user name:",decoded.username);
 
     try {
-      const response = await axios.get(`http://110.42.214.164:8006/defect/history?username=zwj`, { timeout: 10000 });
+      const response = await axios.get(`http://8.153.161.229:8006/defect/history?username=zwj`, { timeout: 10000 });
       console.log(response);
 
       // 使用 Promise.all 来并发处理所有数据

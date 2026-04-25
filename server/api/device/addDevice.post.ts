@@ -2,7 +2,7 @@
 import axios from 'axios';
 import { defineEventHandler } from 'h3';
 
-const BASE_URL = 'http://111.231.168.12:8180/api/device';
+const BASE_URL = 'http://8.159.143.133:8180/api/device';
 /**
  * 接口名称：添加设备接口
  * 接口定义：此接口用于处理添加新设备的请求。

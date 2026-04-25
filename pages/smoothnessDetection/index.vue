@@ -71,7 +71,7 @@
   const ImgResult = ref(null); // 爆裂结果
   const imagePreviewUrl = ref(null); // 存储图片预览的 URL
   const processedImageUrl = ref(null); // 存储处理图片预览的 URL
-  const uploadUrl = ref('http://110.42.214.164:9000/oss/upload/user/upload/'); // 文件上传的 URL
+  const uploadUrl = ref('http://8.159.143.133:9000/oss/upload/user/upload/'); // 文件上传的 URL
   const filename = ref('');
 
   const backToMain = () => {
@@ -154,7 +154,7 @@
     }
 
     axios
-        .post('http://110.42.214.164:8002/flatness/detect', {
+        .post('http://8.153.161.229:8002/flatness/detect', {
             username:"zwj",
             url:downloadImageUrl.value
         })

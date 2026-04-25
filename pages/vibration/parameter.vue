@@ -223,7 +223,7 @@ import {
   deriveThresholdsFromBase,
 } from "~/composables/useVibrationAlertConfig";
 
-const API_BASE_URL = "http://127.0.0.1:8009";
+const API_BASE_URL = "http://8.153.161.229:8009";
 const router = useRouter();
 const formState = reactive({});
 
@@ -549,7 +549,8 @@ onMounted(async () => {
 
 <style scoped>
 .page-shell {
-  min-height: 100vh;
+  /* 在振动中心布局内由父级 overflow-y-auto 承载滚动，此处不锁死 100vh，便于滚轮滑完整页 */
+  min-height: min-content;
   background:
     radial-gradient(circle at top right, rgba(22, 163, 74, 0.1), transparent 26%),
     linear-gradient(180deg, #f8fafc 0%, #eef2f7 100%);

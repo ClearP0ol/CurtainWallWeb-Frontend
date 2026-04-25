@@ -217,7 +217,7 @@ import axios from 'axios'
 
 // 配置基础请求地址
 const apiClient = axios.create({
-  baseURL: 'http://110.42.214.164:8004'
+  baseURL: 'http://8.153.161.229:8004'
 })
 
 // 定义颜色序列
