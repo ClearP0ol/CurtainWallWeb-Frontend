@@ -2,7 +2,7 @@
 import type * as Detection from '~/types/detection'
 import type { DetectionStatus } from '~/types/detection'
 import dayjs from 'dayjs'
-import { getDetectionList, getDetectionSignedUrl, getDetectionTask, retryDetection } from '~/api/detections'
+import { getDetectionList, getDetectionSignedUrl, getDetectionTask, retryDetection, deleteDetection, batchDeleteDetections } from '~/api/detections'
 import { exportSingleDetectionPdf, exportSelectedDetectionPdf } from '~/utils/detectionPdfExport'
 
 // 别名映射确保一致性
@@ -246,6 +246,53 @@ async function handleExportSelectedReport() {
   }
 }
 
+async function handleDelete(id: string | number) {
+  try {
+    await ElMessageBox.confirm('确定要删除该检测记录吗？删除后不可恢复。', '确认删除', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning'
+    })
+    await deleteDetection(id)
+    ElMessage.success('删除成功')
+    clearHistoryCache()
+    await fetchList(false)
+  } catch (error: any) {
+    if (error?.toString()?.includes('cancel')) return
+    ElMessage.error('删除失败')
+    console.error(error)
+  }
+}
+
+async function handleBatchDelete() {
+  if (!selectedRows.value.length) {
+    ElMessage.warning('请先勾选要删除的历史记录')
+    return
+  }
+
+  try {
+    await ElMessageBox.confirm(
+      `确定要删除选中的 ${selectedRows.value.length} 条检测记录吗？删除后不可恢复。`,
+      '确认批量删除',
+      {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }
+    )
+    const ids = selectedRows.value.map(item => item.id)
+    await batchDeleteDetections(ids)
+    ElMessage.success(`已删除 ${ids.length} 条记录`)
+    selectedRows.value = []
+    clearHistoryCache()
+    await fetchList(false)
+  } catch (error: any) {
+    if (error?.toString()?.includes('cancel')) return
+    ElMessage.error('批量删除失败')
+    console.error(error)
+  }
+}
+
 // 定期刷新签名URL
 async function refreshTaskUrl() {
   if (!historyDetailTask.value?.id) return
@@ -302,6 +349,7 @@ watch(detailVisible, (isVisible) => {
           <el-button @click="handleReset">重置</el-button>
           <el-button :loading="loading" @click="handleManualRefresh">刷新</el-button>
           <el-button type="success" plain :disabled="!selectedRows.length" @click="handleExportSelectedReport">导出所选PDF</el-button>
+          <el-button type="danger" plain :disabled="!selectedRows.length" @click="handleBatchDelete">批量删除</el-button>
         </el-form-item>
       </el-form>
 
@@ -319,11 +367,12 @@ watch(detailVisible, (isVisible) => {
         <el-table-column prop="summary" label="总结" min-width="220" show-overflow-tooltip />
         <el-table-column prop="affectedAreaPercentage" label="污渍占比" width="100"><template #default="scope">{{ scope.row.affectedAreaPercentage ?? '-' }}%</template></el-table-column>
         <el-table-column prop="createdAt" label="创建时间" min-width="70" />
-        <el-table-column label="操作" width="220" fixed="right">
+        <el-table-column label="操作" width="280" fixed="right">
           <template #default="scope">
             <el-button link type="primary" @click="openDetail(scope.row.id)">详情</el-button>
             <el-button link type="success" @click="handleExportRowReport(scope.row.id)">导出PDF</el-button>
             <el-button v-if="scope.row.status === 'failed'" link type="warning" @click="handleRetry(scope.row.id)">重试</el-button>
+            <el-button link type="danger" @click="handleDelete(scope.row.id)">删除</el-button>
           </template>
         </el-table-column>
       </el-table>
