@@ -173,7 +173,7 @@
         
         uploadProgress.value = 0;
         const response = await axios.post(
-          `/oss/upload/${encodedTargetPath}`,
+          `/oss/oss/upload/${encodedTargetPath}`,
           formData,
           {
             onUploadProgress: (progressEvent) => {

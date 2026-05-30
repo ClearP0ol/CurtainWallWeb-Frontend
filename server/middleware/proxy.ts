@@ -37,7 +37,7 @@ export default defineEventHandler(async (event) => {
       rewrite: (p: string) => p.replace(/^\/history/, '') // 去掉 /history 前缀
     },
     '/oss': {
-      target: 'http://8.159.143.133:9000/oss',
+      target: 'http://8.159.143.133:9000',
       rewrite: (p: string) => p.replace(/^\/oss/, '') // 去掉前端 /oss 前缀，保留上游 /oss
     },
     '/crackdetection': {
