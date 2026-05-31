@@ -6,27 +6,65 @@
         </div>
         <div class="box-content">
             <el-image 
-             :src="picked.image_path"
+             :src="safeImageSrc(picked.image_path)"
              :preview-src-list="[picked.image_path]" 
              style="width:80%;height: 60%;" 
              />
         </div>
     </div>
-    <div style="width:65%;height: 100%;">
+    <div class="right-pane">
         <div class="box-title">
             <p>检测结果</p>
-            <el-progress :percentage="getDetectionProgress()" style="width:50%;margin-left: auto;margin-right: auto;margin-top: 10px;" />
-            <el-button 
-                type="primary" 
-                style="position: absolute;right: 10%;top:55%" 
-                @click="startCrackDetection" 
-                :loading="globalLoading"
-                :disabled="isAllDetectionComplete"
-            >
-                开始检测
-            </el-button>
+            <div class="detection-toolbar">
+              <div class="mode-row">
+                <span class="toolbar-label">检测模式</span>
+                <el-select v-model="detectionMode" size="small" style="width:160px">
+                  <el-option label="标准双模型" value="standard" />
+                  <el-option label="SOM 模式" value="som" />
+                </el-select>
+              </div>
+              <div v-if="detectionMode === 'som'" class="threshold-row">
+                <span class="toolbar-label">像素阈值</span>
+                <el-input-number
+                  v-model="somThresholds.min_crack_pixels"
+                  :min="1"
+                  :step="1"
+                  :step-strictly="false"
+                  :controls="true"
+                  controls-position="right"
+                  :readonly="false"
+                  size="small"
+                  style="width: 140px;"
+                />
+                <span class="toolbar-label">面积占比阈值</span>
+                <el-input-number
+                  v-model="somThresholds.min_crack_area_ratio"
+                  :min="0"
+                  :max="1"
+                  :step="0.0001"
+                  :precision="4"
+                  :step-strictly="false"
+                  :controls="true"
+                  controls-position="right"
+                  :readonly="false"
+                  size="small"
+                  style="width: 160px;"
+                />
+              </div>
+              <div class="progress-row">
+                <el-progress :percentage="getDetectionProgress()" class="detection-progress" />
+                <el-button 
+                    type="primary" 
+                    @click="startCrackDetection" 
+                    :loading="globalLoading"
+                    :disabled="globalLoading || nums === 0"
+                >
+                    {{ isAllDetectionComplete ? '重新检测' : '开始检测' }}
+                </el-button>
+              </div>
+            </div>
         </div>
-        <el-scrollbar style="width:100%;height: 82%;">
+        <el-scrollbar class="results-scrollbar">
         <div class="box-content" style="height: 100%;">
             <el-timeline style="width: 90%;height: 100%;">
                 <el-timeline-item 
@@ -35,9 +73,9 @@
                     :timestamp="`区域${index + 1}`"
                     placement="top"
                 >
-                    <el-card style="height: 20vh;">
+                    <el-card class="detection-card">
                         <!-- 在卡片顶部添加裂缝状态 -->
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; padding: 5px 0; border-bottom: 1px solid #eee;">
+                        <div class="detection-card-header">
                             <span style="font-weight: bold; font-size: 14px;">区域{{ index + 1 }}检测结果</span>
                             <div style="display: flex; align-items: center; gap: 8px;">
                                 <!-- 检测完成时显示结果标签 -->
@@ -50,7 +88,7 @@
                                     >
                                         {{ crackResult[index].have_crack === '1' ? '有裂缝' : '无裂缝' }}
                                     </el-tag>
-                                    <!-- 智能助手分析按钮 - 只在有裂缝时显示 -->
+                                    <!-- 废案入口（已停用）：
                                     <el-button 
                                         v-if="crackResult && crackResult.length > index && crackResult[index] && crackResult[index].have_crack=== '1'"
                                         type="primary" 
@@ -61,9 +99,9 @@
                                     >
                                         智能助手分析
                                     </el-button>
-                                    <!-- 双模型协同检测按钮 - 只在有裂缝时显示 -->
+                                    -->
                                     <el-button 
-                                        v-if="crackResult && crackResult.length > index && crackResult[index] && crackResult[index].have_crack=== '1'"
+                                        v-if="detectionMode === 'standard' && crackResult && crackResult.length > index && crackResult[index] && crackResult[index].have_crack=== '1'"
                                         type="warning" 
                                         size="small" 
                                         @click="handleDualModelDetection(index)"
@@ -78,26 +116,37 @@
                                 </div>
                             </div>
                         </div>
+                        <div
+                          v-if="detectionMode === 'som' && crackResult && crackResult[index] && crackResult[index].metrics"
+                          style="display:flex;gap:14px;font-size:12px;color:#606266;margin-bottom:8px;"
+                        >
+                          <span>crack_pixels: {{ crackResult[index].metrics.crack_pixels }}</span>
+                          <span>area_ratio: {{ formatRatio(crackResult[index].metrics.crack_area_ratio) }}</span>
+                        </div>
                         
                         <div class="result-card">
-                            <div>
-                                <div style="height: 5%;text-align: center;font-weight: bold">原始图片</div>
+                            <div class="result-column">
+                                <div class="result-image-title">原始图片</div>
                                 <div class="image-container">
                                     <el-image
-                                     :src="item.image_path" 
+                                     :src="safeImageSrc(item.image_path)" 
+                                     @error="markImageFailed(item.image_path)"
                                      :preview-src-list="[item.image_path]"
-                                     style="width:80%;height: 80%;" 
+                                     fit="contain"
+                                     class="result-image"
                                      >
                                      </el-image>
                                 </div>
                             </div>
-                            <div>
-                                <div style="height: 5%;text-align: center;font-weight: bold">Segformer模型</div>
+                            <div class="result-column">
+                                <div class="result-image-title">{{ getSecondModelTitle() }}</div>
                                 <div class="image-container">
                                     <el-image
-                                     :src="item.crackimages[0]" 
-                                     :preview-src-list="[item.crackimages[0]]"
-                                     style="width:80%;height: 80%;" 
+                                     :src="safeImageSrc(getSecondModelImage(item))" 
+                                     @error="markImageFailed(getSecondModelImage(item))"
+                                     :preview-src-list="[getSecondModelImage(item)]"
+                                     fit="contain"
+                                     class="result-image"
                                      >
                                      <template #error>
                                         <div class="image-slot">
@@ -107,13 +156,15 @@
                                      </el-image>
                                 </div>
                             </div>
-                            <div>
-                                <div style="height: 5%;text-align: center;font-weight: bold">CrackDetection模型</div>
+                            <div class="result-column">
+                                <div class="result-image-title">{{ getThirdModelTitle() }}</div>
                                 <div class="image-container">
                                     <el-image
-                                     :src="item.crackimages[1]" 
-                                     :preview-src-list="[item.crackimages[1]]"
-                                     style="width:80%;height: 80%;" 
+                                     :src="safeImageSrc(getThirdModelImage(item))" 
+                                     @error="markImageFailed(getThirdModelImage(item))"
+                                     :preview-src-list="[getThirdModelImage(item)]"
+                                     fit="contain"
+                                     class="result-image"
                                      >
                                      <template #error>
                                         <div class="image-slot">
@@ -133,168 +184,68 @@
 </div>
 
 
-<!-- AI分析结果弹窗 -->
-<el-dialog 
-    v-model="analysisDialogVisible" 
-    title="智能助手分析结果" 
-    width="80%"
-    :before-close="handleCloseDialog"
->
-    <div v-if="analysisLoading" style="text-align: center; padding: 40px;">
-        <el-icon class="is-loading" style="font-size: 24px; margin-bottom: 10px;"><Loading /></el-icon>
-        <p>AI正在分析中，请稍候...</p>
-    </div>
-    <div v-else-if="analysisResult">
-        <!-- 图片对比展示区域 -->
-        <div style="margin-bottom: 20px;">
-            <h4 style="margin-bottom: 15px; color: #303133;">检测图片对比</h4>
-            <div style="display: flex; gap: 20px; justify-content: center;">
-                <!-- 原始图片 -->
-                <div style="flex: 1; text-align: center;">
-                    <h5 style="margin-bottom: 10px; color: #606266;">原始图片</h5>
-                    <el-image
-                        v-if="currentAnalysisIndex >= 0 && picked && picked.segimages && picked.segimages[currentAnalysisIndex]"
-                        :src="picked.segimages[currentAnalysisIndex].image_path"
-                        :preview-src-list="[picked.segimages[currentAnalysisIndex].image_path]"
-                        style="width: 100%; max-width: 300px; height: 200px; border-radius: 8px; border: 1px solid #dcdfe6;"
-                        fit="contain"
-                    >
-                        <template #error>
-                            <div style="display: flex; justify-content: center; align-items: center; width: 100%; height: 100%; background: #f5f7fa; color: #909399;">
-                                图片加载失败
-                            </div>
-                        </template>
-                    </el-image>
-                </div>
-                <!-- 检测结果图片 -->
-                <div style="flex: 1; text-align: center;">
-                    <h5 style="margin-bottom: 10px; color: #606266;">CrackDetection检测结果</h5>
-                    <el-image
-                        v-if="currentAnalysisIndex >= 0 && picked && picked.segimages && picked.segimages[currentAnalysisIndex] && picked.segimages[currentAnalysisIndex].crackimages && picked.segimages[currentAnalysisIndex].crackimages[1]"
-                        :src="picked.segimages[currentAnalysisIndex].crackimages[1]"
-                        :preview-src-list="[picked.segimages[currentAnalysisIndex].crackimages[1]]"
-                        style="width: 100%; max-width: 300px; height: 200px; border-radius: 8px; border: 1px solid #dcdfe6;"
-                        fit="contain"
-                    >
-                        <template #error>
-                            <div style="display: flex; justify-content: center; align-items: center; width: 100%; height: 100%; background: #f5f7fa; color: #909399;">
-                                图片加载失败
-                            </div>
-                        </template>
-                    </el-image>
-                </div>
-            </div>
-        </div>
-        
-        <!-- 分隔线 -->
-        <el-divider />
-        
-        <!-- 免责声明 -->
-        <el-alert
-            title="此内容由大语言模型生成，请注意辨别"
-            type="warning"
-            :closable="false"
-            style="margin-bottom: 20px;"
-        />
-        <!-- 分析结果 -->
-        <div class="analysis-content" v-html="formatMarkdown(analysisResult.analysis)"></div>
-    </div>
-    <div v-else-if="analysisError" style="text-align: center; padding: 20px;">
-        <el-alert
-            :title="analysisError"
-            type="error"
-            :closable="false"
-        />
-    </div>
-    <template #footer>
-        <span class="dialog-footer">
-            <el-button @click="handleCloseDialog">关闭</el-button>
-        </span>
-    </template>
-</el-dialog>
-<!-- 在 AI 分析对话框的 </el-dialog> 标签后添加 -->
-
-<!-- 双模型协同检测结果弹窗 -->
-<el-dialog 
-    v-model="dualModelDialogVisible" 
-    title="双模型协同检测结果" 
+<!-- 废案弹窗（已停用）：
+AI分析结果弹窗 + 双模型协同检测结果弹窗
+-->
+<el-dialog
+    v-model="dualModelDialogVisible"
+    title="双模型协同检测结果"
     width="80%"
     :before-close="handleCloseDualModelDialog"
 >
-    <div v-if="dualModelLoading" style="text-align: center; padding: 40px;">
-        <el-icon class="is-loading" style="font-size: 24px; margin-bottom: 10px;"><Loading /></el-icon>
-        <p>双模型协同检测中，请稍候...</p>
+    <div v-if="dualModelLoading" style="text-align: center; padding: 24px;">
+        双模型协同检测中，请稍候...
     </div>
     <div v-else-if="dualModelResult">
-        <!-- 检测结果展示区域 -->
         <div style="margin-bottom: 20px;">
             <h4 style="margin-bottom: 15px; color: #303133;">检测结果对比</h4>
-            <!-- 原始图片 -->
-            <div style="margin-bottom: 30px; text-align: center;">
+            <div style="margin-bottom: 24px; text-align: center;">
                 <h5 style="margin-bottom: 10px;">原始图片</h5>
-                <img 
-                    :src="picked.segimages[currentDualModelIndex]?.image_path" 
-                    style="max-width: 100%; max-height: 400px; border: 1px solid #ddd; border-radius: 4px;"
+                <img
+                    :src="safeImageSrc(picked.segimages[currentDualModelIndex]?.image_path)"
+                    @error="markImageFailed(picked.segimages[currentDualModelIndex]?.image_path)"
+                    style="max-width: 100%; max-height: 360px; border: 1px solid #ddd; border-radius: 4px;"
                     alt="原始图片"
                 />
             </div>
-            
-            <!-- 检测结果图片 -->
             <div style="text-align: center;">
                 <h5 style="margin-bottom: 10px;">检测结果</h5>
-                <img 
+                <img
                     v-if="dualModelResult.data?.merged_results?.merged_highlighted_url"
-                    :src="dualModelResult.data.merged_results.merged_highlighted_url" 
-                    style="max-width: 100%; max-height: 400px; border: 1px solid #ddd; border-radius: 4px;"
+                    :src="safeImageSrc(dualModelResult.data.merged_results.merged_highlighted_url)"
+                    @error="markImageFailed(dualModelResult.data.merged_results.merged_highlighted_url)"
+                    style="max-width: 100%; max-height: 360px; border: 1px solid #ddd; border-radius: 4px;"
                     alt="检测结果"
-                    @error="$event.target.style.display='none'"
                 />
-                <div v-else style="padding: 50px; background: #f5f5f5; border-radius: 4px; color: #999;">
+                <div v-else style="padding: 36px; background: #f5f5f5; border-radius: 4px; color: #999;">
                     暂无检测结果图片
                 </div>
             </div>
         </div>
-        
-        <!-- 检测信息 -->
-        <div style="margin-top: 20px;">
-            <h4 style="margin-bottom: 15px; color: #303133;">检测信息</h4>
-            <el-descriptions :column="2" border>
-                <el-descriptions-item label="是否检测到裂缝">
-                    <el-tag :type="(dualModelResult.data?.have_crack === true || dualModelResult.data?.have_crack === 'true') ? 'danger' : 'success'">
-                        {{ (dualModelResult.data?.have_crack === true || dualModelResult.data?.have_crack === 'true') ? '是' : '否' }}
-                    </el-tag>
-                </el-descriptions-item>
-                <el-descriptions-item label="检测到的区域数量">
-                    {{ dualModelResult.data?.crop_regions?.length || 0 }}
-                </el-descriptions-item>
-            </el-descriptions>
-        </div>
-        
-        <!-- 区域详情 -->
-        <div v-if="dualModelResult.data?.crop_regions?.length > 0" style="margin-top: 20px;">
-            <h4 style="margin-bottom: 15px; color: #303133;">检测区域详情</h4>
-            <el-table :data="dualModelResult.data.crop_regions" style="width: 100%" border>
-                <el-table-column prop="id" label="区域ID" width="80" />
-                <el-table-column prop="x" label="X坐标" width="80" />
-                <el-table-column prop="y" label="Y坐标" width="80" />
-                <el-table-column prop="width" label="宽度" width="80" />
-                <el-table-column prop="height" label="高度" width="80" />
-            </el-table>
-        </div>
+
+        <el-descriptions :column="2" border>
+            <el-descriptions-item label="是否检测到裂缝">
+                <el-tag :type="(dualModelResult.data?.have_crack === true || dualModelResult.data?.have_crack === 'true') ? 'danger' : 'success'">
+                    {{ (dualModelResult.data?.have_crack === true || dualModelResult.data?.have_crack === 'true') ? '是' : '否' }}
+                </el-tag>
+            </el-descriptions-item>
+            <el-descriptions-item label="检测到的区域数量">
+                {{ dualModelResult.data?.crop_regions?.length || 0 }}
+            </el-descriptions-item>
+        </el-descriptions>
     </div>
-    <div v-else-if="dualModelError" style="text-align: center; padding: 40px;">
-        <el-icon style="font-size: 48px; color: #f56c6c; margin-bottom: 16px;"><CircleClose /></el-icon>
-        <p style="color: #f56c6c; font-size: 16px;">{{ dualModelError }}</p>
+    <div v-else-if="dualModelError" style="text-align: center; padding: 24px; color: #f56c6c;">
+        {{ dualModelError }}
     </div>
 </el-dialog>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed, watch } from 'vue';
 import axios from 'axios'
 import { useCrackDetectionStore } from '../store/CrackDetection'
-import { ElMessage } from 'element-plus'
-import { Loading } from '@element-plus/icons-vue'
+import { ElMessage, ElMessageBox } from 'element-plus'
+// import { Loading } from '@element-plus/icons-vue' // 废案功能停用
 const store = useCrackDetectionStore()
 
 const picked = ref({
@@ -305,6 +256,11 @@ const picked = ref({
 const nums = ref(0)
 const progress = ref(0)
 const globalLoading = ref(false)
+const detectionMode = ref('standard')
+const somThresholds = ref({
+  min_crack_pixels: 250,
+  min_crack_area_ratio: 0.0002
+})
 const isAllDetectionComplete = computed(() => {
   if (nums.value === 0) return false
   
@@ -320,43 +276,198 @@ const isAllDetectionComplete = computed(() => {
 const crackResult = ref([])
 const crackResult2 = ref([])
 
-// 在 AI分析相关数据 部分后添加以下代码
-// AI分析相关数据
-const analysisDialogVisible = ref(false)
-const analysisLoading = ref(false)
-const analysisResult = ref(null)
-const analysisError = ref(null)
-const currentAnalysisIndex = ref(-1)
+const getSecondModelTitle = () => detectionMode.value === 'som' ? 'SOM掩码' : 'Segformer模型'
+const getThirdModelTitle = () => detectionMode.value === 'som' ? 'SOM叠加图' : 'CrackDetection模型'
 
-// 双模型协同检测相关数据
+const buildOrderedCrackImages = (crackimages) => {
+  if (!Array.isArray(crackimages)) return []
+  return crackimages
+    .map((item) => {
+      if (typeof item === 'string') return item
+      if (item && typeof item.image_path === 'string') return item.image_path
+      return ''
+    })
+    .filter((path) => typeof path === 'string' && path)
+}
+
+const getDetectionResultGroups = (crackimages) => {
+  const ordered = buildOrderedCrackImages(crackimages)
+  if (ordered.length === 0) {
+    return {
+      standard: { segformerUrl: '', crackDetectionUrl: '' },
+      som: { maskUrl: '', overlayUrl: '' },
+    }
+  }
+  const latestFirst = [...ordered].reverse()
+  const isSomPath = (path) => path.includes('/som/') || path.includes('som-')
+  const groups = {
+    standard: { segformerUrl: '', crackDetectionUrl: '' },
+    som: { maskUrl: '', overlayUrl: '' },
+  }
+
+  const somMask = latestFirst.find((p) => isSomPath(p) && (p.includes('som-segformer-') || p.includes('/som/mask/')))
+  const somOverlay = latestFirst.find((p) => isSomPath(p) && (p.includes('overlay') || p.includes('som-mask-') || p.includes('/som/overlay/')))
+  if (somMask) groups.som.maskUrl = somMask
+  if (somOverlay) groups.som.overlayUrl = somOverlay
+
+  const standardSegformer = latestFirst.find((p) => !isSomPath(p) && p.includes('segformer'))
+  const standardMask = latestFirst.find((p) => !isSomPath(p) && (p.includes('mask') || p.includes('highlighted') || p.includes('result')))
+  if (standardSegformer) groups.standard.segformerUrl = standardSegformer
+  if (standardMask) groups.standard.crackDetectionUrl = standardMask
+
+  return groups
+}
+
+const hydrateSegModeFields = (seg) => {
+  const groups = getDetectionResultGroups(seg.crackimages)
+  seg.standardSegformerUrl = groups.standard.segformerUrl
+  seg.standardCrackDetectionUrl = groups.standard.crackDetectionUrl
+  seg.somMaskUrl = groups.som.maskUrl
+  seg.somOverlayUrl = groups.som.overlayUrl
+
+  const fallbackHaveCrack = (seg.have_crack === '0' || seg.have_crack === '1') ? seg.have_crack : undefined
+  if (seg.standardHaveCrack === undefined && (seg.standardSegformerUrl || seg.standardCrackDetectionUrl)) {
+    seg.standardHaveCrack = fallbackHaveCrack
+  }
+  if (seg.somHaveCrack === undefined && (seg.somMaskUrl || seg.somOverlayUrl)) {
+    seg.somHaveCrack = fallbackHaveCrack
+  }
+}
+
+const getModeResultPair = (seg) => {
+  if (detectionMode.value === 'som') {
+    return { first: seg.somMaskUrl || '', second: seg.somOverlayUrl || '' }
+  }
+  return { first: seg.standardSegformerUrl || '', second: seg.standardCrackDetectionUrl || '' }
+}
+
+const getSecondModelImage = (item) => {
+  if (!item) return ''
+  return getModeResultPair(item).first
+}
+const getThirdModelImage = (item) => {
+  if (!item) return ''
+  return getModeResultPair(item).second
+}
+const formatRatio = (val) => {
+  if (typeof val !== 'number') return '-'
+  return val.toFixed(6)
+}
+
+const normalizeSomThresholds = () => {
+  const pixels = Number(somThresholds.value.min_crack_pixels)
+  const ratio = Number(somThresholds.value.min_crack_area_ratio)
+
+  somThresholds.value.min_crack_pixels = Number.isFinite(pixels) && pixels >= 1
+    ? Math.floor(pixels)
+    : 2500
+  somThresholds.value.min_crack_area_ratio = Number.isFinite(ratio)
+    ? Math.min(1, Math.max(0, ratio))
+    : 0.01
+}
+
+const resetCurrentModeDetectionState = () => {
+  crackResult.value = []
+  crackResult2.value = []
+  progress.value = 0
+
+  picked.value.segimages.forEach((seg) => {
+    if (detectionMode.value === 'som') {
+      seg.somMaskUrl = ''
+      seg.somOverlayUrl = ''
+      seg.somMetrics = null
+      seg.somHaveCrack = undefined
+    } else {
+      seg.standardSegformerUrl = ''
+      seg.standardCrackDetectionUrl = ''
+      seg.standardHaveCrack = undefined
+    }
+  })
+}
+
+const loadModeResultsFromSegImages = () => {
+  crackResult.value = []
+  crackResult2.value = []
+
+  picked.value.segimages.forEach((seg, index) => {
+    const { first, second } = getModeResultPair(seg)
+    const fallbackHaveCrack = (seg.have_crack === '0' || seg.have_crack === '1') ? seg.have_crack : undefined
+    const modeHaveCrack = detectionMode.value === 'som'
+      ? (seg.somHaveCrack ?? fallbackHaveCrack)
+      : (seg.standardHaveCrack ?? fallbackHaveCrack)
+
+    if (first) {
+      crackResult.value[index] = {
+        url: first,
+        have_crack: modeHaveCrack,
+        metrics: detectionMode.value === 'som' ? seg.somMetrics || null : null,
+      }
+    }
+    if (second) {
+      crackResult2.value[index] = {
+        url: second
+      }
+    }
+  })
+}
+
+// 废案状态（已停用）：
+// const analysisDialogVisible = ref(false)
+// const analysisLoading = ref(false)
+// const analysisResult = ref(null)
+// const analysisError = ref(null)
+// const currentAnalysisIndex = ref(-1)
 const dualModelDialogVisible = ref(false)
 const dualModelLoading = ref(false)
 const dualModelResult = ref(null)
 const dualModelError = ref(null)
 const currentDualModelIndex = ref(-1)
+const failedImageUrls = ref(new Set())
+
+const safeImageSrc = (url) => {
+  if (!url) return ''
+  return failedImageUrls.value.has(url) ? '' : url
+}
+
+const markImageFailed = (url) => {
+  if (!url) return
+  failedImageUrls.value.add(url)
+}
 
 const startCrackDetection = async () => {
   try {
-    // 初始化结果数组和进度
-    crackResult.value = []
-    crackResult2.value = []
-    progress.value = 0  // 修改：开始检测时重置进度为0
+    normalizeSomThresholds()
+    if (isAllDetectionComplete.value) {
+      try {
+        await ElMessageBox.confirm(
+          `当前${detectionMode.value === 'som' ? 'SOM' : '标准'}模式结果已存在，是否重新检测并覆盖本地显示？`,
+          '确认重跑',
+          { type: 'warning', confirmButtonText: '重跑', cancelButtonText: '取消' }
+        )
+      } catch {
+        return
+      }
+      resetCurrentModeDetectionState()
+    } else {
+      // 初始化结果数组和进度
+      crackResult.value = []
+      crackResult2.value = []
+      progress.value = 0
+    }
     let allDetectionSuccess = true
     globalLoading.value = true
 
-    // 为检测请求创建重试函数
+    // 为标准模式创建重试函数
     const retryDetectionRequests = async (url, maxRetries = 3) => {
       for (let attempt = 1; attempt <= maxRetries; attempt++) {
         try {
           console.log(`开始第 ${attempt} 次检测请求: ${url}`)
-          const [response1, response2] = await Promise.all([
-            axios.post('/crackdetection/segformer/predict', {
-              url: url
-            }),
-            axios.post('/crackdetection/crack-detection/detect', {
-              url: url
-            })
-          ])
+          const response1 = await axios.post('/crackdetection/segformer/predict', {
+            url: url
+          })
+          const response2 = await axios.post('/crackdetection/crack-detection/detect', {
+            url: url
+          })
           
           // 检查HTTP状态码
           if (response1.status !== 200 || response2.status !== 200) {
@@ -394,28 +505,78 @@ const startCrackDetection = async () => {
       }
     }
 
+    const retrySomDetectionRequest = async (url, maxRetries = 3) => {
+      for (let attempt = 1; attempt <= maxRetries; attempt++) {
+        try {
+          const response = await axios.post('/crackdetection/crack-detection/som-detect', {
+            url: url,
+            min_crack_pixels: somThresholds.value.min_crack_pixels,
+            min_crack_area_ratio: somThresholds.value.min_crack_area_ratio,
+          })
+          if (response.status !== 200) {
+            throw new Error(`HTTP错误 - response状态: ${response.status}`)
+          }
+          if (response.data.success) {
+            return response
+          }
+          throw new Error(`SOM检测失败: ${response.data.message || '未知错误'}`)
+        } catch (error) {
+          if (attempt === maxRetries) {
+            throw new Error(`SOM检测请求失败，已重试 ${maxRetries} 次: ${error.message}`)
+          }
+          await new Promise(resolve => setTimeout(resolve, 1000 * attempt))
+        }
+      }
+    }
+
     // 对每个几何变换的图片进行检测
     for (let i = 0; i < picked.value.segimages.length; i++) {
       const seg = picked.value.segimages[i]
 
       try {
-        const [response1, response2] = await retryDetectionRequests(seg.image_path)
+        let modelResult = null
+        let modelResult2 = null
+        if (detectionMode.value === 'som') {
+          const responseSom = await retrySomDetectionRequest(seg.image_path)
+          modelResult = {
+            url: responseSom.data.data.mask_url,
+            have_crack: responseSom.data.have_crack ? "1" : "0",
+            metrics: {
+              crack_pixels: responseSom.data.data.crack_pixels,
+              crack_area_ratio: responseSom.data.data.crack_area_ratio,
+            }
+          }
+          modelResult2 = {
+            url: responseSom.data.data.overlay_url
+          }
+        } else {
+          const [response1, response2] = await retryDetectionRequests(seg.image_path)
+          modelResult = {
+            url: response1.data.data,
+            have_crack: response1.data.have_crack ? "1" : "0"
+          }
+          modelResult2 = {
+            url: response2.data.data.mask_url
+          }
+        }
 
-        // 添加第一个模型的检测结果
-        crackResult.value.push({
-          url: response1.data.data,
-          have_crack: response1.data.have_crack ? "1" : "0"  // 将布尔值转换为字符串
-        })
-        
-        // 添加第二个模型的检测结果（只使用 mask_url）
-        crackResult2.value.push({
-          url: response2.data.data.mask_url
-        })
+        crackResult.value.push(modelResult)
+        crackResult2.value.push(modelResult2)
 
         // 修改：每完成一个区域的检测，进度增加1
         progress.value = i + 1
-        seg.crackimages.push(response1.data.data);
-        seg.crackimages.push(response2.data.data.mask_url);
+        if (!Array.isArray(seg.crackimages)) seg.crackimages = []
+        seg.crackimages.push(modelResult.url, modelResult2.url)
+        if (detectionMode.value === 'som' && modelResult.metrics) {
+          seg.somMaskUrl = modelResult.url
+          seg.somOverlayUrl = modelResult2.url
+          seg.somMetrics = modelResult.metrics
+          seg.somHaveCrack = modelResult.have_crack
+        } else {
+          seg.standardSegformerUrl = modelResult.url
+          seg.standardCrackDetectionUrl = modelResult2.url
+          seg.standardHaveCrack = modelResult.have_crack
+        }
 
         // 上传两个模型的检测结果
         try {
@@ -423,22 +584,20 @@ const startCrackDetection = async () => {
           console.log('seg_id:', seg.segId)
           await axios.post('/crackdetection/addCrackImage', {
             seg_id: seg.segId,
-            image_path: response1.data.data
+            image_path: modelResult.url
           })
-          
-          // 上传第二个模型的检测结果
           await axios.post('/crackdetection/addCrackImage', {
             seg_id: seg.segId,
-            image_path: response2.data.data.mask_url
+            image_path: modelResult2.url
           })
 
           // 新增：调用更新分割图像的裂缝状态接口
           await axios.post('/crackdetection/update_seg_image', {
             seg_id: seg.segId,
-            have_crack: response1.data.have_crack ? "1" : "0"
+            have_crack: modelResult.have_crack
           })
           
-          console.log(`区域 ${i + 1} 裂缝状态已更新: ${response1.data.have_crack ? '有裂缝' : '无裂缝'}`)
+          console.log(`区域 ${i + 1} 裂缝状态已更新: ${modelResult.have_crack === "1" ? '有裂缝' : '无裂缝'}`)
         } catch (error) {
           console.error('Error uploading crack detection results or updating seg image:', error)
         }
@@ -515,6 +674,14 @@ onMounted(() => {
       image_path: store.pickedImage.image_path || '',
       segimages: store.pickedImage.segimages || []
     }
+
+    picked.value.segimages.forEach((seg) => {
+      if (!Array.isArray(seg.crackimages)) seg.crackimages = []
+      hydrateSegModeFields(seg)
+      if (seg.standardSegformerUrl && (seg.have_crack === "0" || seg.have_crack === "1")) {
+        seg.standardHaveCrack = seg.have_crack
+      }
+    })
     
     nums.value = picked.value.segimages.length;
     progress.value = 0
@@ -529,35 +696,17 @@ onMounted(() => {
       console.log(`分割区域 ${index} 的 segId:`, seg.segId)
     })
     
-    // 新增：初始化检测结果数组并加载已有数据
-    crackResult.value = []
-    crackResult2.value = []
-    
-    picked.value.segimages.forEach((seg, index) => {
-      // 检查是否已经有检测结果
-      if (seg.crackimages && seg.crackimages.length >= 2) {
-        // 加载第一个模型的结果（Segformer）
-        crackResult.value[index] = {
-          url: seg.crackimages[0],
-          have_crack: seg.have_crack // 直接使用 Segmentation.vue 中已经设置的 have_crack
-        }
-        
-        // 加载第二个模型的结果（CrackDetection）
-        crackResult2.value[index] = {
-          url: seg.crackimages[1]
-        }
-        
-        console.log(`区域 ${index} 已有检测结果:`, {
-          segformer: seg.crackimages[0],
-          crackdetection: seg.crackimages[1],
-          have_crack: seg.have_crack
-        })
-      }
-    })
+    // 按当前模式加载已有结果，避免模式串结果
+    loadModeResultsFromSegImages()
     
   } else {
     ElMessage.error('未找到图片数据，请先完成图片分割')
   }
+})
+
+watch(detectionMode, () => {
+  loadModeResultsFromSegImages()
+  progress.value = 0
 })
 
 // 修改获取裂缝状态的函数
@@ -591,20 +740,10 @@ const getDetectionProgress = () => {
 
 // 判断某个区域的检测是否完成（两个模型都有结果）
 const isDetectionComplete = (index) => {
-  // 检查第一个模型（Segformer）是否有结果
-  const hasFirstModel = crackResult.value && 
-                       crackResult.value.length > index && 
-                       crackResult.value[index] && 
-                       crackResult.value[index].have_crack !== undefined
-  
-  // 检查第二个模型（CrackDetection）是否有结果
-  const hasSecondModel = crackResult2.value && 
-                        crackResult2.value.length > index && 
-                        crackResult2.value[index] && 
-                        crackResult2.value[index].url
-  
-  // 两个模型都有结果才算完成
-  return hasFirstModel && hasSecondModel
+  const seg = picked.value.segimages[index]
+  if (!seg) return false
+  const { first, second } = getModeResultPair(seg)
+  return Boolean(first && second)
 }
 
 const DEFAULT_LLM_MODEL = 'hybrid-default'
@@ -679,26 +818,20 @@ const handleDualModelDetection = async (index) => {
     currentDualModelIndex.value = index
     dualModelDialogVisible.value = true
     dualModelLoading.value = true
-    dualModelError.value = null
     dualModelResult.value = null
-    
-    // 获取图片URL
-    const imageUrl = picked.value.segimages[index].image_path
-    
-    // 调用双模型协同检测API
-    const response = await axios.post('http://110.42.214.164:8001/crack-detection/region-detect', {
+    dualModelError.value = null
+
+    const imageUrl = picked.value.segimages[index]?.image_path
+    if (!imageUrl) throw new Error('未找到区域图片')
+
+    const response = await axios.post('/crackdetection/crack-detection/region-detect', {
       url: imageUrl
     })
-    
-    if (response.data) {
-      dualModelResult.value = response.data
-      ElMessage.success('双模型协同检测完成')
-      console.log('双模型协同检测结果:', dualModelResult.value)
-    } else {
-      throw new Error('API返回数据格式错误')
-    }
+
+    if (!response.data) throw new Error('接口返回为空')
+    dualModelResult.value = response.data
+    ElMessage.success('双模型协同检测完成')
   } catch (error) {
-    console.error('双模型协同检测失败:', error)
     dualModelError.value = error.response?.data?.message || error.message || '双模型协同检测失败，请重试'
     ElMessage.error('双模型协同检测失败')
   } finally {
@@ -706,7 +839,6 @@ const handleDualModelDetection = async (index) => {
   }
 }
 
-// 关闭双模型对话框
 const handleCloseDualModelDialog = () => {
   dualModelDialogVisible.value = false
   dualModelLoading.value = false
@@ -739,46 +871,159 @@ const handleCloseDualModelDialog = () => {
   border-color: #171D25;
   border-radius: 5px;
   box-shadow: 0px 0px 10px rgb(81, 81, 81);
+  min-width: 0;
 }
 
 .box-title{
-    height: 15%;
+    flex: 0 0 auto;
     text-align: center;
     color: black;
     font-size: 20px;
-    padding-top: 20px;
+    padding-top: 16px;
     position: relative;
+    padding-left: 8px;
+    padding-right: 8px;
+    box-sizing: border-box;
+    word-break: break-word;
+}
+
+.right-pane {
+  width: 65%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.results-scrollbar {
+  width: 100%;
+  flex: 1;
+  min-height: 0;
+}
+
+.box-title p {
+  margin: 0 0 8px;
+}
+
+.detection-toolbar {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+
+.mode-row,
+.threshold-row,
+.progress-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  min-width: 0;
+}
+
+.threshold-row {
+  flex-wrap: wrap;
+}
+
+.toolbar-label {
+  color: #606266;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.progress-row {
+  padding: 0 8%;
+  box-sizing: border-box;
+}
+
+.detection-progress {
+  flex: 1;
+  max-width: 520px;
+  min-width: 180px;
 }
 
 .box-content{
     width: 100%;
-    height: 85%;
+    height: 82%;
     display: flex;
     justify-content: center;
     align-items: center;
+    min-width: 0;
 }
 
 .result-card{
     width:100%;
-    height: 100%;
+    min-height: 180px;
     display: grid;
-    grid-template-columns: repeat(3, 1fr); /* 三列布局 */
+    grid-template-columns: repeat(3, minmax(0, 1fr)); /* 三列布局 */
+    gap: 14px;
+    min-width: 0;
+    overflow: visible;
+    align-items: stretch;
+    padding: 0 14px 14px;
+    box-sizing: border-box;
 }
 
-:deep(.el-card__body) {
+.result-column {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  min-width: 0;
+}
+
+.detection-card {
+  width: 100%;
+  overflow: visible;
+}
+
+.detection-card :deep(.el-card__body) {
   padding-right: 0;
   padding-left: 0;
-  padding-top: 3%;
+  padding-top: 12px;
   padding-bottom: 0;
-  height: 100%;
+  overflow: visible;
+}
+
+.detection-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+  padding: 5px 14px;
+  border-bottom: 1px solid #eee;
+  gap: 12px;
+  min-width: 0;
+}
+
+.result-image-title {
+  min-height: 24px;
+  line-height: 24px;
+  text-align: center;
+  font-weight: bold;
+  color: #303133;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .image-container{
     width: 100%;
-    height: 95%;
+    height: 150px;
     display: flex;
     align-items: center;
     justify-content: center;
+    overflow: hidden;
+    min-width: 0;
+    border-radius: 4px;
+    background: #fafafa;
+}
+
+.result-image {
+  width: 100%;
+  height: 100%;
 }
 
 :deep(.el-timeline-item__node) {
@@ -817,5 +1062,59 @@ const handleCloseDualModelDialog = () => {
 .dialog-footer {
   display: flex;
   justify-content: flex-end;
+}
+
+.image-container :deep(.el-image__wrapper) {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.image-container :deep(.el-image__inner) {
+  object-fit: contain;
+  max-width: 100%;
+  max-height: 100%;
+}
+
+:deep(.el-table .cell) {
+  word-break: break-word;
+}
+
+@media (max-width: 1366px) {
+  .box-title {
+    font-size: 18px;
+  }
+}
+
+@media (max-width: 1100px) {
+  .box {
+    flex-direction: column;
+    width: 100%;
+    max-width: 100%;
+    height: auto;
+    max-height: none;
+    margin-top: 12px;
+  }
+
+  .box > div[style*="width:35%"],
+  .box > div[style*="width:65%"] {
+    width: 100% !important;
+  }
+
+  .box-content {
+    height: auto;
+  }
+
+  .result-card {
+    grid-template-columns: 1fr;
+  }
+
+  :deep(.el-card) {
+    height: auto !important;
+  }
+
+  .image-container {
+    min-height: 220px;
+  }
 }
 </style>

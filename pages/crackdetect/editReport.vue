@@ -92,6 +92,7 @@
                 :src="currentImage.image_path"
                 fit="contain"
                 class="preview-image"
+                :preview-src-list="[currentImage.image_path]"
               />
             </div>
 
@@ -102,6 +103,7 @@
                 :src="currentImage.segoverviews[0].image_path"
                 fit="contain"
                 class="seg-overview-image"
+                :preview-src-list="[currentImage.segoverviews[0].image_path]"
               />
               
               <!-- 检测结果网格 -->
@@ -119,22 +121,34 @@
                         :src="seg.image_path"
                         fit="contain"
                         class="small-image"
+                        :preview-src-list="[seg.image_path]"
                       />
                     </div>
-                    <div class="detection-image-item">
+                    <div v-if="getDetectionResultGroups(seg.crackimages).standard.segformerUrl" class="detection-image-item">
                       <p>Segformer</p>
                       <el-image
-                        :src="getCrackImage(seg.crackimages, 'segformer')"
+                        :src="getDetectionResultGroups(seg.crackimages).standard.segformerUrl"
                         fit="contain"
                         class="small-image"
+                        :preview-src-list="[getDetectionResultGroups(seg.crackimages).standard.segformerUrl]"
                       />
                     </div>
-                    <div class="detection-image-item">
+                    <div v-if="getDetectionResultGroups(seg.crackimages).standard.crackDetectionUrl" class="detection-image-item">
                       <p>CrackDetection</p>
                       <el-image
-                        :src="getCrackImage(seg.crackimages, 'mask')"
+                        :src="getDetectionResultGroups(seg.crackimages).standard.crackDetectionUrl"
                         fit="contain"
                         class="small-image"
+                        :preview-src-list="[getDetectionResultGroups(seg.crackimages).standard.crackDetectionUrl]"
+                      />
+                    </div>
+                    <div v-if="getDetectionResultGroups(seg.crackimages).som.overlayUrl" class="detection-image-item">
+                      <p>SOM Overlay</p>
+                      <el-image
+                        :src="getDetectionResultGroups(seg.crackimages).som.overlayUrl"
+                        fit="contain"
+                        class="small-image"
+                        :preview-src-list="[getDetectionResultGroups(seg.crackimages).som.overlayUrl]"
                       />
                     </div>
                   </div>
@@ -269,7 +283,14 @@
           <div v-for="(image, index) in projectDetails.images" :key="image.image_id" class="image-report-section">
             <h3>图片 {{ index + 1 }}</h3>
             <div class="image-report-content">
-              <el-image :src="image.image_path" fit="contain" class="report-image" />
+              <div class="report-main-image-box">
+                <el-image
+                  :src="image.image_path"
+                  fit="contain"
+                  class="report-image"
+                  :preview-src-list="[image.image_path]"
+                />
+              </div>
               <div class="image-report-text">
                 <p><strong>描述：</strong>{{ imageDataList[index]?.description || '暂无描述' }}</p>
                 <p><strong>裂缝情况：</strong>{{ getCrackStatusText(imageDataList[index]?.crackStatus) }}</p>
@@ -285,7 +306,14 @@
             <!-- 分割和检测结果 -->
             <div v-if="image.segoverviews && image.segoverviews[0]" class="report-detection-results">
               <h4>检测结果详情</h4>
-              <el-image :src="image.segoverviews[0].image_path" fit="contain" class="report-seg-overview" />
+              <div class="report-seg-overview-box">
+                <el-image
+                  :src="image.segoverviews[0].image_path"
+                  fit="contain"
+                  class="report-seg-overview"
+                  :preview-src-list="[image.segoverviews[0].image_path]"
+                />
+              </div>
               
               <div class="report-detection-grid">
                 <div 
@@ -295,20 +323,34 @@
                 >
                   <h5>区域 {{ segIdx + 1 }}</h5>
                   <div class="report-detection-images">
-                    <el-image :src="seg.image_path" fit="contain" />
-                    <el-image :src="getCrackImage(seg.crackimages, 'segformer')" fit="contain" />
-                    <el-image :src="getCrackImage(seg.crackimages, 'mask')" fit="contain" />
+                    <div
+                      v-for="slot in getAvailableReportImageSlots(seg)"
+                      :key="slot.key"
+                      class="report-detection-slot"
+                    >
+                      <p class="report-slot-title">{{ slot.label }}</p>
+                      <div class="report-slot-image-box">
+                        <el-image
+                          :src="slot.url"
+                          fit="contain"
+                          class="report-slot-image"
+                          :preview-src-list="[slot.url]"
+                        />
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
           </div>
           
-          <h2>总体结论</h2>
-          <p>{{ reportData.overallAssessment || '暂无总体评估' }}</p>
-          
-          <h2>建议措施</h2>
-          <p>{{ reportData.recommendations || '暂无建议措施' }}</p>
+          <div class="report-final-section">
+            <h2>总体结论</h2>
+            <p style="white-space: pre-wrap;">{{ reportData.overallAssessment || '暂无总体评估' }}</p>
+            
+            <h2>建议措施</h2>
+            <p style="white-space: pre-wrap;">{{ reportData.recommendations || '暂无建议措施' }}</p>
+          </div>
         </div>
       </div>
       
@@ -327,8 +369,6 @@ import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import axios from 'axios'
 import { ElMessage, ElLoading } from 'element-plus'
-import jsPDF from 'jspdf'
-import html2canvas from 'html2canvas'
 import { marked } from 'marked'
 
 const route = useRoute()
@@ -376,6 +416,32 @@ const currentImageData = computed({
     }
   }
 })
+
+const sanitizeImageDataForStorage = (list) => {
+  if (!Array.isArray(list)) return []
+  return list.map((item) => ({
+    description: item?.description || '',
+    crackStatus: item?.crackStatus || 'none',
+    details: item?.details || '',
+    suggestions: item?.suggestions || ''
+  }))
+}
+
+const mergeSavedImageData = (baseList, savedList) => {
+  if (!Array.isArray(baseList) || baseList.length === 0) return []
+  if (!Array.isArray(savedList) || savedList.length === 0) return baseList
+  return baseList.map((base, idx) => {
+    const saved = savedList[idx]
+    if (!saved) return base
+    return {
+      ...base,
+      description: saved.description ?? base.description,
+      crackStatus: saved.crackStatus ?? base.crackStatus,
+      details: saved.details ?? base.details,
+      suggestions: saved.suggestions ?? base.suggestions
+    }
+  })
+}
 
 const selectImage = (index) => {
   currentImageIndex.value = index
@@ -437,10 +503,73 @@ const fetchProjectDetails = async () => {
   }
 }
 
-// 获取对应类型的裂缝检测图片
+const buildOrderedCrackImages = (crackimages) => {
+  if (!Array.isArray(crackimages) || crackimages.length === 0) return []
+  return [...crackimages]
+    .filter((img) => img && typeof img.image_path === 'string' && img.image_path)
+    .sort((a, b) => {
+      const ai = Number.isFinite(Number(a.crack_id)) ? Number(a.crack_id) : Number.MAX_SAFE_INTEGER
+      const bi = Number.isFinite(Number(b.crack_id)) ? Number(b.crack_id) : Number.MAX_SAFE_INTEGER
+      return ai - bi
+    })
+}
+
+const getDetectionResultGroups = (crackimages) => {
+  const ordered = buildOrderedCrackImages(crackimages)
+  if (ordered.length === 0) {
+    return {
+      standard: { segformerUrl: '', crackDetectionUrl: '' },
+      som: { overlayUrl: '' },
+    }
+  }
+
+  const latestFirst = [...ordered].reverse()
+  const isSomPath = (path) => path.includes('/som/') || path.includes('som-')
+  const groups = {
+    standard: { segformerUrl: '', crackDetectionUrl: '' },
+    som: { overlayUrl: '' },
+  }
+
+  const somOverlay = latestFirst.find((img) => {
+    const p = img.image_path
+    return isSomPath(p) && (p.includes('overlay') || p.includes('som-mask-') || p.includes('/som/overlay/'))
+  })
+  if (somOverlay) groups.som.overlayUrl = somOverlay.image_path
+
+  const standardSegformer = latestFirst.find((img) => {
+    const p = img.image_path
+    return !isSomPath(p) && p.includes('segformer')
+  })
+  const standardMask = latestFirst.find((img) => {
+    const p = img.image_path
+    return !isSomPath(p) && (p.includes('mask') || p.includes('highlighted') || p.includes('result'))
+  })
+  if (standardSegformer) groups.standard.segformerUrl = standardSegformer.image_path
+  if (standardMask) groups.standard.crackDetectionUrl = standardMask.image_path
+  return groups
+}
+
+const getReportImageSlots = (seg) => {
+  const groups = getDetectionResultGroups(seg?.crackimages || [])
+  return [
+    { key: 'geom', label: '几何变换', url: seg?.image_path || '' },
+    { key: 'segformer', label: 'Segformer', url: groups.standard.segformerUrl || '' },
+    { key: 'crack', label: 'CrackDetection', url: groups.standard.crackDetectionUrl || '' },
+    { key: 'som', label: 'SOM Overlay', url: groups.som.overlayUrl || '' }
+  ]
+}
+
+const getAvailableReportImageSlots = (seg) => {
+  return getReportImageSlots(seg).filter((slot) => typeof slot.url === 'string' && slot.url.trim().length > 0)
+}
+
+// 兼容旧调用
 const getCrackImage = (crackimages, type) => {
-  const image = crackimages.find(img => img.image_path.includes(type))
-  return image ? image.image_path : ''
+  const groups = getDetectionResultGroups(crackimages)
+  if (type === 'segformer') return groups.standard.segformerUrl || groups.som.overlayUrl || ''
+  if (type === 'mask') return groups.standard.crackDetectionUrl || groups.som.overlayUrl || ''
+  if (type === 'somOverlay') return groups.som.overlayUrl || ''
+  return ''
 }
 
 // 对几何变换图片进行排序
@@ -474,91 +603,6 @@ const renderMarkdown = (content) => {
   } catch (error) {
     console.error('Markdown rendering error:', error)
     return content
-  }
-}
-
-// 压缩图片
-const compressImage = (base64String, maxWidth = 800, quality = 0.7) => {
-  return new Promise((resolve, reject) => {
-    const img = new Image()
-    img.onload = () => {
-      const canvas = document.createElement('canvas')
-      const ctx = canvas.getContext('2d')
-      
-      // 计算压缩后的尺寸
-      let width = img.width
-      let height = img.height
-      
-      if (width > maxWidth) {
-        height = (maxWidth / width) * height
-        width = maxWidth
-      }
-      
-      canvas.width = width
-      canvas.height = height
-      
-      // 绘制压缩后的图片
-      ctx.drawImage(img, 0, 0, width, height)
-      
-      // 转换为压缩后的 base64
-      const compressedBase64 = canvas.toDataURL('image/jpeg', quality)
-      resolve(compressedBase64)
-    }
-    
-    img.onerror = reject
-    img.src = base64String
-  })
-}
-
-// 改进的PDF生成函数，避免空白页
-const generatePDFFromCanvas = (canvas, pdf) => {
-  const imgWidth = 190 // A4宽度减去边距
-  const pageHeight = 277 // A4高度减去边距
-  const imgHeight = (canvas.height * imgWidth) / canvas.width
-  
-  // 将canvas转换为图片
-  const imgData = canvas.toDataURL('image/jpeg', 0.95)
-  
-  // 如果图片高度小于一页，直接添加
-  if (imgHeight <= pageHeight) {
-    pdf.addImage(imgData, 'JPEG', 10, 10, imgWidth, imgHeight)
-    return
-  }
-  
-  // 多页处理
-  let position = 0
-  let pageCount = 0
-  
-  while (position < canvas.height) {
-    if (pageCount > 0) {
-      pdf.addPage()
-    }
-    
-    // 创建临时canvas用于当前页
-    const pageCanvas = document.createElement('canvas')
-    const pageCtx = pageCanvas.getContext('2d')
-    
-    // 计算当前页的高度
-    const sourceY = position
-    const sourceHeight = Math.min(canvas.height - position, (pageHeight / imgWidth) * canvas.width)
-    
-    pageCanvas.width = canvas.width
-    pageCanvas.height = sourceHeight
-    
-    // 绘制当前页内容
-    pageCtx.drawImage(
-      canvas,
-      0, sourceY, canvas.width, sourceHeight,
-      0, 0, canvas.width, sourceHeight
-    )
-    
-    // 添加到PDF
-    const pageData = pageCanvas.toDataURL('image/jpeg', 0.95)
-    const pageImgHeight = (sourceHeight * imgWidth) / canvas.width
-    pdf.addImage(pageData, 'JPEG', 10, 10, imgWidth, pageImgHeight)
-    
-    position += sourceHeight
-    pageCount++
   }
 }
 
@@ -616,14 +660,13 @@ const analyzeCrackWithLLM = async (imageIndex) => {
 // 保存报告
 const saveReport = async () => {
   try {
-    // 这里可以实现保存到后端的逻辑
+    const persistedImageData = sanitizeImageDataForStorage(imageDataList.value)
     const reportPayload = {
       projectId: projectDetails.value.project_id,
       reportData: reportData.value,
-      imageDataList: imageDataList.value
+      imageDataList: persistedImageData
     }
     
-    // 暂时使用本地存储
     localStorage.setItem(`report_${projectDetails.value.project_id}`, JSON.stringify(reportPayload))
     
     ElMessage.success('报告保存成功')
@@ -633,237 +676,106 @@ const saveReport = async () => {
 }
 
 // 下载报告（不显示预览直接下载）
+// PDF 生成已迁移到后端 (typst 矢量渲染)。
+// 流程：POST /reports/generate → 轮询任务状态 → blob 下载。
+// 前端只负责拼载荷、显示进度、触发浏览器下载。
+
+const REPORT_POLL_INTERVAL_MS = 800
+const REPORT_POLL_TIMEOUT_MS  = 5 * 60 * 1000
+
+const sleepMs = (ms) => new Promise((r) => setTimeout(r, ms))
+
+const buildReportPayload = () => {
+  const projectId = route.query.id || projectDetails.value.project_id
+  return {
+    project_id: projectId,
+    reportData: reportData.value,
+    imageDataList: imageDataList.value,
+    projectHierarchy: projectDetails.value,
+  }
+}
+
+const triggerBrowserDownload = (blob, filename) => {
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = filename
+  document.body.appendChild(a)
+  a.click()
+  a.remove()
+  // Give the download dispatch a tick before revoking; some browsers
+  // (Safari, older Edge) cancel the download otherwise.
+  setTimeout(() => URL.revokeObjectURL(url), 1000)
+}
+
 const downloadReport = async () => {
   const loadingInstance = ElLoading.service({
     lock: true,
-    text: '正在生成PDF，请稍候...',
-    background: 'rgba(0, 0, 0, 0.7)'
+    text: '正在提交报告生成任务...',
+    background: 'rgba(0, 0, 0, 0.7)',
   })
-  
+
   try {
-    console.log('开始生成PDF...')
-    
-    // 创建一个隐藏的div来渲染报告
-    const hiddenDiv = document.createElement('div')
-    hiddenDiv.style.position = 'absolute'
-    hiddenDiv.style.left = '-9999px'
-    hiddenDiv.style.top = '0'
-    hiddenDiv.style.width = '794px'
-    document.body.appendChild(hiddenDiv)
-    
-    loadingInstance.setText('正在准备报告内容...')
-    console.log('准备报告HTML...')
-    
-    // 生成报告HTML
-    hiddenDiv.innerHTML = `
-      <div class="report-preview" style="padding: 40px; background-color: white; font-family: 'Microsoft YaHei', Arial, sans-serif;">
-        <div class="report-header" style="text-align: center; margin-bottom: 40px; padding-bottom: 20px; border-bottom: 2px solid #e4e7ed;">
-          <h1 style="margin-bottom: 20px; color: #303133;">${reportData.value.title || '裂缝检测报告'}</h1>
-          <div class="report-info">
-            <p style="margin: 8px 0; color: #606266;">项目名称：${reportData.value.projectName}</p>
-            <p style="margin: 8px 0; color: #606266;">检测单位：${reportData.value.organization}</p>
-            <p style="margin: 8px 0; color: #606266;">检测人员：${reportData.value.inspector}</p>
-            <p style="margin: 8px 0; color: #606266;">检测日期：${reportData.value.inspectionDate}</p>
-          </div>
-        </div>
-        <div class="report-body" style="line-height: 1.8;">
-          <h2 style="margin-top: 30px; margin-bottom: 15px; color: #303133;">检测结果</h2>
-          ${projectDetails.value.images.map((image, index) => `
-            <div class="image-report-section" style="margin-bottom: 30px; page-break-inside: avoid;">
-              <h3 style="margin-top: 20px; margin-bottom: 10px; color: #606266;">图片 ${index + 1}</h3>
-              <div style="margin-bottom: 20px;">
-                <img src="${image.image_path}" style="max-width: 600px; width: 100%; height: auto;" />
-              </div>
-              <div class="image-report-text">
-                <p style="margin: 10px 0; color: #606266;"><strong>描述：</strong>${imageDataList.value[index]?.description || '暂无描述'}</p>
-                <p style="margin: 10px 0; color: #606266;"><strong>裂缝情况：</strong>${getCrackStatusText(imageDataList.value[index]?.crackStatus)}</p>
-                <p style="margin: 10px 0; color: #606266;"><strong>详细说明：</strong>${imageDataList.value[index]?.details || '暂无详细说明'}</p>
-                <p style="margin: 10px 0; color: #606266;"><strong>处理建议：</strong>${imageDataList.value[index]?.suggestions || '暂无建议'}</p>
-                ${image.have_crack === '1' && imageDataList.value[index]?.llmAnalysis ? `
-                  <div style="margin-top: 15px; padding: 10px; background-color: #f5f7fa; border-radius: 4px;">
-                    <p style="margin: 0 0 10px 0; color: #303133; font-weight: bold;">智能分析：</p>
-                    <div style="margin: 0; color: #606266; line-height: 1.6;">${renderMarkdown(imageDataList.value[index]?.llmAnalysis)}</div>
-                  </div>
-                ` : ''}
-              </div>
-              ${image.segoverviews && image.segoverviews[0] ? `
-                <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #e4e7ed;">
-                  <h4 style="margin-bottom: 15px; color: #303133;">检测结果详情</h4>
-                  <img src="${image.segoverviews[0].image_path}" style="max-width: 600px; width: 100%; height: auto; margin-bottom: 20px;" />
-                  <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px;">
-                    ${sortedSegImages(image.segoverviews[0].segimages).map((seg, segIdx) => `
-                      <div style="border: 1px solid #e4e7ed; padding: 10px; border-radius: 4px;">
-                        <h5 style="text-align: center; margin-bottom: 10px; color: #606266;">区域 ${segIdx + 1}</h5>
-                        <img src="${seg.image_path}" style="width: 100%; max-width: 150px; height: auto; margin-bottom: 5px;" />
-                        <img src="${getCrackImage(seg.crackimages, 'segformer')}" style="width: 100%; max-width: 150px; height: auto; margin-bottom: 5px;" />
-                        <img src="${getCrackImage(seg.crackimages, 'mask')}" style="width: 100%; max-width: 150px; height: auto;" />
-                      </div>
-                    `).join('')}
-                  </div>
-                </div>
-              ` : ''}
-            </div>
-          `).join('')}
-          <h2 style="margin-top: 30px; margin-bottom: 15px; color: #303133;">总体结论</h2>
-          <p style="margin: 10px 0; color: #606266;">${reportData.value.overallAssessment || '暂无总体评估'}</p>
-          <h2 style="margin-top: 30px; margin-bottom: 15px; color: #303133;">建议措施</h2>
-          <p style="margin: 10px 0; color: #606266;">${reportData.value.recommendations || '暂无建议措施'}</p>
-        </div>
-      </div>
-    `
-    
-    // 等待图片加载
-    loadingInstance.setText('正在加载图片...')
-    console.log('等待图片加载...')
-    const images = hiddenDiv.querySelectorAll('img')
-    await Promise.all(Array.from(images).map(img => {
-      return new Promise((resolve) => {
-        if (img.complete) {
-          resolve()
-        } else {
-          img.onload = resolve
-          img.onerror = resolve
-        }
-      })
-    }))
-    
-    // 获取报告预览元素
-    const reportPreview = hiddenDiv.querySelector('.report-preview')
-    
-    loadingInstance.setText('正在生成PDF页面...')
-    console.log('开始html2canvas转换...')
-    
-    // 使用html2canvas转换，确保捕获完整内容
-    const canvas = await html2canvas(reportPreview, {
-      scale: 1.5, // 降低scale以减小文件大小
-      useCORS: true,
-      allowTaint: true,
-      backgroundColor: '#ffffff',
-      logging: false,
-      windowHeight: reportPreview.scrollHeight,
-      height: reportPreview.scrollHeight
-    })
-    
-    // 移除隐藏的div
-    document.body.removeChild(hiddenDiv)
-    
-    loadingInstance.setText('正在生成PDF页面...')
-    console.log('生成PDF页面...')
-    
-    // 创建PDF
-    const pdf = new jsPDF({
-      orientation: 'portrait',
-      unit: 'mm',
-      format: 'a4',
-      compress: true // 启用PDF压缩
-    })
-    
-    // 使用新的分页函数
-    generatePDFFromCanvas(canvas, pdf)
-    
-    // 保存PDF
-    loadingInstance.setText('正在保存PDF文件...')
-    console.log('保存PDF...')
+    // 1) 提交任务
+    const submitResp = await axios.post('/crackdetection/reports/generate', buildReportPayload())
+    const taskId = submitResp.data?.task_id
+    if (!taskId) {
+      throw new Error('后端未返回 task_id')
+    }
+
+    // 2) 轮询进度
+    loadingInstance.setText('正在生成 PDF (0%)...')
+    const pollDeadline = Date.now() + REPORT_POLL_TIMEOUT_MS
+    while (true) {
+      if (Date.now() > pollDeadline) {
+        throw new Error('生成超时，请稍后重试')
+      }
+      const statusResp = await axios.get(`/crackdetection/reports/tasks/${taskId}`)
+      const data = statusResp.data || {}
+      const pct = Number.isFinite(data.progress) ? data.progress : 0
+      const stats = data.stats || {}
+      const failed = stats.failed_images || 0
+      const total  = stats.total_images  || 0
+      loadingInstance.setText(
+        failed > 0
+          ? `正在生成 PDF (${pct}%) — 图片加载失败 ${failed}/${total}`
+          : `正在生成 PDF (${pct}%)...`
+      )
+
+      if (data.status === 'success') break
+      if (data.status === 'failed') {
+        throw new Error(data.error || '后端报告生成失败')
+      }
+      await sleepMs(REPORT_POLL_INTERVAL_MS)
+    }
+
+    // 3) 下载 PDF
+    loadingInstance.setText('正在下载 PDF...')
+    const pdfResp = await axios.get(
+      `/crackdetection/reports/tasks/${taskId}/download`,
+      { responseType: 'blob' },
+    )
     const fileName = `${reportData.value.projectName || '裂缝检测'}_报告_${new Date().toISOString().split('T')[0]}.pdf`
-    pdf.save(fileName)
-    
-    console.log('PDF生成完成！')
+    triggerBrowserDownload(pdfResp.data, fileName)
+
     loadingInstance.close()
-    ElMessage.success('PDF下载成功')
+    ElMessage.success('PDF 下载成功')
   } catch (error) {
-    console.error('PDF生成失败:', error)
+    console.error('生成报告失败:', error)
     loadingInstance.close()
-    ElMessage.error('PDF生成失败：' + error.message)
+    const detail = error.response?.data?.error || error.message
+    ElMessage.error('PDF 生成失败：' + detail)
   }
 }
 
 // 导出PDF
 const exportPDF = async () => {
-  const loadingInstance = ElLoading.service({
-    lock: true,
-    text: '正在生成PDF，请稍候...',
-    background: 'rgba(0, 0, 0, 0.7)'
-  })
-  
-  try {
-    console.log('从预览对话框导出PDF...')
-    
-    // 获取报告预览的DOM元素
-    const reportElement = document.querySelector('.report-preview')
-    if (!reportElement) {
-      loadingInstance.close()
-      ElMessage.error('报告内容未找到')
-      return
-    }
-    
-    // 临时修改样式以适配PDF
-    const originalStyle = reportElement.style.cssText
-    reportElement.style.cssText = `
-      padding: 40px;
-      background-color: white;
-      width: 794px;
-      font-family: 'Microsoft YaHei', Arial, sans-serif;
-    `
-    
-    // 确保所有图片加载完成
-    const images = reportElement.querySelectorAll('img')
-    await Promise.all(Array.from(images).map(img => {
-      return new Promise((resolve) => {
-        if (img.complete) {
-          resolve()
-        } else {
-          img.onload = resolve
-          img.onerror = resolve
-        }
-      })
-    }))
-    
-    // 使用html2canvas将DOM转换为canvas，降低scale以减小文件大小
-    const canvas = await html2canvas(reportElement, {
-      scale: 1.5, // 降低scale从2到1.5
-      useCORS: true,
-      allowTaint: true,
-      backgroundColor: '#ffffff',
-      logging: false,
-      windowHeight: reportElement.scrollHeight,
-      height: reportElement.scrollHeight
-    })
-    
-    // 恢复原始样式
-    reportElement.style.cssText = originalStyle
-    
-    loadingInstance.setText('正在生成PDF页面...')
-    console.log('生成PDF页面...')
-    
-    // 创建PDF
-    const pdf = new jsPDF({
-      orientation: 'portrait',
-      unit: 'mm',
-      format: 'a4',
-      compress: true // 启用PDF压缩
-    })
-    
-    // 使用新的分页函数
-    generatePDFFromCanvas(canvas, pdf)
-    
-    // 保存PDF
-    loadingInstance.setText('正在保存PDF文件...')
-    console.log('保存PDF...')
-    const fileName = `${reportData.value.projectName || '裂缝检测'}_报告_${new Date().toISOString().split('T')[0]}.pdf`
-    pdf.save(fileName)
-    
-    console.log('PDF导出完成！')
-    loadingInstance.close()
-    ElMessage.success('PDF下载成功')
-  } catch (error) {
-    console.error('PDF生成失败:', error)
-    loadingInstance.close()
-    ElMessage.error('PDF生成失败：' + error.message)
-  }
+  // 与主下载按钮复用同一条链路
+  await downloadReport()
 }
 
-onMounted(() => {
-  fetchProjectDetails()
+onMounted(async () => {
+  await fetchProjectDetails()
   
   // 尝试加载已保存的报告数据
   const savedReport = localStorage.getItem(`report_${route.query.id}`)
@@ -874,7 +786,7 @@ onMounted(() => {
         Object.assign(reportData.value, parsed.reportData)
       }
       if (parsed.imageDataList) {
-        imageDataList.value = parsed.imageDataList
+        imageDataList.value = mergeSavedImageData(imageDataList.value, parsed.imageDataList)
       }
     } catch (error) {
       console.error('Failed to load saved report:', error)
@@ -980,12 +892,28 @@ onMounted(() => {
 
 .image-preview {
   margin-bottom: 20px;
-  text-align: center;
+  min-height: 260px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #ebeef5;
+  border-radius: 4px;
+  background: #fafafa;
 }
 
 .preview-image {
-  max-height: 300px;
-  width: auto;
+  width: 100%;
+  height: 300px;
+}
+
+.preview-image :deep(.el-image__inner),
+.seg-overview-image :deep(.el-image__inner),
+.small-image :deep(.el-image__inner),
+.report-image :deep(.el-image__inner),
+.report-seg-overview :deep(.el-image__inner),
+.report-slot-image :deep(.el-image__inner) {
+  object-fit: contain;
+  object-position: center;
 }
 
 :deep(.el-form-item__label) {
@@ -1043,10 +971,22 @@ onMounted(() => {
   align-items: flex-start;
 }
 
-.report-image {
-  width: 300px;
-  height: auto;
+.report-main-image-box {
+  width: 320px;
+  height: 240px;
   flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #ebeef5;
+  border-radius: 4px;
+  background: #fafafa;
+  overflow: hidden;
+}
+
+.report-image {
+  width: 100%;
+  height: 100%;
 }
 
 .image-report-text {
@@ -1070,10 +1010,22 @@ onMounted(() => {
   font-weight: bold;
 }
 
-.report-seg-overview {
-  max-width: 100%;
-  max-height: 300px;
+.report-seg-overview-box {
+  width: 100%;
+  height: 300px;
   margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #ebeef5;
+  border-radius: 4px;
+  background: #fafafa;
+  overflow: hidden;
+}
+
+.report-seg-overview {
+  width: 100%;
+  height: 100%;
 }
 
 .report-detection-grid {
@@ -1092,17 +1044,53 @@ onMounted(() => {
   text-align: center;
   margin-bottom: 10px;
   color: #606266;
+  min-height: 22px;
+  line-height: 22px;
 }
 
 .report-detection-images {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 5px;
+  gap: 8px;
 }
 
-.report-detection-images :deep(img) {
-  max-width: 100%;
-  height: auto;
+.report-detection-slot {
+  border: 1px solid #eef0f3;
+  border-radius: 4px;
+  padding: 6px;
+  background: #fff;
+}
+
+.report-slot-title {
+  margin: 0 0 6px 0;
+  font-size: 12px;
+  color: #909399;
+  text-align: center;
+  min-height: 18px;
+  line-height: 18px;
+}
+
+.report-slot-image-box {
+  height: 150px;
+  border: 1px solid #f0f0f0;
+  border-radius: 4px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #fafafa;
+}
+
+.report-slot-image {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center;
+}
+
+.report-slot-placeholder {
+  font-size: 12px;
+  color: #b0b3b8;
 }
 
 .dialog-footer {
@@ -1122,9 +1110,12 @@ onMounted(() => {
 }
 
 .seg-overview-image {
-  max-height: 300px;
+  height: 300px;
   width: 100%;
   margin-bottom: 20px;
+  border: 1px solid #ebeef5;
+  border-radius: 4px;
+  background: #fafafa;
 }
 
 .detection-grid {
@@ -1165,10 +1156,10 @@ onMounted(() => {
 
 .small-image {
   width: 100%;
-  height: 100px;
-  object-fit: contain;
+  height: 140px;
   border: 1px solid #eee;
   border-radius: 4px;
+  background: #fafafa;
 }
 
 .llm-analysis-section {

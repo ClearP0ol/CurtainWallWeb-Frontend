@@ -43,45 +43,34 @@ import axios from "axios";
 import { ElMessage } from "element-plus";
 
 type DashboardLink = {
-  id: string;
+  id?: string;
   label: string;
   icon?: string;
   to?: string;
   exact?: boolean;
   defaultOpen?: boolean;
+  click?: () => void;
   tooltip?: {
     text: string;
     shortcuts?: string[];
   };
-  children?: any[];
+  children?: DashboardLink[];
 };
+
+import { useCrackDetectionStore } from "~/pages/crackdetect/store/CrackDetection";
 
 const route = useRoute();
 const router = useRouter();
-const appConfig = useAppConfig();
-const {isHelpSlideoverOpen} = useDashboard();
+const crackDetectionStore = useCrackDetectionStore();
+const { isHelpSlideoverOpen } = useDashboard();
 const TEMP_TOKEN = "temp-corrosion-access-token";
 
-// definePageMeta({
-//   middleware: "slidebar-renew",
-// });
+const goCrackDetectCenter = () => {
+  crackDetectionStore.enterFromNavigation();
+  router.push("/crackdetect");
+};
 
-const userPermissions = ref({
-  is_superuser: false,
-  access_system_a: false,
-  access_system_b: false,
-  access_system_c: false,
-  access_system_d: false,
-  access_system_v: false,
-  access_system_f: false,
-  access_system_g: false,
-  access_system_h: false,
-  access_system_z: false,
-});
-
-
-
-const baseLinks = [
+const baseLinks: DashboardLink[] = [
   {
     id: "home",
     label: "首页",
@@ -135,6 +124,33 @@ const baseLinks = [
             to: "/vibration/server-monitor",
           },
         ],
+      },
+    ],
+  },
+  {
+    id: "stoneCrack",
+    label: "石材裂缝检测",
+    icon: "i-simple-icons-affinitypublisher",
+    to: "/crackdetect",
+    click: goCrackDetectCenter,
+    defaultOpen: false,
+    tooltip: {
+      text: "石材裂缝检测",
+    },
+    children: [
+      {
+        label: "检测中心",
+        to: "/crackdetect",
+        exact: true,
+        click: goCrackDetectCenter,
+      },
+      {
+        label: "历史记录",
+        to: "/crackdetect/history",
+      },
+      {
+        label: "数据集一览",
+        to: "/crackdetect/datasets",
       },
     ],
   },
@@ -335,27 +351,45 @@ const userAuth = ref({
   access_system_z: false,
 });
 
+const filterLinksByHiddenIds = (
+  sourceLinks: DashboardLink[],
+  hiddenIds: Set<string>,
+): DashboardLink[] => {
+  return sourceLinks
+    .filter((link) => !link.id || !hiddenIds.has(link.id))
+    .map((link) => {
+      if (!link.children) {
+        return link;
+      }
+
+      return {
+        ...link,
+        children: filterLinksByHiddenIds(link.children, hiddenIds),
+      };
+    });
+};
+
 const links = computed(() => {
   const hiddenIds = new Set<string>();
 
   if (!userAuth.value.is_superuser) {
-    if (!userAuth.value.access_system_a) hiddenIds.add("3DBuildingModel")
-    if (!userAuth.value.access_system_b) hiddenIds.add("stoneDirty")
-    if (!userAuth.value.access_system_c) hiddenIds.add("stoneCrack")
-    if (!userAuth.value.access_system_d) hiddenIds.add("explosion")
-    if (!userAuth.value.access_system_v) hiddenIds.add("wind")
-    if (!userAuth.value.access_system_f) hiddenIds.add("segment")
-    if (!userAuth.value.access_system_g) hiddenIds.add("glassFlatness")
+    if (!userAuth.value.access_system_a) hiddenIds.add("3DBuildingModel");
+    if (!userAuth.value.access_system_b) hiddenIds.add("stoneDirty");
+    if (!userAuth.value.access_system_c) hiddenIds.add("stoneCrack");
+    if (!userAuth.value.access_system_d) hiddenIds.add("explosion");
+    if (!userAuth.value.access_system_v) hiddenIds.add("wind");
+    if (!userAuth.value.access_system_f) hiddenIds.add("segment");
+    if (!userAuth.value.access_system_g) hiddenIds.add("glassFlatness");
     if (!userAuth.value.access_system_h) {
-      hiddenIds.add("resilienceAssessment")
-      hiddenIds.add("glassToughnessJudge")
+      hiddenIds.add("resilienceAssessment");
+      hiddenIds.add("glassToughnessJudge");
     }
-    if (!userAuth.value.access_system_z) hiddenIds.add("corrosion")
-    hiddenIds.add("userManage")
+    if (!userAuth.value.access_system_z) hiddenIds.add("corrosion");
+    hiddenIds.add("userManage");
   }
 
-  return baseLinks.filter((link) => !hiddenIds.has(link.id))
-})
+  return filterLinksByHiddenIds(baseLinks, hiddenIds);
+});
 
 const getUserAuth = async () => {
   try {
@@ -384,6 +418,12 @@ const getUserAuth = async () => {
 };
 
 onMounted(() => {
+  crackDetectionStore.ensureConsistency();
+
+  if (route.path === "/crackdetect") {
+    crackDetectionStore.enterFromNavigation();
+  }
+
   getUserAuth();
 });
 

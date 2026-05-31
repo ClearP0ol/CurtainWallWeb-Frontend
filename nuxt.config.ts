@@ -38,8 +38,8 @@ export default defineNuxtConfig({
         changeOrigin: true
       },
       '/crackdetection': {
-        target: 'http://110.42.214.164:8001',
-        changeOrigin: true
+        target: 'http://8.153.161.229:8001',
+        changeOrigin: true,
       },
       '/m-api': {
         target: process.env.NUXT_SERVER_MONITOR_UPSTREAM || 'http://8.159.143.133:8080/api/v1',
