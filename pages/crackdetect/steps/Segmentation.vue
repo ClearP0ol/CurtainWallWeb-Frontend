@@ -11,8 +11,8 @@
                 <div class="group-card" v-for="(item, itemIndex) in group">
                   <div class="pic-name">
                     <span class="filename-text" :title="item.name">{{ item.name }}</span>
-                    <el-tag v-if="item.detected" type="success" effect="dark" round class="item">已检测</el-tag>
-                    <el-tag v-else type="warning" effect="dark" round class="item">未检测</el-tag>
+                    <el-tag v-if="item.detected" type="success" effect="dark" round class="item">已处理</el-tag>
+                    <el-tag v-else type="warning" effect="dark" round class="item">未处理</el-tag>
                   </div>
                   <el-image
                       :key="itemIndex"
@@ -37,7 +37,7 @@
 <div style="height: 67%;margin-top: 3%;">
     <div style="height: 16%;display: flex;align-items: center;justify-content: center;flex-direction: column;gap: 10px;">
         <div style="display: flex;align-items: center;justify-content: center;gap: 24px;">
-          <span class="small-title">幕墙块检测分割</span>
+          <span class="small-title">幕墙块分割</span>
           <el-button type="primary" :disabled="globalLoading" :loading="globalLoading" @click="startSeg">
             {{ picked.detected ? '重新分割' : '开始分割' }}
           </el-button>
@@ -142,7 +142,7 @@ let progressTimer = null
 
 const startProgressSimulation = () => {
   segProgress.value = 8
-  progressText.value = '正在进行幕墙块检测与分割...'
+  progressText.value = '正在进行幕墙块分割...'
   if (progressTimer) clearInterval(progressTimer)
   progressTimer = setInterval(() => {
     if (segProgress.value < 92) {
@@ -223,7 +223,7 @@ const startSeg = async () => {
       if (noDetection) {
         picked.value.detected = false
         stopProgressSimulation(false)
-        ElMessage.warning(response.data.message || '未检测到可分割幕墙块，请更换图片后重试')
+        ElMessage.warning(response.data.message || '未找到可分割幕墙块，请更换图片后重试')
         return
       }
       

@@ -30,8 +30,8 @@
             <el-carousel-item v-for="(item, index) in carouselImages" :key="index" class="image-slide">
               <div class="pic-name">
                 <span class="filename-text" :title="item.name">{{ item.name }}</span>
-                <el-tag v-if="item.detected" type="success" effect="dark" round class="item">已检测</el-tag>
-                <el-tag v-else type="warning" effect="dark" round class="item">未检测</el-tag>
+                <el-tag v-if="item.detected" type="success" effect="dark" round class="item">已处理</el-tag>
+                <el-tag v-else type="warning" effect="dark" round class="item">未处理</el-tag>
               </div>
               <el-image 
                 :src="item.src" 

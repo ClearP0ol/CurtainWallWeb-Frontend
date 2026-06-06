@@ -3,7 +3,7 @@
     <!-- 步骤导航 -->
     <el-steps class="stepsStyle" :active="1" finish-status="success" simple>
       <el-step title="上传图片" @click="$router.push('/crackdetect/UploadImage')" />
-      <el-step title="幕墙块检测分割" />
+      <el-step title="幕墙块分割" />
       <el-step title="裂缝检测" />
       <el-step title="裂缝测量" />
     </el-steps>
@@ -42,7 +42,7 @@
                   :type="image.detected ? 'success' : 'warning'"
                   size="small"
                 >
-                  {{ image.detected ? '已检测' : '未检测' }}
+                  {{ image.detected ? '已处理' : '未处理' }}
                 </el-tag>
               </div>
             </div>
@@ -270,7 +270,7 @@ const nextStep = () => {
 
   // 如果没有选择任何已检测的图片，显示提示
   if (processedImages.length === 0) {
-    ElMessage.warning('请选择已检测的图片')
+    ElMessage.warning('请选择已处理的图片')
     return
   }
 
@@ -558,4 +558,4 @@ onMounted(() => {
   opacity: 0.6;
   cursor: not-allowed;
 }
-</style> 
+</style>
