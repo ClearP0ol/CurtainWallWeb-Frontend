@@ -16,8 +16,8 @@
                 :key="index"
                 @click="toProject(item.id)"
             >
-                <div style="display: flex;width: 100%;height: 10%;">
-                    <div style="color: black;font-weight: bold;font-size: 25px;margin-right: auto;">{{ item.projectName }}</div>
+                <div class="history-card-header">
+                    <div class="history-card-title" :title="item.projectName">{{ item.projectName }}</div>
                     <el-popover
                         trigger="click"
                         placement="bottom"
@@ -43,14 +43,14 @@
                         </template>
                     </el-popover>
                 </div>
-                <div style="width: 100%;height: 86%;margin-top: 4%;">
-                    <div style="margin-bottom: 5%;display: flex;align-items: center;">
-                        <el-icon :size="20"><Clock /></el-icon>
-                        <span style="margin-left: 5px;">创建时间：{{ formatDate(item.createTime) }}</span>
+                <div class="history-card-meta">
+                    <div class="history-card-row">
+                        <el-icon :size="18"><Clock /></el-icon>
+                        <span>创建时间：{{ formatDate(item.createTime) }}</span>
                     </div>
-                    <div style="display: flex;align-items: center;">
-                        <el-icon :size="20"><InfoFilled /></el-icon>
-                        <span style="margin-left: 5px;">项目ID：{{ item.id }}</span>
+                    <div class="history-card-row">
+                        <el-icon :size="18"><InfoFilled /></el-icon>
+                        <span>项目ID：{{ item.id }}</span>
                     </div>
                 </div>
             </el-card>
@@ -189,6 +189,51 @@ onMounted(() => {
     width:31%;
     min-height: 160px;
     margin-bottom: 3%;
+}
+
+.history-card-header {
+    display: flex;
+    align-items: flex-start;
+    width: 100%;
+    gap: 8px;
+}
+
+.history-card-title {
+    color: black;
+    font-weight: bold;
+    font-size: 21px;
+    line-height: 1.2;
+    margin-right: auto;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    word-break: break-word;
+}
+
+.history-card-meta {
+    width: 100%;
+    margin-top: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.history-card-row {
+    display: flex;
+    align-items: center;
+    min-width: 0;
+    color: #303133;
+    font-size: 15px;
+    line-height: 1.4;
+}
+
+.history-card-row span {
+    margin-left: 5px;
+    min-width: 0;
+    overflow-wrap: anywhere;
 }
 
 :deep(.el-card) {

@@ -196,39 +196,6 @@
                   placeholder="请输入处理建议"
                 />
               </el-form-item>
-              
-              <!-- LLM智能分析 -->
-              <el-form-item v-if="currentImage?.have_crack === '1'" label="智能分析">
-                <div class="llm-analysis-section">
-                  <el-button 
-                    type="primary" 
-                    size="small" 
-                    @click="analyzeCrackWithLLM(currentImageIndex)"
-                    :loading="llmLoading[currentImageIndex]"
-                  >
-                    {{ llmLoading[currentImageIndex] ? '分析中...' : '获取智能分析' }}
-                  </el-button>
-                  <el-input
-                    v-if="currentImageData.llmAnalysis"
-                    :model-value="currentImageData.llmAnalysis"
-                    @update:model-value="updateImageData('llmAnalysis', $event)"
-                    type="textarea"
-                    :rows="5"
-                    placeholder="智能分析结果"
-                    style="margin-top: 10px;"
-                  />
-                  <el-alert
-                    v-if="currentImageData.llmAnalysis"
-                    type="info"
-                    :closable="false"
-                    style="margin-top: 10px;"
-                  >
-                    <template #title>
-                      <span style="font-size: 12px;">此分析由AI生成，仅供参考</span>
-                    </template>
-                  </el-alert>
-                </div>
-              </el-form-item>
             </el-form>
           </el-card>
 
@@ -296,10 +263,6 @@
                 <p><strong>裂缝情况：</strong>{{ getCrackStatusText(imageDataList[index]?.crackStatus) }}</p>
                 <p><strong>详细说明：</strong>{{ imageDataList[index]?.details || '暂无详细说明' }}</p>
                 <p><strong>处理建议：</strong>{{ imageDataList[index]?.suggestions || '暂无建议' }}</p>
-                <div v-if="image.have_crack === '1' && imageDataList[index]?.llmAnalysis" class="llm-analysis-preview">
-                  <p><strong>智能分析：</strong></p>
-                  <div class="llm-content" v-html="renderMarkdown(imageDataList[index]?.llmAnalysis)"></div>
-                </div>
               </div>
             </div>
             
@@ -369,7 +332,6 @@ import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import axios from 'axios'
 import { ElMessage, ElLoading } from 'element-plus'
-import { marked } from 'marked'
 
 const route = useRoute()
 const projectDetails = ref({
@@ -383,7 +345,6 @@ const projectDetails = ref({
 const currentImageIndex = ref(0)
 const imageDataList = ref([])
 const previewVisible = ref(false)
-const llmLoading = ref({}) // 记录每个图片的LLM分析加载状态
 
 const reportData = ref({
   projectName: '',
@@ -406,8 +367,7 @@ const currentImageData = computed({
       description: '',
       crackStatus: 'none',
       details: '',
-      suggestions: '',
-      llmAnalysis: ''
+      suggestions: ''
     }
   },
   set(value) {
@@ -486,8 +446,7 @@ const fetchProjectDetails = async () => {
         description: '',
         crackStatus: image.have_crack === '1' ? 'severe' : 'none',
         details: '',
-        suggestions: '',
-        llmAnalysis: '' // 添加LLM分析字段
+        suggestions: ''
       }))
       
       // 默认选中第一张图片
@@ -595,17 +554,6 @@ const getCrackStatusText = (status) => {
   return statusMap[status] || '未评估'
 }
 
-// 渲染 Markdown 内容
-const renderMarkdown = (content) => {
-  if (!content) return ''
-  try {
-    return marked(content)
-  } catch (error) {
-    console.error('Markdown rendering error:', error)
-    return content
-  }
-}
-
 // 预览报告
 const previewReport = () => {
   previewVisible.value = true
@@ -614,47 +562,6 @@ const previewReport = () => {
 // 关闭预览
 const handlePreviewClose = () => {
   previewVisible.value = false
-}
-
-const DEFAULT_LLM_MODEL = 'hybrid-default'
-
-// LLM智能分析
-const analyzeCrackWithLLM = async (imageIndex) => {
-  try {
-    const image = projectDetails.value.images[imageIndex]
-    if (!image || image.have_crack !== '1') {
-      return
-    }
-    
-    llmLoading.value[imageIndex] = true
-    
-    console.log('Calling LLM analyze API with URL:', image.image_path)
-    
-    // 调用LLM分析接口
-    // 直接使用完整URL，避免代理问题
-    const response = await axios.post('http://110.42.214.164:8001/llm-analyze', null, {
-      params: {
-        url: image.image_path,
-        model: DEFAULT_LLM_MODEL
-      }
-    })
-    
-    console.log('LLM API response:', response.data)
-    
-    if (response.data.success) {
-      // 更新当前图片的LLM分析结果
-      updateImageData('llmAnalysis', response.data.analysis)
-      ElMessage.success('智能分析完成')
-    } else {
-      ElMessage.error('分析失败：' + (response.data.error || '未知错误'))
-    }
-  } catch (error) {
-    console.error('LLM analysis failed:', error)
-    console.error('Error details:', error.response?.data || error.message)
-    ElMessage.error('智能分析失败：' + (error.response?.data?.error || error.message))
-  } finally {
-    llmLoading.value[imageIndex] = false
-  }
 }
 
 // 保存报告
@@ -1162,89 +1069,4 @@ onMounted(async () => {
   background: #fafafa;
 }
 
-.llm-analysis-section {
-  width: 100%;
-}
-
-.llm-analysis-preview {
-  margin-top: 15px;
-  padding: 10px;
-  background-color: #f5f7fa;
-  border-radius: 4px;
-}
-
-.llm-analysis-preview p {
-  margin-bottom: 10px !important;
-}
-
-.llm-content {
-  line-height: 1.6;
-  color: #606266;
-}
-
-/* Markdown 样式 */
-.llm-content :deep(h1),
-.llm-content :deep(h2),
-.llm-content :deep(h3),
-.llm-content :deep(h4),
-.llm-content :deep(h5),
-.llm-content :deep(h6) {
-  margin-top: 16px;
-  margin-bottom: 8px;
-  color: #303133;
-}
-
-.llm-content :deep(p) {
-  margin: 8px 0;
-}
-
-.llm-content :deep(ul),
-.llm-content :deep(ol) {
-  margin: 8px 0;
-  padding-left: 24px;
-}
-
-.llm-content :deep(li) {
-  margin: 4px 0;
-}
-
-.llm-content :deep(code) {
-  background-color: #f0f0f0;
-  padding: 2px 4px;
-  border-radius: 3px;
-  font-size: 0.9em;
-}
-
-.llm-content :deep(pre) {
-  background-color: #f5f5f5;
-  padding: 12px;
-  border-radius: 4px;
-  overflow-x: auto;
-  margin: 12px 0;
-}
-
-.llm-content :deep(blockquote) {
-  border-left: 3px solid #409EFF;
-  padding-left: 12px;
-  margin: 12px 0;
-  color: #606266;
-}
-
-.llm-content :deep(table) {
-  border-collapse: collapse;
-  width: 100%;
-  margin: 12px 0;
-}
-
-.llm-content :deep(th),
-.llm-content :deep(td) {
-  border: 1px solid #E4E7ED;
-  padding: 8px 12px;
-  text-align: left;
-}
-
-.llm-content :deep(th) {
-  background-color: #f5f7fa;
-  font-weight: bold;
-}
 </style>

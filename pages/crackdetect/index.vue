@@ -53,7 +53,7 @@ const store = useCrackDetectionStore()
 const router = useRouter()
 
 const steps = ref([
-  { title: '选择项目',component: 'pickProject' },
+  { title: '新建项目',component: 'pickProject' },
   { title: '上传图片',component: 'uploadPicture' },
   { title: '幕墙块分割',component: 'Segmentation'},
   { title: '裂缝检测',component: 'CrackDetection'}

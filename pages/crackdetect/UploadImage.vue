@@ -8,7 +8,7 @@
         simple
       >
         <el-step title="上传图片" class="step-item" />
-        <el-step title="幕墙块检测分割" class="step-item" />
+        <el-step title="幕墙块分割" class="step-item" />
         <el-step title="裂缝检测" class="step-item" />
         <el-step title="裂缝测量" class="step-item" />
       </el-steps>

@@ -3,7 +3,7 @@
     <!-- 步骤导航 -->
     <el-steps class="stepsStyle" :active="2" finish-status="success" simple>
       <el-step title="上传图片" @click="$router.push('/crackdetect/UploadImage')" />
-      <el-step title="幕墙块检测分割" @click="$router.push('/crackdetect/ObjectDetection')" />
+      <el-step title="幕墙块分割" @click="$router.push('/crackdetect/ObjectDetection')" />
       <el-step title="裂缝检测" />
       <el-step title="裂缝测量" />
     </el-steps>
