@@ -3,9 +3,7 @@
     <div class="small-title">上传图片</div>
     <div class="upload-content">
       <el-button
-        v-if="
-          (uploadedImages.length || ossImages.length) && mainTab === 'local'
-        "
+        v-if="uploadedImages.length || ossImages.length"
         type="primary"
         plain
         class="upload-button"
@@ -530,8 +528,8 @@ onMounted(() => {
 
 :deep(.el-upload-list) {
   position: absolute;
-  right: -10vw;
-  width: 15vw;
+  right: 20px;
+  width: 200px;
   top: 10%;
   z-index: 999;
 }
@@ -539,7 +537,7 @@ onMounted(() => {
 .upload-button {
   position: absolute;
   top: -1vh;
-  right: -5vw;
+  right: 20px;
   min-width: 120px;
   white-space: nowrap;
   z-index: 10;
