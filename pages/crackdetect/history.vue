@@ -27,22 +27,29 @@
         </div>
 
         <div class="project-actions">
-          <el-button 
-            type="primary" 
+          <el-button
+            type="primary"
             link
             @click="continueProject(project)"
           >
             继续检测
           </el-button>
-          <el-button 
-            type="info" 
+          <el-button
+            type="info"
             link
             @click="viewDetails(project)"
           >
             查看详情
           </el-button>
-          <el-button 
-            type="warning" 
+          <el-button
+            type="success"
+            link
+            @click="openOssManager"
+          >
+            查看OSS文件
+          </el-button>
+          <el-button
+            type="warning"
             link
             @click="editReport(project)"
           >
@@ -157,7 +164,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import axios from 'axios'
 import { jwtDecode } from 'jwt-decode'
 
@@ -259,6 +266,28 @@ const viewDetails = (project) => {
     path: '/crackdetect/ProjectDetail',
     query: { id: project.project_id }
   })
+}
+
+// 打开 OSS 文件管理器
+const openOssManager = () => {
+  ElMessageBox.alert(
+    '检测结果已保存到 OSS 数据集管理系统\n\n' +
+    '文件路径：crack-detection > results\n\n' +
+    '点击确定打开文件管理器，然后按以下步骤查看：\n' +
+    '1. 点击 "crack-detection" 数据集\n' +
+    '2. 进入 "results" 文件夹\n' +
+    '3. 选择对应的项目子文件夹查看检测结果图片',
+    '查看OSS文件',
+    {
+      confirmButtonText: '打开文件管理器',
+      type: 'info',
+      callback: (action) => {
+        if (action === 'confirm') {
+          window.open('http://8.159.143.133/dataset/dataset/home', '_blank')
+        }
+      }
+    }
+  )
 }
 
 // 查看图片详情

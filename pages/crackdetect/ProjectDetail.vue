@@ -4,9 +4,14 @@
       <div class="title-section">
         <el-button icon="ArrowLeft" @click="$router.back()">返回</el-button>
         <h2>{{ projectDetails.project_name }}</h2>
-        <el-button type="primary" @click="generateReport">
-          生成报告
-        </el-button>
+        <div class="action-buttons">
+          <el-button type="info" plain @click="openOssManager" :icon="FolderOpened">
+            在文件管理器中查看
+          </el-button>
+          <el-button type="primary" @click="generateReport">
+            生成报告
+          </el-button>
+        </div>
       </div>
     </div>
 
@@ -213,7 +218,8 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import axios from 'axios'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import { FolderOpened } from '@element-plus/icons-vue'
 
 const route = useRoute()
 const projectDetails = ref({
@@ -234,6 +240,30 @@ const currentImage = computed(() => {
 
 const selectImage = (index) => {
   currentImageIndex.value = index
+}
+
+// 打开 OSS 文件管理器
+const openOssManager = () => {
+  ElMessageBox.alert(
+    `检测结果已保存到 OSS 数据集管理系统
+
+文件路径：crack-detection > results
+
+点击确定打开文件管理器，然后按以下步骤查看：
+1. 点击 "crack-detection" 数据集
+2. 进入 "results" 文件夹
+3. 选择对应的子文件夹查看检测结果图片`,
+    '查看检测结果',
+    {
+      confirmButtonText: '打开文件管理器',
+      type: 'info',
+      callback: (action) => {
+        if (action === 'confirm') {
+          window.open('http://8.159.143.133/dataset/dataset/home', '_blank')
+        }
+      }
+    }
+  )
 }
 
 // 获取项目详情
@@ -516,6 +546,13 @@ onMounted(() => {
 .title-section h2 {
   margin: 0;
   color: #1989FA;
+  flex: 1;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 12px;
+  margin-left: auto;
 }
 
 .main-content {
