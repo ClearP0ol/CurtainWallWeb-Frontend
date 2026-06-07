@@ -71,6 +71,15 @@
 
             <!-- 示例图片库 -->
             <el-tab-pane label="示例图片库" name="examples">
+              <div class="examples-actions-top">
+                <el-button
+                  type="primary"
+                  @click="addSelectedExamples"
+                  :disabled="selectedExamples.length === 0"
+                >
+                  添加选中的 {{ selectedExamples.length }} 张
+                </el-button>
+              </div>
               <div class="examples-grid">
                 <div
                   v-for="img in exampleImages"
@@ -103,15 +112,6 @@
                     </div>
                   </el-card>
                 </div>
-              </div>
-              <div class="examples-actions">
-                <el-button
-                  type="primary"
-                  @click="addSelectedExamples"
-                  :disabled="selectedExamples.length === 0"
-                >
-                  添加选中的 {{ selectedExamples.length }} 张
-                </el-button>
               </div>
             </el-tab-pane>
           </el-tabs>
@@ -791,6 +791,18 @@ onMounted(() => {
   text-overflow: ellipsis;
   flex: 1;
   line-height: 1.5;
+}
+
+/* 操作按钮区域 - 顶部固定 */
+.examples-actions-top {
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  text-align: right;
+  border-bottom: 1px solid #ebeef5;
+  position: sticky;
+  top: 0;
+  background: white;
+  z-index: 10;
 }
 
 /* 操作按钮区域 */
