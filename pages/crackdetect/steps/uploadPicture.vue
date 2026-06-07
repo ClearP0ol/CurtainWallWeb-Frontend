@@ -71,49 +71,40 @@
 
             <!-- 示例图片库 -->
             <el-tab-pane label="示例图片库" name="examples">
-              <div class="examples-container">
-                <el-checkbox-group v-model="selectedExamples">
-                  <div class="examples-grid">
-                    <div
-                      v-for="img in exampleImages"
-                      :key="img.id"
-                      class="example-item"
+              <div class="examples-grid">
+                <div
+                  v-for="img in exampleImages"
+                  :key="img.id"
+                  class="example-item"
+                >
+                  <el-card :body-style="{ padding: '12px' }" shadow="hover">
+                    <el-image
+                      :src="img.url"
+                      fit="cover"
+                      class="example-image"
+                      lazy
                     >
-                      <el-card :body-style="{ padding: '8px' }" shadow="hover">
-                        <el-checkbox :label="img.url" :value="img.url">
-                          <el-image
-                            :src="img.url"
-                            fit="cover"
-                            class="example-image"
-                            lazy
-                          >
-                            <template #error>
-                              <div class="image-error">
-                                <el-icon><Picture /></el-icon>
-                              </div>
-                            </template>
-                          </el-image>
-                          <div class="example-info">
-                            <div class="example-name" :title="img.filename">
-                              {{ img.filename }}
-                            </div>
-                          </div>
-                        </el-checkbox>
-                      </el-card>
+                      <template #error>
+                        <div class="image-error">
+                          <el-icon><Picture /></el-icon>
+                        </div>
+                      </template>
+                    </el-image>
+                    <div class="example-footer">
+                      <el-checkbox
+                        :label="img.url"
+                        :value="img.url"
+                        v-model="selectedExamples"
+                      >
+                        <span class="example-filename" :title="img.filename">{{
+                          img.filename
+                        }}</span>
+                      </el-checkbox>
                     </div>
-                  </div>
-                </el-checkbox-group>
+                  </el-card>
+                </div>
               </div>
-              <div
-                style="
-                  margin-top: 10px;
-                  text-align: right;
-                  position: sticky;
-                  bottom: 0;
-                  background: white;
-                  padding: 8px 0;
-                "
-              >
+              <div class="examples-actions">
                 <el-button
                   type="primary"
                   @click="addSelectedExamples"
@@ -728,39 +719,20 @@ onMounted(() => {
   font-size: 12px;
 }
 
-.examples-container {
-  max-height: 300px;
-  overflow-y: auto;
-  padding: 5px;
-}
-
+/* 示例图片网格 - 无滚动容器 */
 .examples-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-  gap: 12px;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 16px;
+  padding: 10px 0;
 }
 
 .example-item {
   display: flex;
 }
 
-.example-item :deep(.el-checkbox) {
-  width: 100%;
-}
-
-.example-item :deep(.el-checkbox__label) {
-  width: 100%;
-  padding-left: 0;
-}
-
-.example-item :deep(.el-checkbox__input) {
-  position: absolute;
-  top: 8px;
-  left: 8px;
-  z-index: 1;
-}
-
 .example-item :deep(.el-card) {
+  width: 100%;
   cursor: pointer;
   transition: all 0.3s;
 }
@@ -770,32 +742,62 @@ onMounted(() => {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
+/* 图片预览 - 增大尺寸 */
 .example-image {
   width: 100%;
-  height: 100px;
+  height: 160px;
   display: block;
+  border-radius: 4px;
 }
 
 .image-error {
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 100px;
+  height: 160px;
   background: #f5f7fa;
   color: #909399;
-  font-size: 24px;
+  font-size: 32px;
 }
 
-.example-info {
-  padding: 6px 0;
+/* 底部区域 - Checkbox + Filename */
+.example-footer {
+  margin-top: 10px;
 }
 
-.example-name {
-  font-size: 12px;
+.example-footer :deep(.el-checkbox) {
+  width: 100%;
+  display: flex;
+  align-items: center;
+}
+
+.example-footer :deep(.el-checkbox__label) {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding-left: 8px;
+}
+
+.example-footer :deep(.el-checkbox__input) {
+  flex-shrink: 0;
+}
+
+.example-filename {
+  font-size: 13px;
   font-weight: 500;
   color: #303133;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  flex: 1;
+  line-height: 1.5;
+}
+
+/* 操作按钮区域 */
+.examples-actions {
+  margin-top: 16px;
+  text-align: right;
+  padding-top: 12px;
+  border-top: 1px solid #ebeef5;
 }
 </style>
