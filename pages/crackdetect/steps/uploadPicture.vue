@@ -94,8 +94,8 @@
                             </template>
                           </el-image>
                           <div class="example-info">
-                            <div class="example-name" :title="img.name">
-                              {{ img.name }}
+                            <div class="example-name" :title="img.filename">
+                              {{ img.filename }}
                             </div>
                           </div>
                         </el-checkbox>
@@ -269,7 +269,7 @@ const addSelectedExamples = () => {
     const img = exampleImages.find((e) => e.url === url);
     if (img) {
       ossImages.value.push({
-        name: img.name,
+        name: img.filename,
         url: url,
         fromOss: true,
       });
