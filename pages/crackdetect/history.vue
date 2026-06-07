@@ -8,9 +8,9 @@
     </div>
 
     <div class="projects-grid">
-      <el-card 
-        v-for="project in projects" 
-        :key="project.project_id" 
+      <el-card
+        v-for="project in projects"
+        :key="project.project_id"
         class="project-card"
         shadow="hover"
       >
@@ -27,22 +27,29 @@
         </div>
 
         <div class="project-actions">
-          <el-button 
-            type="primary" 
-            link
-            @click="continueProject(project)"
-          >
-            继续检测
-          </el-button>
-          <el-button 
-            type="info" 
+          <el-button
+            type="info"
             link
             @click="viewDetails(project)"
           >
             查看详情
           </el-button>
-          <el-button 
-            type="warning" 
+          <el-button
+            type="primary"
+            link
+            @click="continueProject(project)"
+          >
+            继续检测
+          </el-button>
+          <el-button
+            type="success"
+            link
+            @click="openOssManager"
+          >
+            OSS文件
+          </el-button>
+          <el-button
+            type="warning"
             link
             @click="editReport(project)"
           >
@@ -50,13 +57,13 @@
           </el-button>
           <el-popconfirm
             title="确定要删除这个项目吗？"
-           
+
             confirm-button-text="确定"
             cancel-button-text="取消"
           >
             <template #reference>
-              <el-button 
-                type="danger" 
+              <el-button
+                type="danger"
                 link
               >
                 删除
@@ -157,7 +164,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import axios from 'axios'
 import { jwtDecode } from 'jwt-decode'
 
@@ -229,7 +236,7 @@ const continueProject = async (project) => {
   try {
     // 先检查是否有待处理的图片
     const hasPendingImages = await checkPendingImages(project.project_id)
-    
+
     if (hasPendingImages) {
       // 如果有待处理的图片，跳转到目标检测页面
       router.push({
@@ -259,6 +266,28 @@ const viewDetails = (project) => {
     path: '/crackdetect/ProjectDetail',
     query: { id: project.project_id }
   })
+}
+
+// 打开 OSS 文件管理器
+const openOssManager = () => {
+  ElMessageBox.alert(
+    '检测结果已保存到 OSS 数据集管理系统\n\n' +
+    '文件路径：crack-detection > results\n\n' +
+    '点击确定打开文件管理器，然后按以下步骤查看：\n' +
+    '1. 点击 "crack-detection" 数据集\n' +
+    '2. 进入 "results" 文件夹\n' +
+    '3. 选择对应的项目子文件夹查看检测结果图片',
+    '查看OSS文件',
+    {
+      confirmButtonText: '打开文件管理器',
+      type: 'info',
+      callback: (action) => {
+        if (action === 'confirm') {
+          window.open('http://8.159.143.133/dataset/dataset/home', '_blank')
+        }
+      }
+    }
+  )
 }
 
 // 查看图片详情
@@ -301,7 +330,7 @@ const getStatusType = (status) => {
 const deleteProject = async (projectId) => {
   try {
     const response = await axios.delete(`/crackdetection/deleteProject/${projectId}`)
-    
+
     if (response.data.message) {
       ElMessage.success('项目删除成功')
       // 从列表中移除已删除的项目
@@ -396,6 +425,12 @@ onMounted(() => {
 
 .project-info p {
   margin: 5px 0;
+  word-break: break-all;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
 }
 
 .project-actions {
