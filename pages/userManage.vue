@@ -60,6 +60,38 @@
             ></el-switch>
           </template>
         </el-table-column>
+<!--        <el-table-column label="幕墙材质分割权限" prop="access_system_f">-->
+<!--          <template #default="{ row }">-->
+<!--            <el-switch-->
+<!--              v-model="row.access_system_f"-->
+<!--              @change="() => handleSwitchChange(row, 'access_system_f','table')"-->
+<!--            ></el-switch>-->
+<!--          </template>-->
+<!--        </el-table-column>-->
+        <el-table-column label="玻璃幕墙监测权限" prop="access_system_g">
+          <template #default="{ row }">
+            <el-switch
+              v-model="row.access_system_g"
+              @change="() => handleSwitchChange(row, 'access_system_g','table')"
+            ></el-switch>
+          </template>
+        </el-table-column>
+        <!-- <el-table-column label="幕墙韧性评估权限" prop="access_system_h">
+          <template #default="{ row }">
+            <el-switch
+              v-model="row.access_system_h"
+              @change="() => handleSwitchChange(row, 'access_system_h','table')"
+            ></el-switch>
+          </template>
+        </el-table-column> -->
+        <el-table-column label="金属锈蚀检测权限" prop="access_system_z">
+          <template #default="{ row }">
+            <el-switch
+              v-model="row.access_system_z"
+              @change="() => handleSwitchChange(row, 'access_system_z','table')"
+            ></el-switch>
+          </template>
+        </el-table-column>
       </el-table>
 
       <!-- 分页组件 -->
@@ -144,8 +176,14 @@ const handleSwitchChange = async (item, key, updatemethod) => {
 
       console.log("转让接口响应:", response);
 
-      ElMessage.success("管理员权限转让成功");
-      await getAllPermission(); // 重新获取数据
+      // 管理员权限已转让给他人，当前用户失去管理员身份
+      // 更新本地存储的权限信息
+      const currentAuth = JSON.parse(localStorage.getItem('userAuth') || '{}');
+      currentAuth.is_superuser = false;
+      localStorage.setItem('userAuth', JSON.stringify(currentAuth));
+
+      ElMessage.success("管理员权限转让成功，即将返回首页");
+      location.replace('/');
     } catch (error) {
       console.error("转让请求出错:", error);
       ElMessage.error("权限转让失败");
