@@ -21,6 +21,16 @@ function getInferenceModeLabel(mode?: Detection.InferenceMode) {
   return mode === 'cloud' ? '云端模型' : '本地模型'
 }
 
+function formatBeijingTime(dateStr?: string | null) {
+  if (!dateStr) return '-'
+  const d = new Date(dateStr)
+  if (isNaN(d.getTime())) return dateStr
+  // UTC 转北京时间 (+8小时)
+  const bj = new Date(d.getTime() + 8 * 60 * 60 * 1000)
+  const pad = (n: number) => String(n).padStart(2, '0')
+  return `${bj.getFullYear()}-${pad(bj.getMonth() + 1)}-${pad(bj.getDate())}-${pad(bj.getHours())}:${pad(bj.getMinutes())}:${pad(bj.getSeconds())}`
+}
+
 // 批量上传队列
 const filesToProcess = ref<File[]>([])
 const currentFileIndex = ref(0)
@@ -440,7 +450,7 @@ async function handleExportCurrentReport() {
                 {{ currentTask.affectedAreaPercentage ?? '-' }}%
               </el-descriptions-item>
               <el-descriptions-item label="检测时间" :span="2">
-                {{ currentTask.createdAt || '-' }}
+                {{ formatBeijingTime(currentTask.createdAt) }}
               </el-descriptions-item>
               <el-descriptions-item label="总结" :span="2">
                 {{ currentTask.summary || '-' }}
