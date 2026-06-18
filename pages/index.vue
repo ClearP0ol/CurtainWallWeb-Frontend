@@ -101,11 +101,10 @@ const modulesLine2 = reactive([
   {
     title: "石材污渍检测",
     description: "用于识别建筑石材幕墙表面污渍",
-    target_address: "/stonedirty/mainpage",
+    target_address: "/stonedirty/detection",
     icon: "i-heroicons-fire",
     permissionKey: "access_system_b",
   },
-
 ]);
 
 const modulesLine3 = reactive([

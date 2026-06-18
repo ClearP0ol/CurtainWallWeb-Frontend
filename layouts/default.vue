@@ -276,7 +276,7 @@ const baseLinks: DashboardLink[] = [
   {
     id: "stoneDirty",
     label: "石材污损检测",
-    to: "/stonedirty/mainpage",
+    to: "/stonedirty/detection",
     icon: "i-heroicons-fire",
     tooltip: {
       text: "石材污损检测",
@@ -284,17 +284,9 @@ const baseLinks: DashboardLink[] = [
     defaultOpen: false,
     children: [
       {
-        label: "上传图片",
-        to: "/stonedirty/mainpage",
-        exact: true,
-      },
-      {
-        label: "历史图片",
-        to: "/stonedirty/otherpage",
-      },
-      {
         label: "检测工作台",
         to: "/stonedirty/detection",
+        exact: true,
       },
       {
         label: "检测历史",
